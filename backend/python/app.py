@@ -13,11 +13,11 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 @app.route('/mppt/<ip>',methods=['GET'])
 def getDataMppt(ip):
-    #c = ModbusClient(host=ip, port=502,strict=False)
-    #c.connect()
-    #registers = c.read_holding_registers(0,82,1)
+    c = ModbusClient(host=ip, port=502,strict=False)
+    c.connect()
+    print(c)
+    rr = c.read_holding_registers(0,82,1)
 
-    #Mppt = mppt(registers[24],registers[28],registers[16])
-    Mppt = mppt(20065 ,15374,15783)
-    print(ip)
+    Mppt = mppt(rr.registers[24],rr.registers[28],rr.registers[16])
+    
     return json.dumps(Mppt.__dict__)
