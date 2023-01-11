@@ -76,7 +76,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
       },{
         label:"Voltage Lithium Battery",
         type: 'line' as ChartType,
-        borderColor:"#011d3b",
+        borderColor:"#a20000",
         borderWidth:2,
         data: maxVolt,
         order:1
