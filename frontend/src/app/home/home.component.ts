@@ -1,6 +1,8 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {Site} from "../models/site";
 import {SiteService} from "../services/site.service";
+import {config} from "../../Config/config";
+import {NzMessageService} from "ng-zorro-antd/message";
 
 @Component({
   selector: 'app-home',
@@ -14,7 +16,7 @@ export class HomeComponent implements OnInit,OnDestroy {
     document.body.className=''
   }
 
-  constructor(private siteServices:SiteService) { }
+  constructor(private siteServices:SiteService,private message:NzMessageService) { }
 
   ngOnInit(): void {
     this.spinnerSite=true
@@ -22,8 +24,10 @@ export class HomeComponent implements OnInit,OnDestroy {
     // @ts-ignore
     this.siteServices.getAllSites().subscribe((sites:Array<Site>)=>{
       this.spinnerSite=false
-      console.log(sites)
       this.sites=sites
+    },err=>{
+      this.spinnerSite=false
+      this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
   }
 

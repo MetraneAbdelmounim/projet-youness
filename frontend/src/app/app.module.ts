@@ -25,6 +25,7 @@ import {AdminGuardService} from "./services/admin-guard.service";
 import { HeaderComponent } from './header/header.component';
 import {NgChartsModule} from "ng2-charts";
 import Annotation from "chartjs-plugin-annotation";
+import { FooterComponent } from './footer/footer.component';
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
@@ -45,6 +46,7 @@ const appRoutes: Routes = [
     AsideComponent,
     AdminSiteComponent,
     HeaderComponent,
+    FooterComponent,
   ],
   imports: [
     BrowserModule,
@@ -65,7 +67,6 @@ const appRoutes: Routes = [
     { provide: NZ_I18N, useValue: en_US },
     { provide: NZ_ICON_DEFAULT_TWOTONE_COLOR, useValue: '#00ff00' }, // If not provided, it is Ant Design's theme blue
     { provide: NZ_ICONS, useValue: icons } // If not provided, it is Ant Design's theme blue
-
   ],
   bootstrap: [AppComponent]
 })

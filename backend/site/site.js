@@ -8,10 +8,14 @@ const siteSchema = mongoose.Schema({
     ip :{type: String,required:true},
     nom:{type: String,required:true},
     Battery_Voltage:{type:Float,required:false},
-    Array_Voltage:{type:Float,required:false},
     Charge_Current:{type:Float,required:false},
     Temperature_Ambient:{type:Float,required:false},
+    Array_Voltage:{type:Float,required:false},
+    Sweep_Pmax:{type:Float,required:false},
+    Load_Voltage:{type:Float,required:false},
+    Load_Current:{type:Float,required:false},
     status:{type: Boolean,required:false,default:true},
+
 });
 
 siteSchema.plugin(uniqueValidator);

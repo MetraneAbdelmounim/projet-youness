@@ -13,6 +13,9 @@ export class SiteService {
   getAllSites(){
     return this.http.get(BACKEND_URL+'sites')
   }
+  getAllWithoutData(){
+    return this.http.get(BACKEND_URL+'sites/ping')
+  }
   addSite(stockData:any) {
     return this.http.post(BACKEND_URL+'sites',stockData)
   }

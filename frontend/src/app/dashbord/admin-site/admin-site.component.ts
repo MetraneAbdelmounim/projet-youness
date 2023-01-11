@@ -54,11 +54,12 @@ export class AdminSiteComponent implements OnInit,OnDestroy {
     this.spinnerSite=true
     // @ts-ignore
 
-    this.siteServices.getAllSites().subscribe((sites:Array<Site>)=>{
-      console.log(sites)
+    this.siteServices.getAllWithoutData().subscribe((sites:Array<Site>)=>{
       this.spinnerSite=false
       this.sites=sites
-
+    },err=>{
+      this.spinnerSite=false
+      this.message.success("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
   }
 
@@ -142,15 +143,17 @@ export class AdminSiteComponent implements OnInit,OnDestroy {
 
   }
   detectFile(event: any) {
-
+    this.spinnerSite=true
     this.selectedFile = event.target.files[0] ;
     if (event.target.files && event.target.files.length > 0) {
       this.onUploadFile(event.target.files[0]);
       this.siteServices.addSiteFromFile(this.selectedFile).subscribe((res: any) => {
+        this.spinnerSite=false
         this.uploaded=false
         this.message.success(res.message, {nzDuration: config.durationMessage})
         this.ngOnInit()
       }, e => {
+        this.spinnerSite=false
         this.uploaded=false
         this.message.error(e.error, {nzDuration: config.durationMessage})
       })

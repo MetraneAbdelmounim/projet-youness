@@ -1,11 +1,13 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 
 import {Chart, ChartConfiguration, ChartItem, registerables} from 'chart.js'
-import * as ChartAnnotation from 'chartjs-plugin-annotation';
+
 import {SiteService} from "../services/site.service";
+import{config} from "../../Config/config"
 
 
 import {Site} from "../models/site";
+import {NzMessageService} from "ng-zorro-antd/message";
 @Component({
   selector: 'app-dashbord',
   templateUrl: './dashbord.component.html',
@@ -22,7 +24,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   spinnerSite: boolean=false;
   // @ts-ignore
    chart: Chart<"bar" | "line" | "scatter" | "bubble" | "pie" | "doughnut" | "polarArea" | "radar", [ChartTypeRegistry[TType]["defaultDataPoint"]] extends [unknown] ? Array<ChartTypeRegistry[TType]["defaultDataPoint"]> : never, unknown>;
-  constructor(private siteServices:SiteService) { }
+  constructor(private siteServices:SiteService,private message:NzMessageService) { }
 
   ngOnInit(): void {
     this.destroy()
@@ -33,11 +35,14 @@ export class DashbordComponent implements OnInit,OnDestroy {
         this.labels.push(s.nom)
         this.battery.push(s.Battery_Voltage)
         this.labels_bar.push(s.ip)
-        this.colors.push(this.getRandomColor())
+        this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
       })
       this.createChart(this.labels,this.battery,this.colors,this.labels_bar)
       this.sites=sites
       this.spinnerSite=false
+    },err=>{
+      this.spinnerSite=false
+      this.message.success("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
     document.body.style.paddingLeft = "15rem"
   }
@@ -110,5 +115,10 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.colors=new Array<string>()
 
 
+  }
+
+  private getColor(isValid: boolean) {
+    if(isValid) return "#61e18a"
+    else return "#ff5454"
   }
 }
