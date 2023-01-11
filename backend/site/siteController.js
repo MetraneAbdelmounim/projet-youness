@@ -93,7 +93,7 @@ module.exports = {
             if(sites) {
                 for(let i =0;i<sites.length;i++){
                     const ping_site = await ping.promise.probe(sites[i].ip, {
-                        timeout: 2,
+                        timeout: 1,
                     });
                 sites[i].status=ping_site.alive
                 }
