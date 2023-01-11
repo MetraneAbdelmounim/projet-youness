@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, HostListener} from '@angular/core';
 import {NavigationEnd, Router} from "@angular/router";
 import {LoginService} from "./services/login.service";
 import {Subscription} from "rxjs";
@@ -9,6 +9,12 @@ import {Subscription} from "rxjs";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
+
+  @HostListener("window:onbeforeunload",["$event"])
+  clearLocalStorage(event:any){
+    this.loginService.logout()
+  }
+
   title = 'frontend';
   memberIsAuthenticated : boolean=false;
   // @ts-ignore

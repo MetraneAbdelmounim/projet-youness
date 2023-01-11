@@ -1,0 +1,14 @@
+@keyframes blinking {
+  0% {
+    background-color: rgb(255, 0, 0,0.25);
+
+  }
+  25% {
+    background-color: rgb(255, 0, 0,0.5);
+
+  }
+
+}
+.blink {
+  animation: blinking 1s infinite;
+}

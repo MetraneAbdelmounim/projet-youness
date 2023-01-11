@@ -1,6 +1,6 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 
-import {Chart, ChartConfiguration, ChartItem, registerables} from 'chart.js'
+import {Chart, ChartConfiguration, ChartItem,ChartType, registerables} from 'chart.js'
 
 import {SiteService} from "../services/site.service";
 import{config} from "../../Config/config"
@@ -21,6 +21,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   battery : Array<Number>=new Array<Number>()
   labels_bar: Array<string>=new Array<string>()
   colors : Array<string>=new Array<string>()
+  maxVolt : Array<Number>=new Array<Number>()
   spinnerSite: boolean=false;
   // @ts-ignore
    chart: Chart<"bar" | "line" | "scatter" | "bubble" | "pie" | "doughnut" | "polarArea" | "radar", [ChartTypeRegistry[TType]["defaultDataPoint"]] extends [unknown] ? Array<ChartTypeRegistry[TType]["defaultDataPoint"]> : never, unknown>;
@@ -35,14 +36,15 @@ export class DashbordComponent implements OnInit,OnDestroy {
         this.labels.push(s.nom)
         this.battery.push(s.Battery_Voltage)
         this.labels_bar.push(s.ip)
+        this.maxVolt.push(config.Battery_Max)
         this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
       })
-      this.createChart(this.labels,this.battery,this.colors,this.labels_bar)
+      this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
       this.sites=sites
       this.spinnerSite=false
     },err=>{
       this.spinnerSite=false
-      this.message.success("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
+      this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
     document.body.style.paddingLeft = "15rem"
   }
@@ -51,13 +53,24 @@ export class DashbordComponent implements OnInit,OnDestroy {
     document.body.style.paddingLeft = "0rem"
   }
 
-  createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>): void {
+  createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>,maxVolt:Array<any>): void {
     Chart.register(...registerables);
     const data = {
       labels: labels,
       datasets: [{
         backgroundColor: colors,
+        borderColor:"#005e03",
+        borderWidth:1,
         data: battery,
+        label:"Battery Voltage",
+        order:2
+      },{
+        label:"Voltage Lithium Battery",
+        type: 'line' as ChartType,
+        borderColor:"#011d3b",
+        borderWidth:2,
+        data: maxVolt,
+        order:1
       }]
     };
     const options = {
@@ -69,9 +82,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         },
         x:{
           stacked: true,
-
         }
-
       },
       plugins: {
         title: {
@@ -85,7 +96,9 @@ export class DashbordComponent implements OnInit,OnDestroy {
             lineHeight: 1.2,
           },
         },
-      }
+
+      },
+
     }
 
 

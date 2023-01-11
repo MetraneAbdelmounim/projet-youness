@@ -19,8 +19,10 @@ var upload = multer({
 
 router.post('/sites',auth,siteController.addSite)
 router.post('/sites/file',auth,upload.single('file'),siteController.addSiteFromFile)
-router.get('/sites',auth,siteController.getAllSites)
+router.get('/sites',auth,siteController.getAllSites2)
 router.get('/sites/ping',auth,siteController.getAllSitesWithoutData)
+router.get('/sites/status/:ip',auth,siteController.getStatusSite)
+router.get('/sites/data/:idSite',auth,siteController.getDataBySiteFromMPPT)
 router.delete('/sites/:idSite',auth,siteController.deleteSite)
 router.put('/sites/:idSite',auth,siteController.updateSite)
 module.exports=router

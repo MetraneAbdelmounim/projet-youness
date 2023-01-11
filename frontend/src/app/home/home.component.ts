@@ -22,7 +22,7 @@ export class HomeComponent implements OnInit,OnDestroy {
     this.spinnerSite=true
     document.body.className='body'
     // @ts-ignore
-    this.siteServices.getAllSites().subscribe((sites:Array<Site>)=>{
+    this.siteServices.getAllWithoutData().subscribe((sites:Array<Site>)=>{
       this.spinnerSite=false
       this.sites=sites
     },err=>{

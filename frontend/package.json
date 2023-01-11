@@ -20,6 +20,8 @@
     "@angular/platform-browser-dynamic": "^14.2.0",
     "@angular/router": "^14.2.0",
     "@ant-design/icons-angular": "^14.1.0",
+    "@types/chartjs-plugin-annotation": "^0.5.1",
+    "chart.js": "^4.1.2",
     "chartjs-plugin-annotation": "^2.1.1",
     "ng-zorro-antd": "^14.2.0",
     "ng2-charts": "^4.1.1",

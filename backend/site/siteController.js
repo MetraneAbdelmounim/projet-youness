@@ -1,4 +1,4 @@
-
+const config=require('../config/config')
 const Site = require('./site')
 let path =require('path')
 let fs = require('fs')
@@ -12,7 +12,6 @@ const {pin} = require("nodemon/lib/version");
 
 module.exports = {
     addSite : function (req,res) {
-        
         const id = new mongoose.Types.ObjectId()
         const site = new Site({
             _id: id,
@@ -88,14 +87,19 @@ module.exports = {
             if(err) res.status(500).send('error : '+err);
         })
     },
-    getAllSitesWithoutData : function (req,res){
+    getAllSites2 : function (req,res){
         Site.find().then( async  sites=>{
             if(sites) {
                 for(let i =0;i<sites.length;i++){
-                    const ping_site = await ping.promise.probe(sites[i].ip, {
-                        timeout: 1,
-                    });
-                sites[i].status=ping_site.alive
+                    const dataMppt = await axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+sites[i].ip);
+                    sites[i].Battery_Voltage=dataMppt.data.Battery_Voltage
+                    sites[i].Charge_Current=dataMppt.data.Charge_Current
+                    sites[i].Array_Voltage=dataMppt.data.Array_Voltage
+                    sites[i].Sweep_Pmax=dataMppt.data.Sweep_Pmax
+                    sites[i].Load_Voltage=dataMppt.data.Load_Voltage
+                    sites[i].Load_Current=dataMppt.data.Load_Current
+                    sites[i].Temperature_Ambient=dataMppt.data.Temperature_Ambient
+                    sites[i].Temperature_Battery=dataMppt.data.Temperature_Battery
                 }
 
                 res.status(200).json(sites);
@@ -105,8 +109,17 @@ module.exports = {
             if(err) res.status(500).send('error : '+err);
         })
     },
+    getAllSitesWithoutData : function (req,res){
+        Site.find().then( async  sites=>{
+            if(sites) {
+                res.status(200).json(sites);
+            }
+        }).catch(err=>{
+
+            if(err) res.status(500).send('error : '+err);
+        })
+    },
     updateSite: function (req,res){
-        c
         Site.findOne({_id: req.params.idSite})
             .then((site) => {
 
@@ -127,7 +140,6 @@ module.exports = {
     },
     addSiteFromFile : function (req,res) {
         const url = req.protocol + "://" + req.get("host");
-
         const excelData = excelToJson({
             sourceFile: path.join('uploads/' + req.file.filename),
             sheets: [{
@@ -153,6 +165,35 @@ module.exports = {
                 fs.unlinkSync(path.join('uploads/' + req.file.filename))
             })
 
+    },
+    getStatusSite:function (req,res){
+        const ping_site = ping.promise.probe(req.params.ip, {
+            timeout: 1,
+        }).then(ping=>{
+            res.status(200).json(ping)
+        });
+    },
+    getDataBySiteFromMPPT:function (req,res){
+
+        Site.findOne({_id:req.params.idSite}).then( async  site=>{
+            if(site) {
+
+                const dataMppt = await axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+site.ip);
+                site.Battery_Voltage=dataMppt.data.Battery_Voltage
+                site.Charge_Current=dataMppt.data.Charge_Current
+                site.Array_Voltage=dataMppt.data.Array_Voltage
+                site.Sweep_Pmax=dataMppt.data.Sweep_Pmax
+                site.Load_Voltage=dataMppt.data.Load_Voltage
+                site.Load_Current=dataMppt.data.Load_Current
+                site.Temperature_Ambient=dataMppt.data.Temperature_Ambient
+                site.Temperature_Battery=dataMppt.data.Temperature_Battery
+
+                res.status(200).json(site);
+            }
+        }).catch(err=>{
+
+            if(err) res.status(500).send('error : '+err);
+        })
     }
 
 }

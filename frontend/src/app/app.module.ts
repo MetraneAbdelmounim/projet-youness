@@ -26,6 +26,8 @@ import { HeaderComponent } from './header/header.component';
 import {NgChartsModule} from "ng2-charts";
 import Annotation from "chartjs-plugin-annotation";
 import { FooterComponent } from './footer/footer.component';
+import { SiteStatusComponent } from './site-status/site-status.component';
+import { SiteDataComponent } from './site-data/site-data.component';
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
@@ -47,6 +49,8 @@ const appRoutes: Routes = [
     AdminSiteComponent,
     HeaderComponent,
     FooterComponent,
+    SiteStatusComponent,
+    SiteDataComponent,
   ],
   imports: [
     BrowserModule,
@@ -59,7 +63,8 @@ const appRoutes: Routes = [
     NzSpinModule,
     Ng2SearchPipeModule,
     NgxPaginationModule,
-    NzModalModule
+    NzModalModule,
+    NgChartsModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true },

@@ -100,18 +100,7 @@
                       <p class="text-gray-900 whitespace-no-wrap">{{site.ip}}</p>
                     </td>
                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <span *ngIf="site.status"
-                        class="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
-                          <span aria-hidden
-                                class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
-                          <span class="relative">Actif</span>
-                      </span>
-                      <span *ngIf="!site.status"
-                            class="relative inline-block px-3 py-1 font-semibold text-red-900 leading-tight">
-                          <span aria-hidden
-                                class="absolute inset-0 blink rounded-full"></span>
-                          <span class="relative">Offline</span>
-                      </span>
+                      <app-site-status [ip]="site.ip"></app-site-status>
                     </td>
                     <td data-label="Modifer" class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                       <i  class="fa cursor-pointer fa-edit" (click)="onFitchSite(site)"></i>

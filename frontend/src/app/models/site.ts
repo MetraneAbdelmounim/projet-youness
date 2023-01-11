@@ -27,4 +27,5 @@ export class Site {
     this.Sweep_Pmax = Sweep_Pmax;
     this.Load_Voltage = Load_Voltage;
   }
+
 }

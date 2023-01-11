@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {NgForm} from "@angular/forms";
 import {LoginService} from "../services/login.service";
 
@@ -8,6 +8,7 @@ import {LoginService} from "../services/login.service";
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit,OnDestroy {
+  name = 'Angular';
 
   constructor(private loginService:LoginService) { }
 
@@ -24,4 +25,5 @@ export class LoginComponent implements OnInit,OnDestroy {
   ngOnDestroy(): void {
     document.body.className=""
   }
+
 }

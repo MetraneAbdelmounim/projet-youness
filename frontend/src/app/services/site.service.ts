@@ -35,4 +35,11 @@ export class SiteService {
 
     return this.http.post(BACKEND_URL + 'sites/file', dataUpload)
   }
+
+  getSiteStatus(ip: string) {
+    return this.http.get(BACKEND_URL + 'sites/status/'+ip)
+  }
+  getDataBySiteFromMppt(id: string) {
+    return this.http.get(BACKEND_URL + 'sites/data/'+id)
+  }
 }
