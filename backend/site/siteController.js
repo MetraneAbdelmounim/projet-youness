@@ -63,8 +63,9 @@ module.exports = {
                         sites[i].Array_Voltage=dataMppt.data.Array_Voltage
                         sites[i].Sweep_Pmax=dataMppt.data.Sweep_Pmax
                         sites[i].Load_Voltage=dataMppt.data.Load_Voltage
-                        sites[i].Load_Voltage=dataMppt.data.Load_Current
+                        sites[i].Load_Current=dataMppt.data.Load_Current
                         sites[i].Temperature_Ambient=dataMppt.data.Temperature_Ambient
+                        sites[i].Temperature_Battery=dataMppt.data.Temperature_Battery
                         sites[i].status=ping_site.alive
                     }
                     else{
@@ -75,6 +76,7 @@ module.exports = {
                         sites[i].Load_Voltage=0
                         sites[i].Load_Voltage=0
                         sites[i].Temperature_Ambient=0
+                        sites[i].Temperature_Battery=0
                         sites[i].status=ping_site.alive
                     }
                 }

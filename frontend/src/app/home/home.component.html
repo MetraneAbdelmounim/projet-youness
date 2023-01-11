@@ -62,11 +62,14 @@
             </div>
           </div>
           <div class="flex flex-wrap mt-1">
-            <div class="relative flex-grow max-w-full flex-1 px-4 text-center" style="margin-left: 4%">
-              <h4 class="uppercase"><i class="fa-solid fa-temperature-high"></i></h4>
+            <div class="relative flex-grow max-w-full flex-1 px-4 border-r text-center" title="Battery Temperature">
+              <h4 class="uppercase"><i class="fa-solid fa-temperature-three-quarters"></i></h4>
+              <h2 class="font-light">{{site.Temperature_Battery}} °C</h2>
+            </div>
+            <div class="relative flex-grow max-w-full flex-1 px-4 text-center" title="Temperature Ambient">
+              <h4 class="uppercase"><i class="fa-solid fa-temperature-low"></i></h4>
               <h2 class="font-light">{{site.Temperature_Ambient}} °C</h2>
             </div>
-
           </div>
         </div>
       </div>

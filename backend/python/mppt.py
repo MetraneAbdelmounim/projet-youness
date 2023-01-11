@@ -1,10 +1,11 @@
 class mppt:
 
 
-    def __init__(self: object, Battery_Voltage: int, Temperature_Ambient:int, Charge_Current:int,Array_Voltage:int,Sweep_Pmax:int,Load_Voltage:int,Load_Current:int):
+    def __init__(self: object, Battery_Voltage: int, Temperature_Ambient:int,Temperature_Battery:int, Charge_Current:int,Array_Voltage:int,Sweep_Pmax:int,Load_Voltage:int,Load_Current:int):
 
         self.Battery_Voltage=self._float_from_unsigned16(Battery_Voltage)
         self.Temperature_Ambient = self._float_from_unsigned16(Temperature_Ambient)
+        self.Temperature_Battery = self._float_from_unsigned16(Temperature_Battery)
         self.Charge_Current=self._float_from_unsigned16(Charge_Current)
         self.Array_Voltage=self._float_from_unsigned16(Array_Voltage)
         self.Sweep_Pmax=self._float_from_unsigned16(Sweep_Pmax)

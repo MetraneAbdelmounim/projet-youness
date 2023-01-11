@@ -10,6 +10,7 @@ const siteSchema = mongoose.Schema({
     Battery_Voltage:{type:Float,required:false},
     Charge_Current:{type:Float,required:false},
     Temperature_Ambient:{type:Float,required:false},
+    Temperature_Battery:{type:Float,required:false},
     Array_Voltage:{type:Float,required:false},
     Sweep_Pmax:{type:Float,required:false},
     Load_Voltage:{type:Float,required:false},
