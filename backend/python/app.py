@@ -13,7 +13,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 
 @app.route('/mppt/<ip>',methods=['GET'])
 def getDataMppt(ip):
-
+    Mppt = mppt(0,0,0,0,0,0,0,0)
     try:
         c = ModbusClient(host=ip, port=502,strict=False)
         c.connect()
