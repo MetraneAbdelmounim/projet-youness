@@ -23,6 +23,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   colors : Array<string>=new Array<string>()
   maxVolt : Array<Number>=new Array<Number>()
   spinnerSite: boolean=false;
+  upVoltage:Number=0
   // @ts-ignore
    chart: Chart<"bar" | "line" | "scatter" | "bubble" | "pie" | "doughnut" | "polarArea" | "radar", [ChartTypeRegistry[TType]["defaultDataPoint"]] extends [unknown] ? Array<ChartTypeRegistry[TType]["defaultDataPoint"]> : never, unknown>;
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
@@ -30,16 +31,24 @@ export class DashbordComponent implements OnInit,OnDestroy {
   ngOnInit(): void {
     this.destroy()
     this.spinnerSite=true
+    let upSite = 0
     // @ts-ignore
     this.siteServices.getAllSites().subscribe((sites:Site[])=>{
       sites.forEach(s=>{
+        if(s.Battery_Voltage!=0){
+          upSite=upSite+1
+        }
+
         this.labels.push(s.nom)
         this.battery.push(s.Battery_Voltage)
         this.labels_bar.push(s.ip)
         this.maxVolt.push(config.Battery_Max)
         this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
       })
+
       this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
+      console.log(upSite)
+      this.upVoltage=(upSite/sites.length)*100
       this.sites=sites
       this.spinnerSite=false
     },err=>{
@@ -126,6 +135,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.labels=new Array<string>()
     this.labels_bar=new Array<string>()
     this.colors=new Array<string>()
+    this.maxVolt=new Array<Number>()
+    this.upVoltage=0
 
 
   }
