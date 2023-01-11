@@ -15,7 +15,7 @@ from pymodbus.payload import BinaryPayloadBuilder
 def getDataMppt(ip):
     Mppt = mppt(0,0,0,0,0,0,0,0)
     try:
-        c = ModbusClient(host=ip, port=502,strict=False,timeout=1)
+        c = ModbusClient(host=ip, port=502,strict=False,timeout=2)
         c.connect()
         rr = c.read_holding_registers(0,82,2)
         Mppt = mppt(rr.registers[24],rr.registers[28],rr.registers[27],rr.registers[16],rr.registers[19],rr.registers[62],rr.registers[20],rr.registers[22])
