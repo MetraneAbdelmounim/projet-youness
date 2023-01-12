@@ -1,34 +1,35 @@
 from mppt import mppt
+import numpy as np
 import json
 import time
 from flask import Flask,jsonify
+from asgiref.sync import sync_to_async
 from flask_cors import CORS
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-#from pymodbus.client import ModbusTcpClient as ModbusClient
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.payload import BinaryPayloadBuilder
 
+import asyncio
+from async_modbus import AsyncTCPClient
 
 @app.route('/mppt/<ip>',methods=['GET'])
-def getDataMppt(ip):
+async def getDataMppt(ip):
     Mppt = mppt(0,0,0,0,0,0,0,0)
     try :
-
-        #c =ModbusClient(host=ip, port=502,unit_id=1, auto_open=True,timeout=10)
-        #c.connect()
-        #time.sleep(2)
-        #rr = await c.read_holding_registers(0,82,2)
-        #print(rr)
-        #Mppt = mppt(rr.registers[24],rr.registers[28],rr.registers[27],rr.registers[16],rr.registers[19],rr.registers[62],rr.registers[20],rr.registers[22])
-        Mppt=mppt(20065,20065,20065,20065,20065,20065,20065,20065)
-        Mppt=mppt(20000,20065,20065,20065,20065,20065,20065,20065)
+        reader, writer = await asyncio.open_connection(ip, 502)
+        client = AsyncTCPClient((reader, writer))
+        read = await client.read_holding_registers(slave_id=1, starting_address=0, quantity=82)
+        rr = np.array(read).tolist()
+        Mppt = mppt(rr[24],rr[28],rr[27],rr[16],rr[19],rr[62],rr[20],rr[22])
+        writer.close()
+        await writer.wait_closed()
+      
+        #Mppt=mppt(20000,20065,20065,20065,20065,20065,20065,20065)
     except Exception as e:
         print(e)
         Mppt = mppt(0,0,0,0,0,0,0,0)
 
     return json.dumps(Mppt.__dict__)
+
+    
