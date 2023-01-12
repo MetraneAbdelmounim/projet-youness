@@ -1,0 +1,17 @@
+<span class="icon" *ngIf="spinnerPing">
+              <i><nz-spin nzSimple [nzSize]="'small'"  style="margin-right: 50%"></nz-spin></i>
+            </span>
+<div *ngIf="!spinnerPing">
+  <span *ngIf="isAlive"
+        class="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
+                        <span aria-hidden
+                              class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
+                        <span class="relative">Actif</span>
+                    </span>
+  <span *ngIf="!isAlive" class="relative inline-block px-3 py-1 font-semibold text-red-900 leading-tight">
+              <span aria-hidden
+                    class="absolute inset-0 blink rounded-full"></span>
+              <span class="relative">Offline</span>
+</span>
+</div>
+
