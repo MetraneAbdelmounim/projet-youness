@@ -26,7 +26,9 @@ export class SiteStatusComponent implements OnInit,OnDestroy {
     },config.refreshDataTime)
   }
   ngOnDestroy() {
-    clearInterval(this.dataRefresher)
+    if(this.dataRefresher){
+      clearInterval(this.dataRefresher);
+    }
   }
 
 }

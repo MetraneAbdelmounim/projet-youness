@@ -32,7 +32,9 @@ export class SiteDataComponent implements OnInit , OnDestroy{
 
   }
   ngOnDestroy() {
-    clearInterval(this.dataRefresher);
+    if(this.dataRefresher){
+      clearInterval(this.dataRefresher);
+    }
   }
 
 }
