@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {SiteService} from "../services/site.service";
 import {Site} from "../models/site";
 import {config} from "../../Config/config";
@@ -8,7 +8,8 @@ import {config} from "../../Config/config";
   templateUrl: './site-data.component.html',
   styleUrls: ['./site-data.component.scss']
 })
-export class SiteDataComponent implements OnInit {
+export class SiteDataComponent implements OnInit , OnDestroy{
+  dataRefresher: any;
   spinnerData:boolean=false
   // @ts-ignore
   site:Site
@@ -23,12 +24,15 @@ export class SiteDataComponent implements OnInit {
 
     setInterval(() => {
       // @ts-ignore
-      this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
+      this.dataRefresher=this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
         this.spinnerData=false
         this.site=site
       })
     },config.refreshDataTime)
 
+  }
+  ngOnDestroy() {
+    clearInterval(this.dataRefresher);
   }
 
 }
