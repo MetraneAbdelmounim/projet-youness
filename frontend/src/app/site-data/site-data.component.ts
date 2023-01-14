@@ -1,6 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {SiteService} from "../services/site.service";
 import {Site} from "../models/site";
+import {config} from "../../Config/config";
 
 @Component({
   selector: 'app-site-data',
@@ -19,12 +20,15 @@ export class SiteDataComponent implements OnInit {
   ngOnInit(): void {
 
     this.spinnerData=true
-    // @ts-ignore
 
-    this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
-      this.spinnerData=false
-          this.site=site
-    })
+    setInterval(() => {
+      // @ts-ignore
+      this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
+        this.spinnerData=false
+        this.site=site
+      })
+    },config.refreshDataTime)
+
   }
 
 }

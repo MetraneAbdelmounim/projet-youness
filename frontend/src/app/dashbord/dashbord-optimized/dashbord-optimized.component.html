@@ -18,7 +18,7 @@
         <h1 class="title">
           Dashboard
         </h1>
-        <span class="icon" *ngIf="spinnerSite">
+        <span class="icon" >
               <i><nz-spin nzSimple [nzSize]="'large'"  style="margin-right: 50%"></nz-spin></i>
             </span>
 
@@ -68,7 +68,7 @@
                   Batteries
                 </h3>
                 <h1>
-                  {{upVoltage}} %
+                  50 %
                 </h1>
               </div>
               <span class="icon widget-icon text-red-500"><i class="mdi mdi-finance mdi-48px"></i></span>
@@ -86,8 +86,8 @@
           </p>
           <div class="flex items-center justify-center">
             <div class="flex ">
-              <span *ngIf="!spinnerSite">
-              <i class="mdi mdi-refresh mdi-48px" title="refresh" (click)="onRefresh(chart)"></i>
+              <span >
+              <i class="mdi mdi-refresh mdi-48px" title="refresh" ></i>
             </span>
 
             </div>
@@ -99,11 +99,13 @@
             <div class="h-full">
               <div class="chartjs-size-monitor">
                 <div class="chartjs-size-monitor-expand">
-                  <div class="flex items-center justify-center h-screen" *ngIf="spinnerSite">
+<!--                  <div class="flex items-center justify-center h-screen">
                     <div class="spin" ></div>
+                  </div>-->
+                  <div >
+                    <app-chart-battery [idSite]="idSite"></app-chart-battery>
+                    <!--<canvas id="my-chart"  ></canvas>-->
                   </div>
-
-                  <div ><canvas id="my-chart" ></canvas></div>
                 </div>
                 <div class="chartjs-size-monitor-shrink">
                   <div></div>

@@ -3,12 +3,10 @@ import numpy as np
 import json
 import time
 from flask import Flask,jsonify
-from asgiref.sync import sync_to_async
 from flask_cors import CORS
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
-
 
 import asyncio
 from async_modbus import AsyncTCPClient
@@ -24,10 +22,9 @@ async def getDataMppt(ip):
         Mppt = mppt(rr[24],rr[28],rr[27],rr[16],rr[19],rr[62],rr[20],rr[22])
         writer.close()
         await writer.wait_closed()
-      
+
         #Mppt=mppt(20000,20065,20065,20065,20065,20065,20065,20065)
     except Exception as e:
-        print(e)
         Mppt = mppt(0,0,0,0,0,0,0,0)
 
     return json.dumps(Mppt.__dict__)

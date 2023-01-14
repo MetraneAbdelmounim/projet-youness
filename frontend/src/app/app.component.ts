@@ -10,10 +10,7 @@ import {Subscription} from "rxjs";
 })
 export class AppComponent {
 
-  @HostListener("window:onbeforeunload",["$event"])
-  clearLocalStorage(event:any){
-    this.loginService.logout()
-  }
+
 
   title = 'frontend';
   memberIsAuthenticated : boolean=false;

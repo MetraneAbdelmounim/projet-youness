@@ -44,6 +44,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         this.labels_bar.push(s.ip)
         this.maxVolt.push(config.Battery_Max)
         this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
+
       })
 
       this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
@@ -129,9 +130,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.chart = new Chart(chartItem, config)
   }
 
-  getRandomColor():string {
-    return '#' + (Math.random().toString(16) + '0000000').slice(2, 8);
-  }
+
 
   onRefresh(chart:any) {
     this.chart.destroy()

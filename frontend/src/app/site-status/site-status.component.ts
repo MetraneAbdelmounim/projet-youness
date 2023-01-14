@@ -1,5 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {SiteService} from "../services/site.service";
+import {config} from "../../Config/config";
 
 @Component({
   selector: 'app-site-status',
@@ -15,11 +16,13 @@ export class SiteStatusComponent implements OnInit {
 
   ngOnInit(): void {
     this.spinnerPing=true
-    this.siteService.getSiteStatus(this.ip).subscribe((ping:any)=>{
-      this.spinnerPing=false
-      this.isAlive=ping.alive
+    setInterval(() => {
+      this.siteService.getSiteStatus(this.ip).subscribe((ping:any)=>{
+        this.spinnerPing=false
+        this.isAlive=ping.alive
 
-    })
+      })
+    },config.refreshDataTime)
   }
 
 }

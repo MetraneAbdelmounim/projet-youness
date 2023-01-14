@@ -28,6 +28,10 @@ import Annotation from "chartjs-plugin-annotation";
 import { FooterComponent } from './footer/footer.component';
 import { SiteStatusComponent } from './site-status/site-status.component';
 import { SiteDataComponent } from './site-data/site-data.component';
+import { DashbordOptimizedComponent } from './dashbord/dashbord-optimized/dashbord-optimized.component';
+import { ChartBatteryComponent } from './dashbord/dashbord-optimized/chart-battery/chart-battery.component';
+import {NgxChartsModule} from "@swimlane/ngx-charts";
+
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
@@ -51,6 +55,8 @@ const appRoutes: Routes = [
     FooterComponent,
     SiteStatusComponent,
     SiteDataComponent,
+    DashbordOptimizedComponent,
+    ChartBatteryComponent,
   ],
   imports: [
     BrowserModule,
@@ -65,6 +71,7 @@ const appRoutes: Routes = [
     NgxPaginationModule,
     NzModalModule,
     NgChartsModule,
+    NgxChartsModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptorService, multi: true },
