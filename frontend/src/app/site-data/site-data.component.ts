@@ -8,7 +8,7 @@ import {config} from "../../Config/config";
   templateUrl: './site-data.component.html',
   styleUrls: ['./site-data.component.scss']
 })
-export class SiteDataComponent implements OnInit , OnDestroy{
+export class SiteDataComponent implements OnInit {
   dataRefresher: any;
   spinnerData:boolean=false
   // @ts-ignore
@@ -22,19 +22,15 @@ export class SiteDataComponent implements OnInit , OnDestroy{
 
     this.spinnerData=true
 
-    setInterval(() => {
+
       // @ts-ignore
       this.dataRefresher=this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
         this.spinnerData=false
         this.site=site
       })
-    },config.refreshDataTime)
+
 
   }
-  ngOnDestroy() {
-    if(this.dataRefresher){
-      clearInterval(this.dataRefresher);
-    }
-  }
+
 
 }

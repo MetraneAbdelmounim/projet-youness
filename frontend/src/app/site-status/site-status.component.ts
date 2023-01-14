@@ -7,7 +7,7 @@ import {config} from "../../Config/config";
   templateUrl: './site-status.component.html',
   styleUrls: ['./site-status.component.scss']
 })
-export class SiteStatusComponent implements OnInit,OnDestroy {
+export class SiteStatusComponent implements OnInit {
   dataRefresher: any;
   spinnerPing:boolean=false
   isAlive:Boolean=false
@@ -17,18 +17,17 @@ export class SiteStatusComponent implements OnInit,OnDestroy {
 
   ngOnInit(): void {
     this.spinnerPing=true
-    setInterval(() => {
+
       this.dataRefresher=this.siteService.getSiteStatus(this.ip).subscribe((ping:any)=>{
         this.spinnerPing=false
         this.isAlive=ping.alive
 
       })
-    },config.refreshDataTime)
+
   }
   ngOnDestroy() {
-    if(this.dataRefresher){
+
       clearInterval(this.dataRefresher);
-    }
   }
 
 }
