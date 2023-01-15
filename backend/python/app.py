@@ -15,15 +15,15 @@ from async_modbus import AsyncTCPClient
 async def getDataMppt(ip):
     Mppt = mppt(0,0,0,0,0,0,0,0)
     try :
-        #reader, writer = await asyncio.open_connection(ip, 502)
-        #client = AsyncTCPClient((reader, writer))
-        #read = await client.read_holding_registers(slave_id=1, starting_address=0, quantity=82)
-        #rr = np.array(read).tolist()
-        #Mppt = mppt(rr[24],rr[28],rr[27],rr[16],rr[19],rr[62],rr[20],rr[22])
-        #writer.close()
-        #await writer.wait_closed()
+        reader, writer = await asyncio.open_connection(ip, 502)
+        client = AsyncTCPClient((reader, writer))
+        read = await client.read_holding_registers(slave_id=1, starting_address=0, quantity=82)
+        rr = np.array(read).tolist()
+        Mppt = mppt(rr[24],rr[28],rr[27],rr[16],rr[19],rr[62],rr[20],rr[22])
+        writer.close()
+        await writer.wait_closed()
 
-        Mppt=mppt(20000,20065,20065,20065,20065,20065,20065,20065)
+        #Mppt=mppt(20000,20065,20065,20065,20065,20065,20065,20065)
     except Exception as e:
         Mppt = mppt(0,0,0,0,0,0,0,0)
 
