@@ -1,5 +1,6 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Observable, Subject} from "rxjs";
+import {ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {Observable, Subject, timer} from "rxjs";
+import {map, startWith} from 'rxjs/operators';
 import {SiteService} from "../../../services/site.service";
 import {Site} from "../../../models/site";
 
@@ -9,28 +10,20 @@ import {Site} from "../../../models/site";
   styleUrls: ['./chart-battery.component.scss']
 })
 export class ChartBatteryComponent implements OnInit {
-   data = {name:"hello",value:15}
-  saleData : any[] = [];
+
+
   @Input()
-  idSite : Subject<string>= new Subject<string>()
-  dataSite : Subject<any> = new Subject<Site>()
+  idSite: Subject<string> = new Subject<string>()
 
 
-  constructor(private siteService:SiteService) { }
+  constructor(private siteService: SiteService) {
+  }
+
 
   ngOnInit(): void {
     this.idSite.subscribe(id=>{
-      // @ts-ignore
-      this.siteService.getDataBySiteFromMppt(id).subscribe((site:Site)=>{
-        this.saleData.push(this.data)
-      })
+      this.siteService.getDataBySiteFromMppt(id).subscribe()
     })
 
-  }
-
-  getData(dataSite: Subject<any>) {
-    this.dataSite.subscribe(s=>{
-      console.log(s)
-    })
   }
 }

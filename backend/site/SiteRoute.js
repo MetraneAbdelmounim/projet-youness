@@ -1,8 +1,10 @@
-const auth = require('../middlewares/auth')
+const auth = require('../middlewares/authAdmin')
 const siteController = require('./siteController')
 let path =require('path')
 let express = require('express');
 let router = express.Router();
+let authAdmin = require('../middlewares/authAdmin')
+let authUser = require('../middlewares/authUser')
 const multer = require('multer')
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -17,12 +19,12 @@ var upload = multer({
 });
 
 
-router.post('/sites',siteController.addSite)
-router.post('/sites/file',upload.single('file'),siteController.addSiteFromFile)
+router.post('/sites',authAdmin,siteController.addSite)
+router.post('/sites/file',authAdmin,upload.single('file'),siteController.addSiteFromFile)
 router.get('/sites',siteController.getAllSites2)
-router.get('/sites/ping',siteController.getAllSitesWithoutData)
-router.get('/sites/status/:ip',siteController.getStatusSite)
-router.get('/sites/data/:idSite',siteController.getDataBySiteFromMPPT)
-router.delete('/sites/:idSite',siteController.deleteSite)
-router.put('/sites/:idSite',siteController.updateSite)
+router.get('/sites/ping',authUser,siteController.getAllSitesWithoutData)
+router.get('/sites/status/:ip',authUser,siteController.getStatusSite)
+router.get('/sites/data/:idSite',authUser,siteController.getDataBySiteFromMPPT)
+router.delete('/sites/:idSite',authAdmin,siteController.deleteSite)
+router.put('/sites/:idSite',authAdmin,siteController.updateSite)
 module.exports=router

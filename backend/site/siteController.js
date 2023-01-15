@@ -91,7 +91,7 @@ module.exports = {
         })
     },
     getAllSites2 : function (req,res){
-        Site.find().then( async  sites=>{
+       /* Site.find().then( async  sites=>{
             if(sites) {
                 for(let i =0;i<sites.length;i++){
                     const dataMppt = await axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+sites[i].ip);
@@ -110,6 +110,26 @@ module.exports = {
         }).catch(err=>{
 
             if(err) res.status(500).send('error : '+err);
+        })*/
+        Site.find().then(   sites=>{;
+            sites.forEach(s=>{
+                axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+s.ip).then(dataMppt=>{
+                    Site.updateOne({_id:s._id},{...dataMppt.data}).then(()=>{
+
+                    })
+                });
+            })
+        }).finally(()=>{
+            Site.find().then(  sites=>{
+                if(sites) {
+                    return res.status(200).json(sites);
+                }
+            }).catch(err=>{
+
+                if(err) return res.status(500).send('error : '+err);
+            })
+        }).catch(err=>{
+            if(err) return res.status(500).send('error : '+err);
         })
     },
     getAllSitesWithoutData : function (req,res){

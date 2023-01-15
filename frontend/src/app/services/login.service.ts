@@ -76,6 +76,7 @@ export class LoginService {
 
   }
   logout(){
+
     let userId= this.getAuthorizedFromLocal()
     this.memberService.logout(userId).subscribe((res)=>{
 
@@ -100,13 +101,14 @@ export class LoginService {
 
     localStorage.removeItem("token");
     localStorage.removeItem("expiration");
-    localStorage.removeItem("authorized");
+    //localStorage.removeItem("authorized");
   }
   private getAuthData() {
     const token = localStorage.getItem("token");
     const expirationDate = localStorage.getItem("expiration");
     const user = localStorage.getItem("authorized");
     if (!token || !expirationDate || !user) {
+      this.logout()
       return;
     }
 

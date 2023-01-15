@@ -160,7 +160,7 @@
             <p class="mt-1 text-sm text-red-400" *ngIf="f.submitted && !username.valid">Le champ Nom ne correspond pas!</p>
           </div>
           <div class="mb-5" *ngIf="type==='Edit'">
-            <label for="username" class="block font-bold text-gray-600">Nom du Site <span>*</span></label>
+            <label for="username" class="block font-bold text-gray-600">Username <span>*</span></label>
             <input type="text" name="username" [ngModel]="memberEdited.username" required #username="ngModel"
                    class="w-full p-2 border border-gray-300 rounded-l shadow focus:outline-none focus:ring-2 focus:a20067-600"
                    placeholder="username">

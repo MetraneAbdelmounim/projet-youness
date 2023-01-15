@@ -16,7 +16,8 @@ import {NzMessageService} from "ng-zorro-antd/message";
 export class DashbordComponent implements OnInit,OnDestroy {
   // @ts-ignore
   sites: Array<Site>=new Array<Site>()
-
+  itemsPerPage: number = 20;
+  page:number=1;
   labels : Array<string>=new Array<string>()
   battery : Array<Number>=new Array<Number>()
   labels_bar: Array<string>=new Array<string>()
@@ -34,6 +35,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
     let upSite = 0
     // @ts-ignore
     this.siteServices.getAllSites().subscribe((sites:Site[])=>{
+      this.spinnerSite=false
+      console.log(sites)
       sites.forEach(s=>{
         if(s.Battery_Voltage!=0){
           upSite=upSite+1
@@ -97,10 +100,14 @@ export class DashbordComponent implements OnInit,OnDestroy {
         y: {
           beginAtZero: true,
           display: true,
-          stacked:true
+          stacked:true,
+          ticks: {
+            stepSize: 2
+          }
         },
         x:{
           stacked: true,
+
         }
       },
       plugins: {
