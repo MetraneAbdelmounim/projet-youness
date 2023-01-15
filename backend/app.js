@@ -6,6 +6,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoute =require('./auth/authRoute')
+const memberRoute=require('./member/memberRoute')
 const siteRoute =require('./site/SiteRoute')
 const path = require('path');
 const PORT = config.PORT;
@@ -54,8 +55,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(authRoute)
+//app.use(authRoute)
+app.use(memberRoute)
 app.use(siteRoute)
+
 app.listen(PORT,()=>{
   console.log(`server running at http://${HOST}:${PORT}`);
 });

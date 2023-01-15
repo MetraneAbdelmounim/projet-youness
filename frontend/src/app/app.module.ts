@@ -31,14 +31,17 @@ import { SiteDataComponent } from './site-data/site-data.component';
 import { DashbordOptimizedComponent } from './dashbord/dashbord-optimized/dashbord-optimized.component';
 import { ChartBatteryComponent } from './dashbord/dashbord-optimized/chart-battery/chart-battery.component';
 import {NgxChartsModule} from "@swimlane/ngx-charts";
+import { AdminUserComponent } from './dashbord/admin-user/admin-user.component';
+import {AuthGuardService} from "./services/auth-guard.service";
 
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
   {path:'' ,component: LoginComponent},
-  {path:'home' ,component: HomeComponent,canActivate:[AdminGuardService]},
-  {path:'dashbord' ,component: DashbordComponent,canActivate:[AdminGuardService]},
-  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[AdminGuardService]},
+  {path:'home' ,component: HomeComponent,canActivate:[AuthGuardService]},
+  {path:'dashbord' ,component: DashbordComponent,canActivate:[AuthGuardService]},
+  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[AuthGuardService,AdminGuardService]},
+  {path:'dashbord/users' ,component: AdminUserComponent,canActivate:[AuthGuardService,AdminGuardService]},
 ]
 
 
@@ -57,6 +60,7 @@ const appRoutes: Routes = [
     SiteDataComponent,
     DashbordOptimizedComponent,
     ChartBatteryComponent,
+    AdminUserComponent,
   ],
   imports: [
     BrowserModule,

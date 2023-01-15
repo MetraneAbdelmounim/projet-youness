@@ -6,7 +6,6 @@
   <div class="items-center hidden space-x-8 lg:flex text-black " style="color: black ">
     <a routerLink="home">Home</a>
     <a routerLink="dashbord">Dashbord</a>
-
   </div>
   <!-- right header section -->
   <div class="flex items-center space-x-2" *ngIf="memberIsAuthenticated">
@@ -26,7 +25,7 @@
         />
       </svg>
     </a>
-    <a routerLink="dashbord" *ngIf="role==='Admin'">
+    <a routerLink="dashbord" >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-6 h-6 text-gray-400"
@@ -64,7 +63,7 @@
         />
       </svg>
     </a>
-    <span class="font-bold">Bienvenue <span style="color:rgba(0,94,184,0.58);">Admin</span></span>
+    <span class="font-bold">Bienvenue <span style="color:rgba(0,94,184,0.58);">{{nom}}</span></span>
     <span  alt="se deconnecter" title="se deconnecter"><i class="fa fa-sign-out cursor-pointer"  style="font-size: 16px ;color: #a20067" (click)="onLogout()"> </i></span>
   </div>
 </nav>

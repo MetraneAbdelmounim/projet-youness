@@ -175,7 +175,7 @@
             <label for="nom" class="block font-bold text-gray-600">Nom du Site <span>*</span></label>
             <input type="text" name="nom" [ngModel]="siteEdited.nom" required #nom="ngModel"
                    class="w-full p-2 border border-gray-300 rounded-l shadow focus:outline-none focus:ring-2 focus:a20067-600"
-                   placeholder="Variant">
+                   placeholder="Nom du site">
             <p class="mt-1 text-sm text-red-400" *ngIf="f.submitted && !nom.valid">Le champ Nom ne correspond pas!</p>
           </div>
           <div class="mb-5" *ngIf="type!=='Edit'">

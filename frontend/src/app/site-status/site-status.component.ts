@@ -16,18 +16,12 @@ export class SiteStatusComponent implements OnInit {
   constructor(private siteService:SiteService) { }
 
   ngOnInit(): void {
-    this.spinnerPing=true
+    this.spinnerPing = true
+    this.dataRefresher = this.siteService.getSiteStatus(this.ip).subscribe((ping: any) => {
+      this.spinnerPing = false
+      this.isAlive = ping.alive
 
-      this.dataRefresher=this.siteService.getSiteStatus(this.ip).subscribe((ping:any)=>{
-        this.spinnerPing=false
-        this.isAlive=ping.alive
-
-      })
+    })
 
   }
-  ngOnDestroy() {
-
-      clearInterval(this.dataRefresher);
-  }
-
 }

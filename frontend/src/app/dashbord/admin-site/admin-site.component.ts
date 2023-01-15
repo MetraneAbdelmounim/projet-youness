@@ -100,7 +100,7 @@ export class AdminSiteComponent implements OnInit,OnDestroy {
   openAddModal() {
     this.ngOnInit()
     // @ts-ignore
-    this.editStock = null
+    this.editSite = null
     this.type = 'Create'
     this.hiddenModal = false
   }
