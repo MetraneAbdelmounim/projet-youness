@@ -1,3 +1,4 @@
-<app-header></app-header>
+<app-header  (window:beforeunload)="doBeforeUnload()" (window:unload)="doUnload()"></app-header>
 <router-outlet  style="margin-top: 50px" ></router-outlet>
+
 <app-footer class="mt-auto"></app-footer>

@@ -50,7 +50,9 @@ module.exports = {
                         if (!valid) {
                             return res.status(401).json({ error: 'Mot de passe incorrect !' });
                         }
-                        if (user.actif) return res.status(401).json({ error: 'Une autre authentification détectée , Merci de se deconnecter !' });
+/*
+                        if (user.actif) return res.status(401).json({error: 'Une autre authentification détectée , Merci de se deconnecter !'});
+*/
                         User.updateOne({ _id: user._id }, {  actif: true })
                             .then(async () =>{
                                 res.status(200).json({

@@ -43,9 +43,17 @@ export class AppComponent {
 
     } )
   }
+
   public doUnload(): void {
-    this.loginService.logout()
+    console.log("hello")
+    this.doBeforeUnload();
   }
 
+  // Keep me Signed in
+  public doBeforeUnload(): void {
+    // Clear localStorage
+    alert("asdasdasd");
+
+  }
 
 }

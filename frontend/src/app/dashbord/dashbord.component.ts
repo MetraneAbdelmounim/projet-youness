@@ -70,7 +70,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   }
 
   createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>,maxVolt:Array<any>,minVolt:Array<any>): void {
-    console.log(minVolt)
+
     Chart.register(...registerables);
     const data = {
       labels: labels,
