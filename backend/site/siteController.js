@@ -9,6 +9,7 @@ var intToFloat16 = require("ieee754-binary16-modbus").intToFloat16;
 
 const ping = require('ping')
 const {pin} = require("nodemon/lib/version");
+const {errors} = require("jsmodbus");
 
 module.exports = {
     addSite : function (req,res) {
@@ -59,7 +60,7 @@ module.exports = {
                     if(ping_site.alive){
 
                         const dataMppt = await axios.get(`http://127.0.0.1:8000/mppt/`+sites[i].ip);
-                        console.log(dataMppt)
+
                         sites[i].Battery_Voltage=dataMppt.data.Battery_Voltage
                         sites[i].Charge_Current=dataMppt.data.Charge_Current
                         sites[i].Array_Voltage=dataMppt.data.Array_Voltage
@@ -90,7 +91,7 @@ module.exports = {
             if(err) res.status(500).send('error : '+err);
         })
     },
-    getAllSites2 : function (req,res){
+    getAllSites2 : async function (req,res){
        /* Site.find().then( async  sites=>{
             if(sites) {
                 for(let i =0;i<sites.length;i++){
@@ -111,25 +112,15 @@ module.exports = {
 
             if(err) res.status(500).send('error : '+err);
         })*/
-        Site.find().then(   sites=>{;
-            sites.forEach(s=>{
-                axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+s.ip).then(dataMppt=>{
-                    Site.updateOne({_id:s._id},{...dataMppt.data}).then(()=>{
+        Site.find({},{ },{ returnDocument: 'after' }).then(  sites=>{
+            if(sites) {
 
-                    })
-                });
-            })
-        }).finally(()=>{
-            Site.find().then(  sites=>{
-                if(sites) {
-                    return res.status(200).json(sites);
-                }
-            }).catch(err=>{
 
-                if(err) return res.status(500).send('error : '+err);
-            })
+                res.status(200).json(sites);
+            }
         }).catch(err=>{
-            if(err) return res.status(500).send('error : '+err);
+
+            if(err) res.status(500).send('error : '+err);
         })
     },
     getAllSitesWithoutData : function (req,res){
@@ -191,7 +182,7 @@ module.exports = {
     },
     getStatusSite:function (req,res){
         const ping_site = ping.promise.probe(req.params.ip, {
-            timeout: 1,
+            timeout: 3,
         }).then(ping=>{
             res.status(200).json(ping)
         });
@@ -217,6 +208,24 @@ module.exports = {
 
             if(err) res.status(500).send('error : '+err);
         })
-    }
+    },
+    updateData : function (req,res){
 
+        Site.find().then( async  sites=>{;
+            let item = 0
+            await sites.forEach(s=>{
+
+                axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+s.ip).then(async dataMppt=>{
+
+                    Site.findOneAndUpdate({_id:s._id},{...dataMppt.data}).then(()=>{
+                        item++
+                        if(item==sites.length){
+                            return res.status(201).send({message : "Data updated succesfully !"})
+                        }
+                   })
+
+                });
+            })
+        })
+    }
 }

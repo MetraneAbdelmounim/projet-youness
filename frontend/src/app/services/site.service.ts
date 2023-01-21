@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {Observable, Subject} from "rxjs";
+import {Site} from "../models/site";
 
 const BACKEND_URL = environment.apiUri
 @Injectable({
@@ -9,27 +10,31 @@ const BACKEND_URL = environment.apiUri
 })
 export class SiteService {
 
-
-
-  constructor(private http:HttpClient) { }
-
-  getAllSites(){
-    return this.http.get(BACKEND_URL+'sites')
+  constructor(private http: HttpClient) {
   }
-  getAllWithoutData(){
-    return this.http.get(BACKEND_URL+'sites/ping')
+
+  getAllSites() {
+    return this.http.get(BACKEND_URL + 'sites')
   }
-  addSite(stockData:any) {
-    return this.http.post(BACKEND_URL+'sites',stockData)
+
+  getAllWithoutData() {
+    return this.http.get(BACKEND_URL + 'sites/ping')
   }
+
+  addSite(stockData: any) {
+    return this.http.post(BACKEND_URL + 'sites', stockData)
+  }
+
   deleteSite(_id: string) {
-    return this.http.delete(BACKEND_URL+'sites/'+_id)
+    return this.http.delete(BACKEND_URL + 'sites/' + _id)
   }
+
   editSite(_id: string | undefined, userData: any) {
 
-    return this.http.put(BACKEND_URL+'sites/'+_id,userData)
+    return this.http.put(BACKEND_URL + 'sites/' + _id, userData)
   }
-  addSiteFromFile(fileData : File) {
+
+  addSiteFromFile(fileData: File) {
 
 
     // @ts-ignore
@@ -40,9 +45,14 @@ export class SiteService {
   }
 
   getSiteStatus(ip: string) {
-    return this.http.get(BACKEND_URL + 'sites/status/'+ip)
+    return this.http.get(BACKEND_URL + 'sites/status/' + ip)
   }
+
   getDataBySiteFromMppt(id: string) {
-    return this.http.get(BACKEND_URL + 'sites/data/'+id)
+    return this.http.get(BACKEND_URL + 'sites/data/' + id)
+  }
+
+  updateData() {
+    return this.http.put(BACKEND_URL+'sites',null)
   }
 }

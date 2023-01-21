@@ -27,4 +27,5 @@ router.get('/sites/status/:ip',authUser,siteController.getStatusSite)
 router.get('/sites/data/:idSite',authUser,siteController.getDataBySiteFromMPPT)
 router.delete('/sites/:idSite',authAdmin,siteController.deleteSite)
 router.put('/sites/:idSite',authAdmin,siteController.updateSite)
+router.put('/sites',siteController.updateData)
 module.exports=router

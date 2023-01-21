@@ -16,27 +16,29 @@ import {NzMessageService} from "ng-zorro-antd/message";
 export class DashbordComponent implements OnInit,OnDestroy {
   // @ts-ignore
   sites: Array<Site>=new Array<Site>()
-  itemsPerPage: number = 20;
+  itemsPerPage: number =config.itemsPerPage;
   page:number=1;
   labels : Array<string>=new Array<string>()
   battery : Array<Number>=new Array<Number>()
   labels_bar: Array<string>=new Array<string>()
   colors : Array<string>=new Array<string>()
   maxVolt : Array<Number>=new Array<Number>()
+  minVolt : Array<Number>=new Array<Number>()
   spinnerSite: boolean=false;
   upVoltage:Number=0
   // @ts-ignore
   chart: Chart<"bar" | "line" | "scatter" | "bubble" | "pie" | "doughnut" | "polarArea" | "radar", [ChartTypeRegistry[TType]["defaultDataPoint"]] extends [unknown] ? Array<ChartTypeRegistry[TType]["defaultDataPoint"]> : never, unknown>;
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<any> {
     this.destroy()
     this.spinnerSite=true
     let upSite = 0
+    await this.siteServices.updateData().toPromise()
     // @ts-ignore
     this.siteServices.getAllSites().subscribe((sites:Site[])=>{
       this.spinnerSite=false
-      console.log(sites)
+
       sites.forEach(s=>{
         if(s.Battery_Voltage!=0){
           upSite=upSite+1
@@ -46,12 +48,12 @@ export class DashbordComponent implements OnInit,OnDestroy {
         this.battery.push(s.Battery_Voltage)
         this.labels_bar.push(s.ip)
         this.maxVolt.push(config.Battery_Max)
+        this.minVolt.push(config.Battery_Min)
         this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
 
       })
+      this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt,this.minVolt)
 
-      this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
-      console.log(upSite)
       this.upVoltage=(upSite/sites.length)*100
       this.sites=sites
       this.spinnerSite=false
@@ -64,9 +66,11 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
   ngOnDestroy(): void {
     document.body.style.paddingLeft = "0rem"
+    this.destroy()
   }
 
-  createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>,maxVolt:Array<any>): void {
+  createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>,maxVolt:Array<any>,minVolt:Array<any>): void {
+    console.log(minVolt)
     Chart.register(...registerables);
     const data = {
       labels: labels,
@@ -75,17 +79,29 @@ export class DashbordComponent implements OnInit,OnDestroy {
         borderColor:"#000000",
         borderWidth:1,
         data: battery,
-        label:"Battery Voltage",
+        label:"Good Battery",
         order:2
       },{
-        label:"Voltage Lithium Battery",
+        label:"Max Voltage Lithium Battery",
         type: 'line' as ChartType,
         backgroundColor: "#011d3b",
         borderColor:"#011d3b" ,
         borderWidth:2,
         data: maxVolt,
-        order:1
+        order: 1,
+        yAxisID: 'y',
       },{
+        label:"Min Voltage Lithium Battery",
+        type: 'line' as ChartType,
+        backgroundColor: "#ff0000",
+        borderColor:"#ff0000" ,
+        borderWidth:2,
+        data: minVolt,
+        order: 1,
+        yAxisID: 'y1',
+
+      },
+        {
         label:"Low Battery",
         type: 'bar' as ChartType,
         backgroundColor: "#ffa265",
@@ -98,11 +114,23 @@ export class DashbordComponent implements OnInit,OnDestroy {
     const options = {
       scales: {
         y: {
-          beginAtZero: true,
+          min: 22,
+          max:27,
+          beginAtZero: false,
           display: true,
           stacked:true,
           ticks: {
-            stepSize: 2
+            stepSize: 1,
+          }
+        },
+        y1:{
+          min: 22,
+          max:27,
+          beginAtZero: false,
+          display: false,
+          stacked:true,
+          ticks: {
+            stepSize: 1,
           }
         },
         x:{
@@ -111,6 +139,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
         }
       },
       plugins: {
+        backgroundImageUrl:
+          'https://www.msoutlook.info/pictures/bgconfidential.png',
         title: {
           display: true,
           text: 'Battery Voltage Monitoring',
@@ -140,8 +170,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
 
   onRefresh(chart:any) {
-    this.chart.destroy()
-    this.ngOnInit()
+    window.location.reload()
   }
 
   private destroy() {
@@ -151,13 +180,16 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.labels_bar=new Array<string>()
     this.colors=new Array<string>()
     this.maxVolt=new Array<Number>()
+    this.minVolt=new Array<Number>()
     this.upVoltage=0
 
 
   }
 
   private getColor(isValid: boolean) {
-    if(isValid) return "#61e18a"
-    else return "#ffa265"
+    if(isValid) return "rgba(97,225,138,0.8)"
+    else return "rgba(255,162,101,0.8)"
   }
+
+
 }

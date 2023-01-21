@@ -2,6 +2,7 @@ import {Component, HostListener} from '@angular/core';
 import {NavigationEnd, Router} from "@angular/router";
 import {LoginService} from "./services/login.service";
 import {Subscription} from "rxjs";
+import {SiteService} from "./services/site.service";
 
 
 
@@ -13,13 +14,17 @@ import {Subscription} from "rxjs";
 
 export class AppComponent {
 
+
   title = 'frontend';
   memberIsAuthenticated : boolean=false;
   // @ts-ignore
   private authListenerSub:Subscription;
+
+
   constructor(private router: Router,private loginService:LoginService) {}
 
   ngOnInit(): void {
+
     this.loginService.autoAuthUser();
     this.memberIsAuthenticated =this.loginService.getAuthStatus();
     this.authListenerSub=this.loginService.getAuthStatusListener().subscribe((isAuthenticated)=>{
@@ -37,6 +42,9 @@ export class AppComponent {
       });
 
     } )
+  }
+  public doUnload(): void {
+    this.loginService.logout()
   }
 
 

@@ -12,7 +12,7 @@ import {NzModalService} from "ng-zorro-antd/modal";
   styleUrls: ['./admin-site.component.scss']
 })
 export class AdminSiteComponent implements OnInit,OnDestroy {
-  itemsPerPage: number = 20;
+  itemsPerPage: number = config.itemsPerPage;
   page:number=1;
   // @ts-ignore
   type: string = "Create"

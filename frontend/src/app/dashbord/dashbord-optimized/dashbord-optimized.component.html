@@ -18,11 +18,9 @@
         <h1 class="title">
           Dashboard
         </h1>
-        <span class="icon" >
+        <span class="icon" *ngIf="spinnerSite">
               <i><nz-spin nzSimple [nzSize]="'large'"  style="margin-right: 50%"></nz-spin></i>
-            </span>
-
-
+        </span>
       </div>
     </section>
 
@@ -86,8 +84,8 @@
           </p>
           <div class="flex items-center justify-center">
             <div class="flex ">
-              <span >
-              <i class="mdi mdi-refresh mdi-48px" title="refresh" ></i>
+            <span *ngIf="!spinnerSite">
+              <i class="mdi mdi-refresh mdi-48px" title="refresh" (click)="onRefresh()"></i>
             </span>
 
             </div>
@@ -99,12 +97,27 @@
             <div class="h-full">
               <div class="chartjs-size-monitor">
                 <div class="chartjs-size-monitor-expand">
-<!--                  <div class="flex items-center justify-center h-screen">
+                  <div class="flex items-center justify-center h-screen" *ngIf="spinnerSite">
                     <div class="spin" ></div>
-                  </div>-->
+                  </div>
                   <div >
-                    <app-chart-battery [idSite]="idSite"></app-chart-battery>
-                    <!--<canvas id="my-chart"  ></canvas>-->
+
+                    <ngx-charts-bar-vertical
+
+                      [results]="dataSite | async"
+                      [xAxisLabel]="'Sites'"
+                      [legendTitle]="'Battery MPPT Status'"
+                      [yAxisLabel]="'Voltage (v)'"
+                      [legend]="true"
+                      [showXAxisLabel]="true"
+                      [showYAxisLabel]="true"
+                      [xAxis]="true"
+                      [yAxis]="true"
+                      [gradient]="true"
+                      [customColors]="dataColor |async"
+                      >
+                    </ngx-charts-bar-vertical>
+
                   </div>
                 </div>
                 <div class="chartjs-size-monitor-shrink">

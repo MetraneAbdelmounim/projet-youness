@@ -13,7 +13,7 @@ import {NgForm} from "@angular/forms";
   styleUrls: ['./admin-user.component.scss']
 })
 export class AdminUserComponent implements OnInit,OnDestroy {
-  itemsPerPage: number = 20;
+  itemsPerPage: number = config.itemsPerPage;
   page:number=1;
   // @ts-ignore
   type: string = "Create"
