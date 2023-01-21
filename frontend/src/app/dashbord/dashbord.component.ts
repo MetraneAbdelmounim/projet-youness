@@ -91,7 +91,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         order: 1,
         yAxisID: 'y',
       },{
-        label:"Min Voltage Lithium Battery",
+        label:"Max Voltage AGM Battery",
         type: 'line' as ChartType,
         backgroundColor: "#ff0000",
         borderColor:"#ff0000" ,
