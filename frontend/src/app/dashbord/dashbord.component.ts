@@ -139,6 +139,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         }
       },
       plugins: {
+
         backgroundImageUrl:
           'https://www.msoutlook.info/pictures/bgconfidential.png',
         title: {
