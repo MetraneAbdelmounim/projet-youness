@@ -80,7 +80,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         borderWidth:1,
         data: battery,
         label:"Good Battery",
-        order:2
+        order:3
       },{
         label:"Max Voltage Lithium Battery",
         type: 'line' as ChartType,
@@ -105,7 +105,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         label:"Low Battery",
         type: 'bar' as ChartType,
         backgroundColor: "#ffa265",
-        order:1,
+        order:4,
         data:[],
         borderColor:"#411700",
         borderWidth:2,
