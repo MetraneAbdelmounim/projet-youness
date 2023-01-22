@@ -31,6 +31,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
 
   async ngOnInit(): Promise<any> {
+    document.body.style.paddingLeft = "15rem"
     this.destroy()
     this.spinnerSite=true
     let upSite = 0
@@ -61,7 +62,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
       this.spinnerSite=false
       this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
-    document.body.style.paddingLeft = "15rem"
+
   }
 
   ngOnDestroy(): void {
@@ -102,14 +103,12 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
       },
         {
-        label:"Low Battery",
-        type: 'bar' as ChartType,
-        backgroundColor: "#ffa265",
-        order:4,
-        data:[],
-        borderColor:"#411700",
-        borderWidth:2,
-      }]
+          data: [],
+          backgroundColor: "rgba(255,162,101,0.8)",
+          label: 'Low Battery',
+          borderColor:"#000000",
+          order: 4,
+        }]
     };
     const options = {
       scales: {
@@ -140,8 +139,6 @@ export class DashbordComponent implements OnInit,OnDestroy {
       },
       plugins: {
 
-        backgroundImageUrl:
-          'https://www.msoutlook.info/pictures/bgconfidential.png',
         title: {
           display: true,
           text: 'Battery Voltage Monitoring',

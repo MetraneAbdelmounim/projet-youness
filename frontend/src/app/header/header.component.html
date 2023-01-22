@@ -4,8 +4,8 @@
   </div>
   <!-- left header section -->
   <div class="items-center hidden space-x-8 lg:flex text-black " style="color: black ">
-    <a >Home</a>
-    <a >Dashbord</a>
+    <a routerLink="">Home</a>
+    <a routerLink="dashbord">Dashbord</a>
   </div>
   <!-- right header section -->
   <div class="flex items-center space-x-2" *ngIf="memberIsAuthenticated">
@@ -25,7 +25,7 @@
         />
       </svg>
     </a>
-    <a routerLink="dashbord" >
+    <a  >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-6 h-6 text-gray-400"
@@ -47,7 +47,7 @@
         />
       </svg>
     </a>
-    <a href="#" class="p-2 rounded-full bg-blue-50">
+    <a  class="p-2 rounded-full bg-blue-50">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         class="w-6 h-6 text-gray-200"
