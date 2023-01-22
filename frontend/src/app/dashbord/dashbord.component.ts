@@ -79,8 +79,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
         backgroundColor: colors,
         borderColor:"#000000",
         borderWidth:1,
+        label: "",
         data: battery,
-        label:"Good Battery",
         order:3
       },{
         label:"Max Voltage Lithium Battery",
@@ -108,9 +108,16 @@ export class DashbordComponent implements OnInit,OnDestroy {
           label: 'Low Battery',
           borderColor:"#000000",
           order: 4,
+        },{
+          data: [],
+          backgroundColor: "rgba(97,225,138,0.8)",
+          label: 'Good Battery',
+          borderColor:"#000000",
+          order: 5,
         }]
     };
     const options = {
+
       scales: {
         y: {
           min: 22,
