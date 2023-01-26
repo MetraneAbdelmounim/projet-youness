@@ -5,11 +5,9 @@ let fs = require('fs')
 let axios=require('axios').default
 var excelToJson = require('convert-excel-to-json');
 const mongoose = require('mongoose')
-var intToFloat16 = require("ieee754-binary16-modbus").intToFloat16;
 
 const ping = require('ping')
-const {pin} = require("nodemon/lib/version");
-const {errors} = require("jsmodbus");
+
 
 module.exports = {
     addSite : function (req,res) {
@@ -59,7 +57,7 @@ module.exports = {
 
                     if(ping_site.alive){
 
-                        const dataMppt = await axios.get(`http://127.0.0.1:8000/mppt/`+sites[i].ip);
+                        const dataMppt = await axios.get(config.mppt_api+sites[i].ip);
 
                         sites[i].Battery_Voltage=dataMppt.data.Battery_Voltage
                         sites[i].Charge_Current=dataMppt.data.Charge_Current
@@ -192,7 +190,7 @@ module.exports = {
         Site.findOne({_id:req.params.idSite}).then( async  site=>{
             if(site) {
 
-                const dataMppt = await axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+site.ip);
+                const dataMppt = await axios.get(config.mppt_api+site.ip);
                 site.Battery_Voltage=dataMppt.data.Battery_Voltage
                 site.Charge_Current=dataMppt.data.Charge_Current
                 site.Array_Voltage=dataMppt.data.Array_Voltage
@@ -215,7 +213,7 @@ module.exports = {
             let item = 0
             await sites.forEach(s=>{
 
-                axios.get(`http://127.0.0.1:${config.PORT_PY}/mppt/`+s.ip).then(async dataMppt=>{
+                axios.get(config.mppt_api+s.ip).then(async dataMppt=>{
 
                     Site.findOneAndUpdate({_id:s._id},{...dataMppt.data}).then(()=>{
                         item++

@@ -13,4 +13,14 @@ services:
     image: mongo
     ports:
       - "27017:27017"
-
+  nginx:
+    build: ./nginx
+    ports:
+      - '80:80'
+    depends_on:
+      - app
+  mppt-service:
+    restart: on-failure
+    build: ./python
+    ports:
+      - '8000:8000'

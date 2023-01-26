@@ -1,0 +1,5 @@
+numpy
+async_modbus
+Flask
+flask[async]
+flask-cors

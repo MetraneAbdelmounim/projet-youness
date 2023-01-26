@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon app --watch"
+    "start": "nodemon app --watchnodemon ",
+    "prod": "SET NODE_ENV=production&&nodemon app --watchnodemon "
   },
   "dependencies": {
     "axios": "^1.2.2",

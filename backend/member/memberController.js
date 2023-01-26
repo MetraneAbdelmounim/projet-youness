@@ -146,7 +146,7 @@ module.exports = {
     getMemberFromToken:function (req,res) {
         try {
             decoded = jwt.verify(req.params.token, config.secret_token_key);
-            User.findOne({_id: decoded.userId})
+            User.findOneAndUpdate({_id: decoded.userId},{actif:true})
                 .then(async (user) => {
 
                     res.status(200).send({message:'authorized',user:user});
