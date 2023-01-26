@@ -7,5 +7,5 @@ COPY . .
 EXPOSE 5000
 RUN apt-get update -y
 RUN apt-get install -y iputils-ping
-CMD [ "npm","run","prod","app.js",'--node-args="--max-http-header-size=360000"' ]
+CMD [ "npm","run","prod","app.js"]
 
