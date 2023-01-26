@@ -7,5 +7,6 @@ COPY . .
 EXPOSE 5000
 RUN apt-get update -y
 RUN apt-get install -y iputils-ping
+RUN export NODE_ENV=production
 #CMD [ "npm","run","prod","app.js" ]
-CMD ["NODE_ENV=production", "pm2-runtime","start","app.js" ,"--update-env"]
+CMD [ "pm2-runtime","start","app.js",'--node-args="--max-http-header-size=16000"']
