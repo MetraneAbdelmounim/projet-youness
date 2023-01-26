@@ -7,4 +7,5 @@ COPY . .
 EXPOSE 5000
 RUN apt-get update -y
 RUN apt-get install -y iputils-ping
-CMD [ "npm","run","prod","app.js" ]
+#CMD [ "npm","run","prod","app.js" ]
+CMD [ "pm2-runtime","app.js" ]

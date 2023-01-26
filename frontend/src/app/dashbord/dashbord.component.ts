@@ -79,7 +79,6 @@ export class DashbordComponent implements OnInit,OnDestroy {
         backgroundColor: colors,
         borderColor:"#000000",
         borderWidth:1,
-        label: "",
         data: battery,
         order:3
       },{
@@ -126,7 +125,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
           display: true,
           stacked:true,
           ticks: {
-            stepSize: 1,
+            stepSize: 0.5,
           }
         },
         y1:{
@@ -136,7 +135,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
           display: false,
           stacked:true,
           ticks: {
-            stepSize: 1,
+            stepSize: 0.5,
           }
         },
         x:{
