@@ -120,7 +120,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
       scales: {
         y: {
           min: 22,
-          max:27,
+          max:29,
           beginAtZero: false,
           display: true,
           stacked:true,
@@ -130,7 +130,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
         },
         y1:{
           min: 22,
-          max:27,
+          max:29,
           beginAtZero: false,
           display: false,
           stacked:true,
