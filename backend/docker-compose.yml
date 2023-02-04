@@ -2,7 +2,7 @@ version: "2"
 services:
   app:
     container_name: app
-    restart: on-failure
+    restart: always
     build: .
     ports:
       - "5000:5000"
@@ -10,6 +10,7 @@ services:
       - mongo
   mongo:
     container_name: mongo
+    restart: always
     image: mongo
     ports:
       - "27017:27017"
@@ -20,7 +21,7 @@ services:
     depends_on:
       - app
   mppt-service:
-    restart: on-failure
+    restart: always
     build: ./python
     ports:
       - '8000:8000'
