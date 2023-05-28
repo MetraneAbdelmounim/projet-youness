@@ -6,12 +6,24 @@ services:
     build: .
     ports:
       - "5000:5000"
+      - "5001:5000"
     links:
       - mongo
+      - mongo2
   mongo:
     container_name: mongo
     restart: always
     image: mongo
+    expose:
+      - 27017
+    ports:
+      - "27017:27017"
+  mongo2:
+    container_name: mongo2
+    restart: always
+    image: mongo
+    expose:
+      - 27017
     ports:
       - "27017:27017"
   nginx:
@@ -26,3 +38,30 @@ services:
     build: ./python
     ports:
       - '8000:8000'
+      - '8001:8000'
+  mongoinit:
+    image: mongo
+    # this container will exit after executing the command
+    restart: "always"
+    depends_on:
+      - mongo
+      - mongo2
+    command: >
+      mongo --host mongo:27017 --eval
+      '
+      db = (new Mongo("localhost:27017")).getDB("test");
+      config = {
+      "_id" : "my-mongo-set",
+      "members" : [
+        {
+          "_id" : 0,
+          "host" : "mongo:27017"
+        },
+        {
+          "_id" : 1,
+          "host" : "mongo2:27017"
+        }
+      ]
+      };
+      rs.initiate(config);
+      '
