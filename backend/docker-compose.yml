@@ -11,7 +11,7 @@ services:
   mongo:
     container_name: mongo
     restart: always
-    image: mongo:5.0.9
+    image: mongo:6.0.5
     expose:
       - 27017
     ports:
