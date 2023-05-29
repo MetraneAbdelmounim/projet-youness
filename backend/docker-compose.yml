@@ -17,7 +17,7 @@ services:
     expose:
       - 27017
     ports:
-      - "27017:27017"
+      - "3000:27017"
     volumes:
       - ./data:/data/db
   mongo2:
@@ -27,7 +27,7 @@ services:
     expose:
       - 27017
     ports:
-      - "27017:27017"
+      - "30001:27017"
     volumes:
       - ./data:/data/db
   nginx:
