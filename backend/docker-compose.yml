@@ -12,8 +12,10 @@ services:
     container_name: mongo
     restart: always
     image: mongo
+    expose:
+      - 27017
     ports:
-      - "27017:27017"
+      - "30000:27017"
     volumes:
       - ./data:/data/db
   nginx:
