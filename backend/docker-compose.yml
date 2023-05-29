@@ -11,7 +11,7 @@ services:
   mongo:
     container_name: mongo
     restart: always
-    image: mongo:5.0.9-windowsservercore-ltsc2022
+    image: mongo:5.0.9
     expose:
       - 27017
     ports:
