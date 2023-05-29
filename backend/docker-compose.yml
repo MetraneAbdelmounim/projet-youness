@@ -17,7 +17,7 @@ services:
     expose:
       - 27017
     ports:
-      - "3000:27017"
+      - "30000:27017"
     volumes:
       - ./data:/data/db
   mongo2:
