@@ -18,6 +18,8 @@ services:
       - 27017
     ports:
       - "27017:27017"
+    volumes:
+      - ./data:/data/db
   mongo2:
     container_name: mongo2
     restart: always
@@ -26,6 +28,8 @@ services:
       - 27017
     ports:
       - "27017:27017"
+    volumes:
+      - ./data:/data/db
   nginx:
     build: ./nginx
     restart: always
@@ -39,6 +43,7 @@ services:
     ports:
       - '8000:8000'
       - '8001:8000'
+
   mongoinit:
     image: mongo
     # this container will exit after executing the command
