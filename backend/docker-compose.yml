@@ -22,7 +22,7 @@ services:
       - "8000:8000"
     restart: on-failure
   proxy:
-    restart: unless-stopped
+    restart: on-failure
     image: nginx
     ports:
       - 80:80
