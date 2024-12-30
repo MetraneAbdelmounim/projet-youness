@@ -28,13 +28,18 @@ import Annotation from "chartjs-plugin-annotation";
 import { FooterComponent } from './footer/footer.component';
 import { SiteStatusComponent } from './site-status/site-status.component';
 import { SiteDataComponent } from './site-data/site-data.component';
+import { AdminMemberComponent } from './dashbord/admin-member/admin-member.component';
+import { AuthGuardService } from './services/auth-guard.service';
+import { AppRoutingModule } from './app-routing.module';
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
   {path:'' ,component: LoginComponent},
-  {path:'home' ,component: HomeComponent,canActivate:[AdminGuardService]},
-  {path:'dashbord' ,component: DashbordComponent,canActivate:[AdminGuardService]},
-  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[AdminGuardService]},
+  {path:'home' ,component: HomeComponent,canActivate:[AuthGuardService]},
+  {path:'dashbord' ,component: DashbordComponent,canActivate:[AuthGuardService]},
+  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[AuthGuardService,AdminGuardService]},
+  {path:'dashbord/members' ,component: AdminMemberComponent,canActivate:[AuthGuardService,AdminGuardService]},
+  {path:'**', redirectTo:'home'}
 ]
 
 
@@ -51,9 +56,11 @@ const appRoutes: Routes = [
     FooterComponent,
     SiteStatusComponent,
     SiteDataComponent,
+    AdminMemberComponent,
   ],
   imports: [
     BrowserModule,
+    AppRoutingModule,
     RouterModule.forRoot(appRoutes, {useHash: true}),
     FormsModule,
     HttpClientModule,

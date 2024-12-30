@@ -17,7 +17,7 @@ export class LoginService {
   token : string;
   private authStatusListener = new Subject<boolean>();
   private isAuthenticated = false;
-
+  redirectUrl: string="";
   private tokenTimer: any;
 
   private memberRoleSub =new Subject<boolean>();
@@ -36,7 +36,8 @@ export class LoginService {
     const authData = {username : username, password : password};
     this.http.post<{token : string, expiresIn : number, memberId : string,role : string,message:string}>(
       BACKEND_URL+'login',authData).subscribe((result)=>{
-
+        console.log(result);
+        
       const token = result.token;
       this.token = token;
 
@@ -46,10 +47,17 @@ export class LoginService {
         this.setAuthTimer(expiresInDuration);
 
         const now = new Date();
+        if (this.redirectUrl) {
+          console.log(this.redirectUrl)
+          this.router.navigate([this.redirectUrl.slice(1,this.redirectUrl.length)]);
+          // @ts-ignore
+          this.redirectUrl = null;
+        
+        }
         this.message.success(result.message,{nzDuration:config.durationMessage})
         const expirationDate = new Date(now.getTime()+expiresInDuration*1000);
 
-        this.saveAuthData(token,expirationDate);
+        this.saveAuthData(token,expirationDate,result.memberId);
         this.authStatusListener.next(true);
         this.isAuthenticated = true;
         this.router.navigate(['home']);
@@ -67,21 +75,29 @@ export class LoginService {
     this.authStatusListener.next(false);
     this.isAuthenticated = false;
     clearTimeout(this.tokenTimer);
-    this.clearAuthData();
-    this.router.navigate(['']);
+    
+    this.memberService.logoutMember(localStorage.getItem("memberId")).subscribe(()=>{
+
+      this.clearAuthData();
+      this.router.navigate(['']);
+    })
+    
   }
-  private saveAuthData(token: string, expirationDate: Date) {
+  private saveAuthData(token: string, expirationDate: Date, memberId: string) {
     localStorage.setItem("token", token);
+    localStorage.setItem("memberId", memberId);
     localStorage.setItem("expiration", expirationDate.toISOString());
 
   }
   private clearAuthData(){
     localStorage.removeItem("token");
+    localStorage.removeItem("memberId");
     localStorage.removeItem("expiration");
   }
   private getAuthData() {
     const token = localStorage.getItem("token");
     const expirationDate = localStorage.getItem("expiration");
+    const memberId = localStorage.getItem("memberId");
     if (!token || !expirationDate) {
       return;
     }
@@ -89,16 +105,22 @@ export class LoginService {
     return {
       token: token,
       expirationDate: new Date (expirationDate),
+      memberId:memberId
     };
   }
   getMemberStatus(){
     this.memberService.getMemberFromToken(this.getToken())
-    this.memberService.userFromTokenSubject.asObservable().subscribe((user:any)=>{
-      this.memberRoleSub.next(true)
+    this.memberService.userFromTokenSubject.asObservable().subscribe((data:any)=>{
+    
+      
+      this.memberRoleSub.next(data.member.isAdmin)
     })
     return this.memberRoleSub.asObservable()
   }
-
+  
+  getAuthorizedFromLocal(){
+    return String(localStorage.getItem('memberId'))
+  }
   getTokenFromLocal(){
     return localStorage.getItem('token')
   }
@@ -112,7 +134,7 @@ export class LoginService {
     const now = new Date();
     const expiresIn = authInfo.expirationDate.getTime() - now.getTime();
     if (expiresIn > 0) {
-
+      
       this.token = authInfo.token;
       this.isAuthenticated = true;
       this.setAuthTimer(expiresIn / 1000);

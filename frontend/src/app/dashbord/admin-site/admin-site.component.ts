@@ -59,7 +59,7 @@ export class AdminSiteComponent implements OnInit,OnDestroy {
       this.sites=sites
     },err=>{
       this.spinnerSite=false
-      this.message.success("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
+      this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
     })
   }
 

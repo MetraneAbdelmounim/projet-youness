@@ -1,6 +1,7 @@
 import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {NgForm} from "@angular/forms";
 import {LoginService} from "../services/login.service";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -9,11 +10,27 @@ import {LoginService} from "../services/login.service";
 })
 export class LoginComponent implements OnInit,OnDestroy {
   name = 'Angular';
-
-  constructor(private loginService:LoginService) { }
+  // @ts-ignore
+  private authListenerSub : Subscription;
+  memberIsAuthenticated : boolean = false;
+  constructor(private loginService:LoginService,private router:Router) { }
 
   ngOnInit(): void {
     document.body.className="body"
+    //document.body.className="login-c"
+    this.memberIsAuthenticated = this.loginService.getAuthStatus();
+    this.authListenerSub = this.loginService.getAuthStatusListener()
+      .subscribe((isAuthenticated)=> {
+        this.memberIsAuthenticated = isAuthenticated;
+        if(this.memberIsAuthenticated){
+
+          this.router.navigate(['home'])
+        }
+      });
+    this.memberIsAuthenticated = this.loginService.getAuthStatus();
+    if(this.memberIsAuthenticated) {
+      this.router.navigate(['home'])
+    }
   }
 
   onSignIn(f: NgForm) {

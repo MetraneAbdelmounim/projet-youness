@@ -6,19 +6,16 @@ import {LoginService} from './login.service';
 @Injectable({
   providedIn: 'root'
 })
+
 export class AdminGuardService {
 
-  // @ts-ignore
-  canActivate(route: ActivatedRouteSnapshot,
-              state: RouterStateSnapshot):
-    Observable<boolean> | Promise<boolean>  | boolean  {
-    if(this.loginService.getAuthStatus() && this.loginService.getMemberStatus){
-      return   this.loginService.getMemberStatus();
+
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean>  | boolean {
+    if(!(this.loginService.getAuthStatus() && this.loginService.getMemberStatus)){
+      return this.router.navigateByUrl('/');
+
     }
-    else {
-      this.router.navigate(['']);
-      return false
-    }
+    return   this.loginService.getMemberStatus();
   }
   constructor(private loginService : LoginService,private router : Router) { }
 }

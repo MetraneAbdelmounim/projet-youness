@@ -17,7 +17,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
   // @ts-ignore
   sites: Array<Site>=new Array<Site>()
 
-  labels : Array<string>=new Array<string>()
+ labels : Array<string>=new Array<string>()
+
   battery : Array<Number>=new Array<Number>()
   labels_bar: Array<string>=new Array<string>()
   colors : Array<string>=new Array<string>()
@@ -33,24 +34,35 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.spinnerSite=true
     let upSite = 0
     // @ts-ignore
-    this.siteServices.getAllSites().subscribe((sites:Site[])=>{
-      sites.forEach(s=>{
-        if(s.Battery_Voltage!=0){
-          upSite=upSite+1
-        }
-
-        this.labels.push(s.nom)
-        this.battery.push(s.Battery_Voltage)
-        this.labels_bar.push(s.ip)
-        this.maxVolt.push(config.Battery_Max)
-        this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
+    
+    this.siteServices.getAllSites().subscribe( ()=>{
+    // @ts-ignore
+      this.siteServices.getAllWithoutData().subscribe((sites:Site[])=>{
+       
+        sites.forEach(s=>{
+          if(s.Battery_Voltage!=0){
+            upSite=upSite+1
+          }
+  
+          this.labels.push(s.nom)
+          this.battery.push(s.Battery_Voltage)
+          this.labels_bar.push(s.ip)
+          this.maxVolt.push(config.Battery_Max)
+          this.colors.push(this.getColor(s.Battery_Voltage>config.Battery_Max?true:false))
+        })
+        
+  
+        this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
+        
+        this.upVoltage=(upSite/sites.length)*100
+        this.sites=sites
+        this.spinnerSite=false
+      },err=>{
+        this.spinnerSite=false
+        this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})
       })
-
-      this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt)
-      console.log(upSite)
-      this.upVoltage=(upSite/sites.length)*100
-      this.sites=sites
-      this.spinnerSite=false
+      
+     
     },err=>{
       this.spinnerSite=false
       this.message.error("Une erreur est survenue ! ", {nzDuration: config.durationMessage})

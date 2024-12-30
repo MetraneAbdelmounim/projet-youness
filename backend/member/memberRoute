@@ -1,0 +1,11 @@
+const memberController = require('./memberController')
+let express = require('express');
+let router = express.Router();
+const authUser = require('../middlewares/authUser')
+const authAdmin = require('../middlewares/authAdmin')
+router.post('/members',authAdmin,memberController.addMember)
+router.get('/members',authAdmin,memberController.getAllmembers)
+router.delete('/members/:idMember',authAdmin,memberController.deleteMember)
+router.put('/members/:idMember',authAdmin,memberController.updateMember)
+
+module.exports = router

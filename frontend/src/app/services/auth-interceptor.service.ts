@@ -14,19 +14,21 @@ export class AuthInterceptorService implements HttpInterceptor {
   }
 
   intercept(req: HttpRequest<any>, next: HttpHandler) {
+   // @ts-ignore
+    const token: string = this.loginService.getTokenFromLocal()
+    const authorized : string = this.loginService.getAuthorizedFromLocal()
+    req = req.clone({ headers: req.headers.set('Authorization', 'Bearer ' + token+ ' '+authorized)});
 
-    const token: string = this.loginService.getToken();
-    req = req.clone({ headers: req.headers.set('Authorization', 'Bearer ' + token) });
 
     return next.handle(req)
       .pipe(
         catchError((error: HttpErrorResponse) => {
           if (error && error.status === 401) {
-            this.message.error("ERROR 401 UNAUTHORIZED",{nzDuration:config.durationMessage})
+            this.message.error(error.error.error,{nzDuration:config.durationMessage})
           }
           const err = error.error.message || error.statusText;
           return throwError(error);
         })
       );
-  }
+    }
 }

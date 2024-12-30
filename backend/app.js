@@ -7,6 +7,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const authRoute =require('./auth/authRoute')
 const siteRoute =require('./site/SiteRoute')
+const memberRoute =require('./member/memberRoute')
 const path = require('path');
 const PORT = config.PORT;
 const HOST = config.HOST;
@@ -56,6 +57,7 @@ app.use((req, res, next) => {
 
 app.use(authRoute)
 app.use(siteRoute)
+app.use(memberRoute)
 app.listen(PORT,()=>{
   console.log(`server running at http://${HOST}:${PORT}`);
 });

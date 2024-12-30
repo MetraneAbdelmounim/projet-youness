@@ -1,0 +1,7 @@
+mppt
+Flask
+flask-cors
+pymodbus
+asgiref
+flask[async]
+pymodbus==3.6.5
