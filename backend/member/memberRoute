@@ -4,7 +4,7 @@ let router = express.Router();
 const authUser = require('../middlewares/authUser')
 const authAdmin = require('../middlewares/authAdmin')
 router.post('/members',authAdmin,memberController.addMember)
-router.get('/members',authAdmin,memberController.getAllmembers)
+router.get('/members',authUser,memberController.getAllmembers)
 router.delete('/members/:idMember',authAdmin,memberController.deleteMember)
 router.put('/members/:idMember',authAdmin,memberController.updateMember)
 

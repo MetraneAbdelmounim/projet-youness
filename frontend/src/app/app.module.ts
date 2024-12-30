@@ -31,6 +31,7 @@ import { SiteDataComponent } from './site-data/site-data.component';
 import { AdminMemberComponent } from './dashbord/admin-member/admin-member.component';
 import { AuthGuardService } from './services/auth-guard.service';
 import { AppRoutingModule } from './app-routing.module';
+import { TotalMembersComponent } from './dashbord/total-members/total-members.component';
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
@@ -57,6 +58,7 @@ const appRoutes: Routes = [
     SiteStatusComponent,
     SiteDataComponent,
     AdminMemberComponent,
+    TotalMembersComponent,
   ],
   imports: [
     BrowserModule,
