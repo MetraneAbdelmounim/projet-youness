@@ -72,6 +72,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
   ngOnDestroy(): void {
     document.body.style.paddingLeft = "0rem"
+    
+    this.chart.destroy()
   }
 
   createChart(labels: Array<string>, battery: Array<any>, colors: Array<string>, labels_bar: Array<any>,maxVolt:Array<any>): void {

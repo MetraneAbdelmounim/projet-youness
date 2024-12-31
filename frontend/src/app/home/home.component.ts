@@ -14,6 +14,9 @@ export class HomeComponent implements OnInit,OnDestroy {
   spinnerSite: boolean=false;
   ngOnDestroy(): void {
     document.body.className=''
+   
+    
+   
   }
 
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
