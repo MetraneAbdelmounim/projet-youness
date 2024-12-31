@@ -112,66 +112,81 @@
           </div>
         </div>
       </div>
-      <body class="antialiased font-sans">
-        <div class="container">
-          <div class="">
-            <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-1 overflow-x-auto">
-              <div class="inline-block min-w-full shadow rounded-lg overflow-hidden">
+      <div class="card mb-6">
+        <header class="card-header">
+          <p class="card-header-title">
+            <span class="icon"><i class="mdi mdi-finance"></i></span>
+            Status des sites
 
-                <table class="min-w-full">
-                  <thead>
-                  <tr style="margin-right: 25%;">
-                    <th
-                      class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Nom
-                    </th>
-                    <th
-                      class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      IP Address
-                    </th>
-
-                    <th
-                      class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Status
-                    </th>
-                    
-                  </tr>
-                  </thead>
-                  <tbody>
-
-                  <tr   *ngFor="let site of sites | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }; let i=index">
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <div class="flex items-center">
-
-                        <div class="ml-3">
-                          <p class="text-gray-900 whitespace-no-wrap">
-                            {{site.nom}}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <p class="text-gray-900 whitespace-no-wrap">{{site.ip}}</p>
-                    </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      <app-site-status [ip]="site.ip"></app-site-status>
-                    </td>
-                  </tr>
-
-                  </tbody>
-                </table>
-
+          </p>
+          <div class="flex items-center justify-center">
+            <div class="flex items-center justify-center">
+              <div class="flex border-2 rounded">
+                <input type="text" class="px-4 py-2 w-80" placeholder="Search..." [(ngModel)]="term">
+                <button class="flex  items-center justify-center px-4 border-l">
+                  <svg class="w-6 h-6 " fill="currentColor" xmlns="http://www.w3.org/2000/svg"
+                       viewBox="0 0 24 24">
+                    <path
+                      d="M16.32 14.9l5.39 5.4a1 1 0 0 1-1.42 1.4l-5.38-5.38a8 8 0 1 1 1.41-1.41zM10 16a6 6 0 1 0 0-12 6 6 0 0 0 0 12z" />
+                  </svg>
+                </button>
               </div>
+          
+
             </div>
           </div>
-        </div>
-        </body>
-        <div class="section main-section">
+
+        </header>
+        <div class="card-content">
+          <table class="min-w-full">
+            <thead>
+            <tr style="margin-right: 25%;">
+              <th
+                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Nom
+              </th>
+              <th
+                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                IP Address
+              </th>
+
+              <th
+                class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Status
+              </th>
+              
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr   *ngFor="let site of sites |filter : term | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }; let i=index">
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <div class="flex items-center">
+
+                  <div class="ml-3">
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      {{site.nom}}
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <p class="text-gray-900 whitespace-no-wrap">{{site.ip}}</p>
+              </td>
+              <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                <app-site-status [ip]="site.ip"></app-site-status>
+              </td>
+            </tr>
+
+            </tbody>
+          </table>
+
+      </div>
+      <div class="section main-section">
           <pagination-controls *ngIf="sites.length>0" class="paginationforum" [class.active]="'colorActive'"  id="listing_pagination"  (pageChange)="page = $event" ></pagination-controls>
     
-        </div>
-
-
-    </section>
-  </div>
+      </div>
+      </div>
+      </section>
+      </div>
 </div>

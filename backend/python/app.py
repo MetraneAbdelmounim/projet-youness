@@ -20,7 +20,7 @@ async def getDataMppt(ip):
     Mppt = mppt(0,0,0,0,0,0,0,0)
     try :
 
-        c = ModbusClient(host=ip, port=502,unit_id=1, auto_open=True,timeout=2)
+        c = ModbusClient(host=ip, port=502,unit_id=1, auto_open=True,timeout=5)
 
         await c.connect()
         time.sleep(2)

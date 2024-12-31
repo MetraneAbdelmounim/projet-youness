@@ -16,11 +16,11 @@ import {NzMessageService} from "ng-zorro-antd/message";
 export class DashbordComponent implements OnInit,OnDestroy {
   // @ts-ignore
   sites: Array<Site>=new Array<Site>()
-  itemsPerPage: number = 20;
+  itemsPerPage: number = 7;
   page:number=1;
   // @ts-ignore
  labels : Array<string>=new Array<string>()
-
+ term :string=""
   battery : Array<Number>=new Array<Number>()
   labels_bar: Array<string>=new Array<string>()
   colors : Array<string>=new Array<string>()
