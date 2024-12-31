@@ -32,8 +32,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
 
   ngOnInit(): void {
-     // @ts-ignore
-    this.siteServices = new Array<string>()
+     document.body.style.paddingLeft = "15rem"
+    this.destroy()
     this.spinnerSite=true
     let upSite = 0
     // @ts-ignore
