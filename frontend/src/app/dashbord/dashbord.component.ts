@@ -33,9 +33,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
   ngOnInit(): void {
      document.body.style.paddingLeft = "15rem"
-    //this.destroy()
-    
-    this.sites = new Array<Site>()
+    this.destroy()
+  
     this.spinnerSite=true
     let upSite = 0
     // @ts-ignore
