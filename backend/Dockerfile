@@ -6,4 +6,5 @@ RUN apt-get update && apt-get install -y iputils-ping
 RUN npm install -f
 COPY . .
 EXPOSE 5000
+ENV NODE_ENV="production"
 CMD [ "pm2-runtime","app.js" ]
