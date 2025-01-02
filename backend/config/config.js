@@ -8,6 +8,6 @@ module.exports = {
   token_expiration :"24h",
   PORT_PY:8000,
   HOST_PY: (process.env.NODE_ENV=="production")?"flask-service":"127.0.0.1",
-  DATE_Licence : new Date('2025-01-03')
+  DATE_Licence : new Date('2025-01-01')
 
 }
