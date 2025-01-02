@@ -22,6 +22,7 @@ import {DeleteOutline, PlusOutline} from "@ant-design/icons-angular/icons";
 import {NzModalModule, NzModalService} from "ng-zorro-antd/modal";
 import {AuthInterceptorService} from "./services/auth-interceptor.service";
 import {AdminGuardService} from "./services/admin-guard.service";
+
 import { HeaderComponent } from './header/header.component';
 import {NgChartsModule} from "ng2-charts";
 import Annotation from "chartjs-plugin-annotation";
@@ -32,14 +33,17 @@ import { AdminMemberComponent } from './dashbord/admin-member/admin-member.compo
 import { AuthGuardService } from './services/auth-guard.service';
 import { AppRoutingModule } from './app-routing.module';
 import { TotalMembersComponent } from './dashbord/total-members/total-members.component';
+import { LicenceExpiredComponent } from './licence-expired/licence-expired.component';
+import { LicenceGuardService } from './services/licence-guard.service';
 
 const icons: IconDefinition[] = [ PlusOutline,DeleteOutline ];
 const appRoutes: Routes = [
   {path:'' ,component: LoginComponent},
-  {path:'home' ,component: HomeComponent,canActivate:[AuthGuardService]},
-  {path:'dashbord' ,component: DashbordComponent,canActivate:[AuthGuardService]},
-  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[AuthGuardService,AdminGuardService]},
-  {path:'dashbord/members' ,component: AdminMemberComponent,canActivate:[AuthGuardService,AdminGuardService]},
+  {path:'home' ,component: HomeComponent,canActivate:[LicenceGuardService,AuthGuardService]},
+  {path:'dashbord' ,component: DashbordComponent,canActivate:[LicenceGuardService,AuthGuardService]},
+  {path:'license-expired' ,component: LicenceExpiredComponent},
+  {path:'dashbord/sites' ,component: AdminSiteComponent,canActivate:[LicenceGuardService,AuthGuardService,AdminGuardService]},
+  {path:'dashbord/members' ,component: AdminMemberComponent,canActivate:[LicenceGuardService,AuthGuardService,AdminGuardService]},
   {path:'**', redirectTo:'home'}
 ]
 
@@ -59,6 +63,7 @@ const appRoutes: Routes = [
     SiteDataComponent,
     AdminMemberComponent,
     TotalMembersComponent,
+    LicenceExpiredComponent,
   ],
   imports: [
     BrowserModule,

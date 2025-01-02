@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, HostListener, OnInit} from '@angular/core';
 import {LoginService} from "./services/login.service";
 
 import {Subscription} from "rxjs";
@@ -40,4 +40,5 @@ export class AppComponent{
 
     })
   }
+  
 }

@@ -3,9 +3,10 @@ let express = require('express');
 let router = express.Router();
 const authUser = require('../middlewares/authUser')
 const authAdmin = require('../middlewares/authAdmin')
-router.post('/members',authAdmin,memberController.addMember)
-router.get('/members',authUser,memberController.getAllmembers)
-router.delete('/members/:idMember',authAdmin,memberController.deleteMember)
-router.put('/members/:idMember',authAdmin,memberController.updateMember)
+const licenceGuard= require('../middlewares/licenceGuard')
+router.post('/members',licenceGuard,authAdmin,memberController.addMember)
+router.get('/members',licenceGuard,authUser,memberController.getAllmembers)
+router.delete('/members/:idMember',licenceGuard,authAdmin,memberController.deleteMember)
+router.put('/members/:idMember',licenceGuard,authAdmin,memberController.updateMember)
 
 module.exports = router
