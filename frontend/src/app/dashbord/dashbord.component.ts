@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
 
 import {Chart, ChartConfiguration, ChartItem,ChartType, registerables} from 'chart.js'
 
@@ -32,6 +32,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   // @ts-ignore
    chart: Chart<"bar" | "line" | "scatter" | "bubble" | "pie" | "doughnut" | "polarArea" | "radar", [ChartTypeRegistry[TType]["defaultDataPoint"]] extends [unknown] ? Array<ChartTypeRegistry[TType]["defaultDataPoint"]> : never, unknown>;
   constructor(private siteServices:SiteService,private message:NzMessageService) { }
+  
 
   ngOnInit(): void {
      document.body.style.paddingLeft = "15rem"
@@ -62,7 +63,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
   
         this.createChart(this.labels,this.battery,this.colors,this.labels_bar,this.maxVolt,this.maxAGM)
         
-        this.upVoltage=(upSite/sites.length)*100
+        this.upVoltage=Math.round((upSite/sites.length)*100)
         this.sites=sites
         this.spinnerSite=false
       },err=>{
@@ -80,7 +81,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
 
   ngOnDestroy(): void {
     document.body.style.paddingLeft = "0rem"
-    
+    this.destroy()
     this.chart.destroy()
   }
 
@@ -225,8 +226,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
     this.labels_bar=new Array<string>()
     this.colors=new Array<string>()
     this.maxVolt=new Array<Number>()
+    this.maxAGM=new Array<Number>()
     this.upVoltage=0
-
 
   }
 

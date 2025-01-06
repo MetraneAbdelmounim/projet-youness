@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { LoginService } from 'src/app/services/login.service';
 import { MemberService } from 'src/app/services/member.service';
 
@@ -16,7 +17,7 @@ export class AsideComponent implements OnInit {
   // @ts-ignore
     isAdmin:boolean
   
-    constructor(private loginService:LoginService,private memberService: MemberService) { }
+    constructor(private loginService:LoginService,private memberService: MemberService,private router:Router) { }
   
     ngOnInit(): void {
   
@@ -48,7 +49,15 @@ export class AsideComponent implements OnInit {
         })
       }
     }
+    dashbord(){
 
+    
+
+      this.router.navigate(['/dashbord'])
+      .then(() => {
+        window.location.reload();
+      });
+    }
   
 
 }

@@ -28,7 +28,7 @@ async def getDataMppt(ip):
         Mppt = mppt(rr.registers[24],rr.registers[28],rr.registers[27],rr.registers[16],rr.registers[19],rr.registers[62],rr.registers[20],rr.registers[22])
 
         #Mppt=mppt(20065,20065,20065,20065,20065,20065,20065,20065)
-
+        
     except Exception as e:
         Mppt = mppt(0,0,0,0,0,0,0,0)
 

@@ -73,4 +73,13 @@ export class HeaderComponent implements OnInit {
   isAdmin(admin: string) {
     return this.router.url.startsWith('/'+admin)
   }
+  dashbord(){
+
+    
+
+    this.router.navigate(['/dashbord'])
+    .then(() => {
+      window.location.reload();
+    });
+  }
 }
