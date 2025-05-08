@@ -1,3 +1,5 @@
+const { Buffer } = require("node:buffer");
+global.Buffer = Buffer;
 const express = require('express');
 const config = require('./config/config.js')
 const bodyparser =require('body-parser')
@@ -13,6 +15,7 @@ const PORT = config.PORT;
 const HOST = config.HOST;
 const app = express();
 const connectionUrl = config.bdUrl
+
 
 mongoose
     .connect(connectionUrl
