@@ -84,4 +84,33 @@ module.exports = {
                 });
     
      },
+    changePassword: function (req, res) {
+
+        Member.findOne({ _id: req.params.idMember })
+            .then((member) => {
+
+                if (req.body.newPass != req.body.confirmedPass) return res.status(400).json("Unmatch password")
+
+                bcrypt.hash(req.body.newPass, 10)
+                    .then(hash => {
+
+                        Member.updateOne({ _id: member._id }, { password:hash, _id: member._id })
+                    .then(() => {
+
+                        res.status(200).json({ message: "Votre mot de passe a été modifé avec succés !" })
+                    })
+                    .catch(error => {
+                        res.status(400).json({ error })
+                    });
+                    })
+                    .catch(error => res.status(500).send({ error })
+                    );
+
+                
+            })
+            .catch(error => {
+
+                res.status(400).send(error)
+            });
+    },
 }

@@ -8,5 +8,6 @@ router.post('/members',licenceGuard,authAdmin,memberController.addMember)
 router.get('/members',licenceGuard,authUser,memberController.getAllmembers)
 router.delete('/members/:idMember',licenceGuard,authAdmin,memberController.deleteMember)
 router.put('/members/:idMember',licenceGuard,authAdmin,memberController.updateMember)
+router.put('/members/password/:idMember',licenceGuard,authAdmin,memberController.changePassword)
 
 module.exports = router

@@ -183,7 +183,7 @@ module.exports = {
     },
     getStatusSite:function (req,res){
         const ping_site = ping.promise.probe(req.params.ip, {
-            timeout: 1,
+            timeout: 4,
         }).then(ping=>{
             res.status(200).json(ping)
         });
