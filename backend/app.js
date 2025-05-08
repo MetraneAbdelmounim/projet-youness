@@ -58,6 +58,10 @@ app.use((req, res, next) => {
   );
   next();
 });
+app.options('/api/*', function (request, response, next) {
+  response.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+  response.send();
+});
 
 app.use('/api/auth',authRoute)
 app.use('/api/stations',siteRoute)
