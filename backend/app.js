@@ -1,5 +1,6 @@
-const { Buffer } = require("node:buffer");
-global.Buffer = Buffer;
+if (typeof Buffer === 'undefined') {
+  global.Buffer = require('buffer').Buffer;
+}
 const express = require('express');
 const config = require('./config/config.js')
 const bodyparser =require('body-parser')
