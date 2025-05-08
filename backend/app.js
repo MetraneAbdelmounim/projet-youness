@@ -59,9 +59,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(authRoute)
-app.use(siteRoute)
-app.use(memberRoute)
+app.use('/api/auth',authRoute)
+app.use('/api/stations',siteRoute)
+app.use('/api/members',memberRoute)
 app.listen(PORT,()=>{
   console.log(`server running at http://${HOST}:${PORT}`);
 });

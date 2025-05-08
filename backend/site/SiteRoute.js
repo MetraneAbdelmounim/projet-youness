@@ -19,12 +19,12 @@ var upload = multer({
 });
 
 
-router.post('/sites',licenceGuard,authAdmin,siteController.addSite)
-router.post('/sites/file',licenceGuard ,authAdmin,upload.single('file'),siteController.addSiteFromFile)
-router.get('/sites',licenceGuard ,authUser,siteController.getAllSites2)
-router.get('/sites/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
-router.get('/sites/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
-router.get('/sites/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)
-router.delete('/sites/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
-router.put('/sites/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
+router.post('',licenceGuard,authAdmin,siteController.addSite)
+router.post('/file',licenceGuard ,authAdmin,upload.single('file'),siteController.addSiteFromFile)
+router.get('',licenceGuard ,authUser,siteController.getAllSites2)
+router.get('/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
+router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
+router.get('/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)
+router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
+router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
 module.exports=router
