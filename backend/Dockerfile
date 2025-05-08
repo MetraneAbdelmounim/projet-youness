@@ -1,4 +1,4 @@
-FROM node:bullseye
+FROM FROM node:18-bullseye
 WORKDIR /usr/src/app
 RUN npm install --global pm2
 COPY package*.json ./
