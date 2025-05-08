@@ -1,4 +1,4 @@
-FROM node:16-alpine
+FROM node:latest
 WORKDIR /usr/src/app
 RUN npm install --global pm2
 COPY package*.json ./
