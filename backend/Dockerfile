@@ -1,4 +1,4 @@
-FROM node:18.18-alpine3.18
+FROM node:20.18-alpine3.19
 WORKDIR /usr/src/app
 RUN npm install --global pm2
 COPY package*.json ./
