@@ -37,10 +37,10 @@ app.use(logger('dev'));
 
 
 app.use('/uploads',express.static('uploads'));
-app.use('/',express.static(path.join(__dirname,'public')));
+app.use('/',express.static(path.join(__dirname,'public/browser')));
 app.use('/uploads',express.static(path.join(__dirname,'uploads')));
 app.get('', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public','index.html'));
+    res.sendFile(path.join(__dirname, 'public/browser','index.html'));
 });
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
