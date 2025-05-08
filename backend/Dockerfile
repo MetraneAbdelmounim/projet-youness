@@ -2,7 +2,7 @@ FROM node:bullseye
 WORKDIR /usr/src/app
 RUN npm install --global pm2
 COPY package*.json ./
-RUN apk add --update iputils-ping
+RUN apt-get update && apt-get install -y iputils-ping
 RUN npm install -f
 COPY . .
 EXPOSE 5000
