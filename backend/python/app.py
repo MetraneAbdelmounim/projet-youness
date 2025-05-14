@@ -1,4 +1,5 @@
 from mppt import mppt
+import asyncio
 import json
 import time
 from flask import Flask,jsonify
@@ -23,7 +24,7 @@ async def getDataMppt(ip):
         c = ModbusClient(host=ip, port=502,unit_id=1, auto_open=True,timeout=5)
 
         await c.connect()
-        time.sleep(2)
+        await asyncio.sleep(2)
         rr = await c.read_holding_registers(0,82,1)
         Mppt = mppt(rr.registers[24],rr.registers[28],rr.registers[27],rr.registers[16],rr.registers[19],rr.registers[62],rr.registers[20],rr.registers[22])
 
