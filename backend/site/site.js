@@ -7,6 +7,8 @@ const siteSchema = mongoose.Schema({
     _id : {type:mongoose.Schema.Types.ObjectId,unique:true},
     ip :{type: String,required:true,unique:true},
     nom:{type: String,required:true},
+    latitude:{type:Float,required:false,default: 0},
+    longitude:{type:Float,required:false,default: 0},
     Battery_Voltage:{type:Float,required:false,default: 0},
     Charge_Current:{type:Float,required:false,default: 0},
     Temperature_Ambient:{type:Float,required:false,default: 0},

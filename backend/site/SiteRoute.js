@@ -27,4 +27,5 @@ router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
 router.get('/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)
 router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
 router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
+router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
 module.exports=router
