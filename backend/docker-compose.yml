@@ -2,7 +2,7 @@ version : '3'
 services:
   app:
     container_name: app
-    restart: always
+    restart: on-failure
     build: .
     ports:
       - "5000:5000"
@@ -11,7 +11,6 @@ services:
       - flask-service
   mongo:
     container_name: mongo
-    restart: always
     image: mongo
     ports:
       - "27017:27017"
@@ -22,9 +21,9 @@ services:
     container_name: flask-container
     ports:
       - "8000:8000"
-    restart: always
+    restart: on-failure
   proxy:
-    restart: always
+    restart: unless-stopped
     image: nginx
     ports:
       - 80:80
