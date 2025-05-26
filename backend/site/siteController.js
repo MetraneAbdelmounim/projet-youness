@@ -204,7 +204,7 @@ module.exports = {
             if (site) {
 
                 const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + site.ip);
-                console.log(dataMppt);
+          
                 
                 site.Battery_Voltage = dataMppt.data.data.Battery_Voltage
                 site.Charge_Current = dataMppt.data.data.Charge_Current
@@ -218,7 +218,8 @@ module.exports = {
                 res.status(200).json(site);
             }
         }).catch(err => {
-
+            
+            
             if (err) res.status(500).send('error : ' + err);
         })
     },

@@ -12,7 +12,8 @@ if sys.platform.startswith('win'):
 from mppt import mppt  # Assurez-vous que la classe mppt est définie dans mppt.py
 
 app = Flask(__name__)
-CORS(app)
+cors = CORS(app, resources={r"/mppt/*": {"origins": "*"}})
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Analyse de la température sur la capacité de la batterie
 def battery_capacity_reduction(temp):
