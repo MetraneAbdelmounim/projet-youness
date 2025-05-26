@@ -204,14 +204,16 @@ module.exports = {
             if (site) {
 
                 const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + site.ip);
-                site.Battery_Voltage = dataMppt.data.Battery_Voltage
-                site.Charge_Current = dataMppt.data.Charge_Current
-                site.Array_Voltage = dataMppt.data.Array_Voltage
-                site.Sweep_Pmax = dataMppt.data.Sweep_Pmax
-                site.Load_Voltage = dataMppt.data.Load_Voltage
-                site.Load_Current = dataMppt.data.Load_Current
-                site.Temperature_Ambient = dataMppt.data.Temperature_Ambient
-                site.Temperature_Battery = dataMppt.data.Temperature_Battery
+                console.log(dataMppt);
+                
+                site.Battery_Voltage = dataMppt.data.data.Battery_Voltage
+                site.Charge_Current = dataMppt.data.data.Charge_Current
+                site.Array_Voltage = dataMppt.data.data.Array_Voltage
+                site.Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
+                site.Load_Voltage = dataMppt.data.data.Load_Voltage
+                site.Load_Current = dataMppt.data.data.Load_Current
+                site.Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
+                site.Temperature_Battery = dataMppt.data.data.Temperature_Battery
 
                 res.status(200).json(site);
             }
