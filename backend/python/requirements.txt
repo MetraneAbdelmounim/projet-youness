@@ -6,3 +6,4 @@ asgiref
 flask[async]
 pymodbus==3.6.5
 aiohttp
+backports.zoneinfo
