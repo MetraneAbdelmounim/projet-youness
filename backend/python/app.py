@@ -1,12 +1,16 @@
 import asyncio
 import time
 import json
-from zoneinfo import ZoneInfo
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import aiohttp
 import sys
+if sys.version_info < (3, 9):
+    from backports.zoneinfo import ZoneInfo
+else:
+    from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 
 if sys.platform.startswith('win'):
