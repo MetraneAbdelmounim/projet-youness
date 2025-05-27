@@ -1,5 +1,6 @@
 const config = require('../config/config')
 const Site = require('./site')
+const Analysis = require('../analysis/analysis')
 let path = require('path')
 let fs = require('fs')
 let axios = require('axios').default
@@ -10,6 +11,7 @@ const excelJS = require('exceljs');
 const ping = require('ping')
 const { pin } = require("nodemon/lib/version");
 const { log } = require('console')
+const analysis = require('../analysis/analysis')
 
 module.exports = {
     addSite: function (req, res) {
@@ -204,8 +206,8 @@ module.exports = {
             if (site) {
 
                 const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + site.ip);
-          
-                
+
+
                 site.Battery_Voltage = dataMppt.data.data.Battery_Voltage
                 site.Charge_Current = dataMppt.data.data.Charge_Current
                 site.Array_Voltage = dataMppt.data.data.Array_Voltage
@@ -218,8 +220,8 @@ module.exports = {
                 res.status(200).json(site);
             }
         }).catch(err => {
-            
-            
+
+
             if (err) res.status(500).send('error : ' + err);
         })
     },
@@ -279,5 +281,25 @@ module.exports = {
             res.status(500).send('Error generating Excel file');
         }
     },
+    getDataAnalysisBySiteFromMPPT: function (req, res) {
+        Site.findOne({ _id: req.params.idSite }).then(async site => {
+            if (site) {
+                try {
+                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/` + site.ip);
+                    const dataMppt = response.data;
+
+                    const analysis = new Analysis(dataMppt.analysis);
+
+                    res.status(200).json(analysis);
+                } catch (err) {
+                    res.status(500).send('Error fetching analysis: ' + err);
+                }
+            } else {
+                res.status(404).send('Site not found');
+            }
+        }).catch(err => {
+            res.status(500).send('Error: ' + err);
+        });
+    }
 
 }

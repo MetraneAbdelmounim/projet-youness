@@ -25,7 +25,9 @@ router.get('',licenceGuard ,authUser,siteController.getAllSites2)
 router.get('/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
 router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
 router.get('/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)
+router.get('/data/analysis/:idSite',licenceGuard ,authUser,siteController.getDataAnalysisBySiteFromMPPT)
 router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
 router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
 router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
+
 module.exports=router
