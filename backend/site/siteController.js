@@ -107,7 +107,7 @@ module.exports = {
                             sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
                             sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
 
-                            Site.updateOne({ _id: sites[i]._id }, { $set: { ...dataMppt.data } })
+                            Site.updateOne({ _id: sites[i]._id }, { $set: { ...dataMppt.data.data } })
                                 .then(() => {
                                     //console.log("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
 
