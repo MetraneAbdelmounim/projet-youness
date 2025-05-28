@@ -96,7 +96,7 @@ module.exports = {
                 for (let i = 0; i < sites.length; i++) {
                     axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
                         .then((dataMppt) => {
-                            console.log(dataMppt);
+                            
                             
                             sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
                             sites[i].Charge_Current = dataMppt.data.data.Charge_Current
