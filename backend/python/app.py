@@ -88,7 +88,7 @@ def solar_recharge_duration(sun_hours, battery_type="lithium"):
             return 100
         elif sun_hours >= 3:
             return 65
-        elif sun_hours<2 and sun_hours>=1:
+        elif sun_hours<3 and sun_hours>=1:
             return 35
     return 0
 
@@ -113,16 +113,20 @@ async def get_weather_data(lat, lon):
             # now aussi "aware"
             now = datetime.now(local_tz)
             remaining_sunlight = max(0, (sunset_dt - now).total_seconds() / 3600.0)
-            print(remaining_sunlight)
+        
             return temperature, cloud_cover, sunshine_duration, remaining_sunlight
 
 @app.route('/mppt/analysis/<ip>', methods=['GET']) 
 async def getAnalysisMppt(ip):
     try:
-        lat = 45.58109
-        lon = -73.48695
+        
         battery_type = request.args.get("battery", default="agm", type=str)
+        lat = request.args.get("lat", type=float)
+        lon = request.args.get("lon", type=float)
 
+        if lat is None or lon is None:
+            lat = 45.58109
+            lon = -73.48695
         c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=5)
         await c.connect()
         rr = await c.read_holding_registers(0, 82, 1)
@@ -161,7 +165,7 @@ async def getAnalysisMppt(ip):
             "solar_charge_efficiency": solar_eff,
             "predicted_end_day_voltage": round(predicted_voltage, 2),
             "current_battery_voltage" : initial_voltage,
-            "performance": "UP" if round(predicted_voltage, 2)>=initial_voltage else "DOWN"
+            "performance": "UP" if round(predicted_voltage, 2)>=round(initial_voltage,2) else "DOWN"
         }
 
         return jsonify({
@@ -173,7 +177,7 @@ async def getAnalysisMppt(ip):
     except Exception as e:
         mppt_data = mppt(0,0,0,0,0,0,0,0)
         return jsonify({"success": False, "message": str(e), "data": mppt_data.__dict__})
-# --- Fonction pour redémarrer le MPPT ---
+
 
 
 if __name__ == '__main__':
