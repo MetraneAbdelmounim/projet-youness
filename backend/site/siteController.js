@@ -60,14 +60,14 @@ module.exports = {
                     if (ping_site.alive) {
                         const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip);
 
-                        sites[i].Battery_Voltage = dataMppt.data.Battery_Voltage
-                        sites[i].Charge_Current = dataMppt.data.Charge_Current
-                        sites[i].Array_Voltage = dataMppt.data.Array_Voltage
-                        sites[i].Sweep_Pmax = dataMppt.data.Sweep_Pmax
-                        sites[i].Load_Voltage = dataMppt.data.Load_Voltage
-                        sites[i].Load_Current = dataMppt.data.Load_Current
-                        sites[i].Temperature_Ambient = dataMppt.data.Temperature_Ambient
-                        sites[i].Temperature_Battery = dataMppt.data.Temperature_Battery
+                        sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
+                        sites[i].Charge_Current = dataMppt.data.data.Charge_Current
+                        sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
+                        sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
+                        sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
+                        sites[i].Load_Current = dataMppt.data.data.Load_Current
+                        sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
+                        sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
                         sites[i].status = ping_site.alive
                     }
                     else {
@@ -96,15 +96,16 @@ module.exports = {
                 for (let i = 0; i < sites.length; i++) {
                     axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
                         .then((dataMppt) => {
-
-                            sites[i].Battery_Voltage = dataMppt.data.Battery_Voltage
-                            sites[i].Charge_Current = dataMppt.data.Charge_Current
-                            sites[i].Array_Voltage = dataMppt.data.Array_Voltage
-                            sites[i].Sweep_Pmax = dataMppt.data.Sweep_Pmax
-                            sites[i].Load_Voltage = dataMppt.data.Load_Voltage
-                            sites[i].Load_Current = dataMppt.data.Load_Current
-                            sites[i].Temperature_Ambient = dataMppt.data.Temperature_Ambient
-                            sites[i].Temperature_Battery = dataMppt.data.Temperature_Battery
+                            console.log(dataMppt);
+                            
+                            sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
+                            sites[i].Charge_Current = dataMppt.data.data.Charge_Current
+                            sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
+                            sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
+                            sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
+                            sites[i].Load_Current = dataMppt.data.data.Load_Current
+                            sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
+                            sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
 
                             Site.updateOne({ _id: sites[i]._id }, { $set: { ...dataMppt.data } })
                                 .then(() => {
@@ -232,14 +233,14 @@ module.exports = {
                 for (let i = 0; i < sites.length; i++) {
                     const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip);
 
-                    sites[i].Battery_Voltage = dataMppt.data.Battery_Voltage
-                    sites[i].Charge_Current = dataMppt.data.Charge_Current
-                    sites[i].Array_Voltage = dataMppt.data.Array_Voltage
-                    sites[i].Sweep_Pmax = dataMppt.data.Sweep_Pmax
-                    sites[i].Load_Voltage = dataMppt.data.Load_Voltage
-                    sites[i].Load_Current = dataMppt.data.Load_Current
-                    sites[i].Temperature_Ambient = dataMppt.data.Temperature_Ambient
-                    sites[i].Temperature_Battery = dataMppt.data.Temperature_Battery
+                    sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
+                    sites[i].Charge_Current = dataMppt.data.data.Charge_Current
+                    sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
+                    sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
+                    sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
+                    sites[i].Load_Current = dataMppt.data.data.Load_Current
+                    sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
+                    sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
                 }
 
                 res.status(200).json(sites);
