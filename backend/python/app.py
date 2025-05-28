@@ -161,7 +161,7 @@ async def getAnalysisMppt(ip):
             "solar_charge_efficiency": solar_eff,
             "predicted_end_day_voltage": round(predicted_voltage, 2),
             "current_battery_voltage" : initial_voltage,
-            "performance": "UP" if round(predicted_voltage, 2)>initial_voltage else "DOWN"
+            "performance": "UP" if round(predicted_voltage, 2)>=initial_voltage else "DOWN"
         }
 
         return jsonify({
