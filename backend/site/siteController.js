@@ -50,6 +50,13 @@ module.exports = {
             })
             .catch(error => res.status(500).send(error));
     },
+    getSiteByIdWithoutDATA: function (req, res) {
+        Site.findOne({ _id: req.params.idSite })
+            .then((site) => {
+                 res.status(200).json(site);
+            })
+            .catch(error => res.status(500).send(error));
+    },
     getAllSites: function (req, res) {
         Site.find().then(async sites => {
             if (sites) {
@@ -170,7 +177,8 @@ module.exports = {
                         A: 'ip',
                         B: 'nom',
                         C: 'latitude',
-                        D: 'longitude'
+                        D: 'longitude',
+                        E: 'Battery_Type'
                     }
                 }]
             });
@@ -251,10 +259,14 @@ module.exports = {
         })
     },
     exportAllSites: async function (req, res) {
-
+    
+        
         try {
+    
+            
             const sites = await Site.find();
-
+            
+            
             const workbook = new excelJS.Workbook();
             const worksheet = workbook.addWorksheet('sites');
 
@@ -263,6 +275,7 @@ module.exports = {
                 { header: 'nom', key: 'nom', width: 30 },
                 { header: 'latitude', key: 'latitude', width: 30 },
                 { header: 'longitude', key: 'longitude', width: 30 },
+                { header: 'Battery_Type', key: 'Battery_Type', width: 30 },
             ];
 
             worksheet.addRows(sites);
@@ -279,6 +292,8 @@ module.exports = {
             await workbook.xlsx.write(res);
             res.end();
         } catch (error) {
+            console.log(error);
+            
             res.status(500).send('Error generating Excel file');
         }
     },
@@ -286,7 +301,7 @@ module.exports = {
         Site.findOne({ _id: req.params.idSite }).then(async site => {
             if (site) {
                 try {
-                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/` + site.ip);
+                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}` );
                     const dataMppt = response.data;
 
                     const analysis = new Analysis(dataMppt.analysis);

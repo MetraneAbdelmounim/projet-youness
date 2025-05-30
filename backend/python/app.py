@@ -120,7 +120,7 @@ async def get_weather_data(lat, lon):
 async def getAnalysisMppt(ip):
     try:
         
-        battery_type = request.args.get("battery", default="agm", type=str)
+        battery_type = request.args.get("battery_type", default="agm", type=str)
         lat = request.args.get("lat", type=float)
         lon = request.args.get("lon", type=float)
 
@@ -149,7 +149,7 @@ async def getAnalysisMppt(ip):
 
         # Capacité finale estimée :
         initial_voltage = mppt_data.Battery_Voltage
-        charge_percent = max(0, (solar_eff - cloud_loss) / 100)
+        charge_percent = (solar_eff - cloud_loss) / 100
         capacity_loss_percent = temp_loss / 100
 
         predicted_voltage = initial_voltage * (1 + charge_percent) * (1 - capacity_loss_percent)
