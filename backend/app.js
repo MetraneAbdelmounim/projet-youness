@@ -92,7 +92,7 @@ function sendAlertEmail(site, reason) {
         else console.log('Alert email sent:', info.response);
     });
 }
-cron.schedule('0 */6 * * *', async () => {
+cron.schedule(config.schedule, async () => {
     console.log('⏱️ Running MPPT performance check...');
 
     const sites = await Site.find(); // Assume this returns a list of sites
