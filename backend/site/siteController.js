@@ -145,15 +145,18 @@ module.exports = {
         })
     },
     updateSite: function (req, res) {
+        
+        
         Site.findOne({ _id: req.params.idSite })
             .then((site) => {
-
+                
                 Site.updateOne({ _id: site._id }, { ...req.body, _id: site._id })
                     .then(() => {
 
                         res.status(200).json({ message: "Le site a été modifé avec succés !" })
                     })
                     .catch(error => {
+                        
                         res.status(400).json({ error })
                     });
             })

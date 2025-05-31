@@ -1,3 +1,4 @@
+const { schedule } = require("node-cron");
 
 module.exports = {
 
@@ -8,6 +9,19 @@ module.exports = {
   token_expiration :"24h",
   PORT_PY:8000,
   HOST_PY: (process.env.NODE_ENV=="production")?"flask-service":"127.0.0.1",
-  DATE_Licence : new Date('2025-09-15')
+  DATE_Licence : new Date('2025-09-15'),
+  mailOptions : {
+        from:  (process.env.NODE_ENV=="production")? 'notifications@innovationmi8.com' : 'postmaster@sandbox3976616a1044434c8376786625419e21.mailgun.org'  ,
+        to:  (process.env.NODE_ENV=="production")? ['dgagnon@innovationmi8.com','yberayeteb@innovationmi8.com','abdelmounim.metrane@gmail.com']:'abdelmounim.metrane@gmail.com',
+    },
+  transporter:{
+    host:(process.env.NODE_ENV=="production")? 'innovationmi8-com.mail.protection.outlook.com' : 'smtp.mailgun.org',
+    port:(process.env.NODE_ENV=="production")? 25 : 465,
+    auth:(process.env.NODE_ENV=="production")? null : {
+        user: 'postmaster@sandbox3976616a1044434c8376786625419e21.mailgun.org',
+        pass: 'Axians@2024'
+    }  
+  },
+  schedule:(process.env.NODE_ENV=="production")? '*/10 * * * *' : '0 */6 * * *'
 
 }
