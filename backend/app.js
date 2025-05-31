@@ -92,7 +92,7 @@ function sendAlertEmail(site, reason) {
         else console.log('Alert email sent:', info.response);
     });
 }
-cron.schedule(config.schedule, async () => {
+/*cron.schedule(config.schedule, async () => {
     console.log('⏱️ Running MPPT performance check...');
 
     const sites = await Site.find(); // Assume this returns a list of sites
@@ -124,7 +124,7 @@ cron.schedule(config.schedule, async () => {
             sendAlertEmail(site, `MPPT fetch failed: ${err.message}`);
         }
     }
-});
+});*/
 
 app.use('/api/auth',authRoute)
 app.use('/api/stations',siteRoute)
