@@ -12,7 +12,7 @@ module.exports = {
   DATE_Licence : new Date('2025-09-15'),
   mailOptions : {
         from:  (process.env.NODE_ENV=="production")? 'notifications@innovationmi8.com' : 'postmaster@sandbox3976616a1044434c8376786625419e21.mailgun.org'  ,
-        to:  (process.env.NODE_ENV=="production")? ['dgagnon@innovationmi8.com','yberayeteb@innovationmi8.com','berayeteb.younes@gmail.com','abdelmounim.metrane@gmail.com']:'abdelmounim.metrane@gmail.com',
+        to:  (process.env.NODE_ENV=="production")? ['dgagnon@innovationmi8.com','yberayeteb@innovationmi8.com','berayeteb.younes@gmail.com']:'abdelmounim.metrane@gmail.com',
     },
   transporter:{
     host:(process.env.NODE_ENV=="production")? 'innovationmi8-com.mail.protection.outlook.com' : 'smtp.mailgun.org',
@@ -22,6 +22,6 @@ module.exports = {
         pass: 'Axians@2024'
     }  
   },
-  schedule:(process.env.NODE_ENV=="production")? '*/10 * * * *' : '0 */6 * * *'
+  schedule:(process.env.NODE_ENV=="production")? '*/15 * * * *' : '*/60 * * * *'
 
 }

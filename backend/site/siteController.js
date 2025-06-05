@@ -304,7 +304,7 @@ module.exports = {
         Site.findOne({ _id: req.params.idSite }).then(async site => {
             if (site) {
                 try {
-                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}` );
+                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}&lat=${site.latitude}&lon=${site.longitude}` );
                     const dataMppt = response.data;
 
                     const analysis = new Analysis(dataMppt.analysis);

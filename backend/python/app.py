@@ -93,28 +93,61 @@ def solar_recharge_duration(sun_hours, battery_type="lithium"):
     return 0
 
 # Récupération de la météo
+from zoneinfo import ZoneInfo
+from datetime import datetime
+
+from zoneinfo import ZoneInfo
+from datetime import datetime
+
 async def get_weather_data(lat, lon):
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,cloudcover&daily=sunshine_duration,sunset&timezone=auto"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=cloudcover&daily=sunshine_duration,sunset&hourly=cloudcover,temperature_2m&timezone=auto"
+
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             data = await resp.json()
 
-            temperature = data["current"]["temperature_2m"]
-            cloud_cover = data["current"].get("cloudcover", 0)
+            current_cloud = data["current"].get("cloudcover", 0)
             sunshine_duration = data["daily"]["sunshine_duration"][0] / 3600.0  # sec → hours
 
-            sunset_time_str = data["daily"]["sunset"][0]  # e.g., "2025-05-27T20:30"
+            sunset_time_str = data["daily"]["sunset"][0]
             timezone_str = data.get("timezone", "UTC")
-
-            # Assure sunset_dt est "aware"
             local_tz = ZoneInfo(timezone_str)
+
+            now = datetime.now(local_tz)
             sunset_dt = datetime.fromisoformat(sunset_time_str).replace(tzinfo=local_tz)
 
-            # now aussi "aware"
-            now = datetime.now(local_tz)
+            # --- Données horaires
+            hourly_times = data["hourly"]["time"]
+            hourly_clouds = data["hourly"]["cloudcover"]
+            hourly_temps = data["hourly"]["temperature_2m"]
+
+            remaining_clouds_today = []
+            remaining_temps_today = []
+
+            for time_str, cloud_value, temp_value in zip(hourly_times, hourly_clouds, hourly_temps):
+                hour_dt = datetime.fromisoformat(time_str).replace(tzinfo=local_tz)
+
+                if now.date() == hour_dt.date() and now <= hour_dt <= sunset_dt:
+                    remaining_clouds_today.append(cloud_value)
+                    remaining_temps_today.append(temp_value)
+
+            # Moyennes
+          
+            avg_remaining_cloud = (
+                sum(remaining_clouds_today) / len(remaining_clouds_today)
+                if remaining_clouds_today else current_cloud
+            )
+
+            avg_remaining_temp = (
+                sum(remaining_temps_today) / len(remaining_temps_today)
+                if remaining_temps_today else 20.0  # fallback
+            )
+
             remaining_sunlight = max(0, (sunset_dt - now).total_seconds() / 3600.0)
-        
-            return temperature, cloud_cover, sunshine_duration, remaining_sunlight
+
+            return avg_remaining_temp, avg_remaining_cloud, sunshine_duration, remaining_sunlight
+
+
 
 @app.route('/mppt/analysis/<ip>', methods=['GET']) 
 async def getAnalysisMppt(ip):
@@ -123,7 +156,7 @@ async def getAnalysisMppt(ip):
         battery_type = request.args.get("battery_type", default="agm", type=str)
         lat = request.args.get("lat", type=float)
         lon = request.args.get("lon", type=float)
-
+        
         if lat is None or lon is None:
             lat = 45.58109
             lon = -73.48695
@@ -140,10 +173,11 @@ async def getAnalysisMppt(ip):
             rr.registers[20], rr.registers[22]
         )
 
-        temperature, cloud_cover, total_sun_hours, remaining_sun_hours = await get_weather_data(lat, lon)
-
+        temperature, avg_remaining_cloud, total_sun_hours, remaining_sun_hours = await get_weather_data(lat, lon)
+    
         temp_loss = battery_capacity_reduction(temperature)
-        cloud_loss = solar_recharge_clouds(cloud_cover)
+        cloud_loss = solar_recharge_clouds(avg_remaining_cloud)
+       
         adjusted_sun_hours = min(remaining_sun_hours, total_sun_hours)
         solar_eff = solar_recharge_duration(adjusted_sun_hours, battery_type)
 
@@ -151,12 +185,22 @@ async def getAnalysisMppt(ip):
         initial_voltage = mppt_data.Battery_Voltage
         charge_percent = (solar_eff - cloud_loss) / 100
         capacity_loss_percent = temp_loss / 100
+        performance_value = (1 + charge_percent) * (1 - capacity_loss_percent)
 
-        predicted_voltage = initial_voltage * (1 + charge_percent) * (1 - capacity_loss_percent)
+        performance = "DOWN"
+        if performance_value < 0.75:
+            performance = "DOWN"
+        elif 0.75 <= performance_value <= 1.25:
+            performance = "MEDIUM"
+        else:
+            performance = "UP"
 
+        predicted_voltage = initial_voltage * performance_value
+    
+     
         analysis = {
             "temperature_ext": temperature,
-            "cloud_cover": cloud_cover,
+            "avg_remaining_cloud": round(avg_remaining_cloud,2),
             "sun_hours": total_sun_hours,
             "remaining_sun_hours": round(remaining_sun_hours, 2),
             "battery_type": battery_type.lower(),
@@ -165,7 +209,7 @@ async def getAnalysisMppt(ip):
             "solar_charge_efficiency": solar_eff,
             "predicted_end_day_voltage": round(predicted_voltage, 2),
             "current_battery_voltage" : initial_voltage,
-            "performance": "UP" if round(predicted_voltage, 2)>=round(initial_voltage,2) else "DOWN"
+            "performance": performance
         }
 
         return jsonify({
@@ -177,7 +221,36 @@ async def getAnalysisMppt(ip):
     except Exception as e:
         mppt_data = mppt(0,0,0,0,0,0,0,0)
         return jsonify({"success": False, "message": str(e), "data": mppt_data.__dict__})
+    
+    
+async def restart_mppt(ip, port=502, unit_id=1):
+    RESET_REGISTER = 121  # Adresse Modbus du registre de reset
+    RESET_COMMAND = 1     # Valeur à écrire pour déclencher le reset
 
+    client = ModbusClient(host=ip, port=port, unit_id=unit_id, auto_open=True, timeout=5)
+    try:
+        await client.connect()
+        result = await client.write_register(RESET_REGISTER, RESET_COMMAND)
+
+        if result.isError():
+            return False, f"Erreur Modbus : {result}"
+        return True, "Redémarrage déclenché avec succès"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        await client.close()
+
+# --- Endpoint REST ---
+@app.route('/mppt/restart/<ip>', methods=['POST'])
+def restart_endpoint(ip):
+    try:
+        result, message = asyncio.run(restart_mppt(ip))
+        return jsonify({
+            "success": result,
+            "message": message
+        }), 200 if result else 500
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 if __name__ == '__main__':
