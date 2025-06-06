@@ -8,7 +8,6 @@ from flask_cors import CORS
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import aiohttp
 import sys,os
-import requests
 if sys.version_info < (3, 9):
     from backports.zoneinfo import ZoneInfo
 else:
