@@ -251,6 +251,7 @@ async def run_playwright(ip):
             return jsonify({"status": "success", "message": "Save button clicked!"})
 
     except Exception as e:
+        print(e)
         return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)
