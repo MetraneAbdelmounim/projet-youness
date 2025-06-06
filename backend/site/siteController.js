@@ -53,7 +53,7 @@ module.exports = {
     getSiteByIdWithoutDATA: function (req, res) {
         Site.findOne({ _id: req.params.idSite })
             .then((site) => {
-                 res.status(200).json(site);
+                res.status(200).json(site);
             })
             .catch(error => res.status(500).send(error));
     },
@@ -103,8 +103,8 @@ module.exports = {
                 for (let i = 0; i < sites.length; i++) {
                     axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
                         .then((dataMppt) => {
-                            
-                            
+
+
                             sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
                             sites[i].Charge_Current = dataMppt.data.data.Charge_Current
                             sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
@@ -145,18 +145,18 @@ module.exports = {
         })
     },
     updateSite: function (req, res) {
-        
-        
+
+
         Site.findOne({ _id: req.params.idSite })
             .then((site) => {
-                
+
                 Site.updateOne({ _id: site._id }, { ...req.body, _id: site._id })
                     .then(() => {
 
                         res.status(200).json({ message: "Le site a été modifé avec succés !" })
                     })
                     .catch(error => {
-                        
+
                         res.status(400).json({ error })
                     });
             })
@@ -262,14 +262,14 @@ module.exports = {
         })
     },
     exportAllSites: async function (req, res) {
-    
-        
+
+
         try {
-    
-            
+
+
             const sites = await Site.find();
-            
-            
+
+
             const workbook = new excelJS.Workbook();
             const worksheet = workbook.addWorksheet('sites');
 
@@ -296,7 +296,7 @@ module.exports = {
             res.end();
         } catch (error) {
             console.log(error);
-            
+
             res.status(500).send('Error generating Excel file');
         }
     },
@@ -304,7 +304,7 @@ module.exports = {
         Site.findOne({ _id: req.params.idSite }).then(async site => {
             if (site) {
                 try {
-                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}&lat=${site.latitude}&lon=${site.longitude}` );
+                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}&lat=${site.latitude}&lon=${site.longitude}`);
                     const dataMppt = response.data;
 
                     const analysis = new Analysis(dataMppt.analysis);
@@ -319,6 +319,30 @@ module.exports = {
         }).catch(err => {
             res.status(500).send('Error: ' + err);
         });
+    },
+    restarSite: async function (req, res) {
+        try {
+            const site = await Site.findOne({ _id: req.params.idSite });
+            if (!site) {
+                return res.status(404).send('Site not found');
+            }
+
+            // Call the Flask API
+            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/restart/${site.ip}`);
+
+            const data = response.data;
+
+            // Example: Send the whole response back
+            res.status(200).json({ status: data.status, message: data.message });
+
+            // Optional: If your Flask returns analysis data, construct an Analysis object
+            // const analysis = new Analysis(data.analysis);
+            // res.status(200).json(analysis);
+
+        } catch (err) {
+            console.error('Restart error:', err.message);
+            res.status(500).send('Error restarting site: ' + err.message);
+        }
     }
 
 }

@@ -1,4 +1,5 @@
 import asyncio
+from playwright.async_api import async_playwright
 import time
 import json
 
@@ -6,15 +7,16 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from pymodbus.client import AsyncModbusTcpClient as ModbusClient
 import aiohttp
-import sys
+import sys,os
+import requests
 if sys.version_info < (3, 9):
     from backports.zoneinfo import ZoneInfo
 else:
     from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 
-if sys.platform.startswith('win'):
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from mppt import mppt  # Assurez-vous que la classe mppt est définie dans mppt.py
 
@@ -223,35 +225,33 @@ async def getAnalysisMppt(ip):
         return jsonify({"success": False, "message": str(e), "data": mppt_data.__dict__})
     
     
-async def restart_mppt(ip, port=502, unit_id=1):
-    RESET_REGISTER = 121  # Adresse Modbus du registre de reset
-    RESET_COMMAND = 1     # Valeur à écrire pour déclencher le reset
 
-    client = ModbusClient(host=ip, port=port, unit_id=unit_id, auto_open=True, timeout=5)
-    try:
-        await client.connect()
-        result = await client.write_register(RESET_REGISTER, RESET_COMMAND)
-
-        if result.isError():
-            return False, f"Erreur Modbus : {result}"
-        return True, "Redémarrage déclenché avec succès"
-    except Exception as e:
-        return False, str(e)
-    finally:
-        await client.close()
-
-# --- Endpoint REST ---
 @app.route('/mppt/restart/<ip>', methods=['POST'])
 def restart_endpoint(ip):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(run_playwright(ip))
+    return result
+async def run_playwright(ip):
     try:
-        result, message = asyncio.run(restart_mppt(ip))
-        return jsonify({
-            "success": result,
-            "message": message
-        }), 200 if result else 500
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page()
+            page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+            # Use your actual URL here:
+            await page.goto(f"http://{ip}:4444/network.html")
+        
+            # Wait for JavaScript to initialize
+            await page.wait_for_timeout(1000)
+
+            # Trigger Save
+            await page.evaluate("document.getElementsByName('BTNSave')[0]?.click()")
+            await page.wait_for_timeout(1000)
+
+            await browser.close()
+            return jsonify({"status": "success", "message": "Save button clicked!"})
+
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
-
-
+        return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)
