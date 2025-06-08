@@ -27,7 +27,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 async def getDataMppt(ip):
     try:
       
-        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=5)
+        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=2)
         await c.connect()
        
         rr = await c.read_holding_registers(0, 82, 1)
@@ -161,7 +161,7 @@ async def getAnalysisMppt(ip):
         if lat is None or lon is None:
             lat = 45.58109
             lon = -73.48695
-        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=5)
+        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=1)
         await c.connect()
         rr = await c.read_holding_registers(0, 82, 1)
 
