@@ -8,6 +8,7 @@ router.post('',licenceGuard,authAdmin,memberController.addMember)
 router.get('',licenceGuard,authUser,memberController.getAllmembers)
 router.delete('/:idMember',licenceGuard,authAdmin,memberController.deleteMember)
 router.put('/:idMember',licenceGuard,authAdmin,memberController.updateMember)
-router.put('/password/:idMember',licenceGuard,authAdmin,memberController.changePassword)
+router.put('/password/:idMember',licenceGuard,authUser,memberController.changePassword)
+router.put('/notifications/:idMember',licenceGuard,authAdmin,memberController.changeNotification)
 
 module.exports = router

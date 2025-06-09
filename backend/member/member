@@ -9,6 +9,7 @@ const memberSchema = mongoose.Schema({
     password : {type:String,required:true},
     isAdmin : {type:Boolean,required:true,default:false},
     actif:{type: Boolean,required:false,default:false},
+    notification:{type: Boolean,required:false,default:false},
 
 });
 

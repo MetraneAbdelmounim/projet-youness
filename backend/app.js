@@ -22,6 +22,8 @@ const HOST = config.HOST;
 const app = express();
 const connectionUrl = config.bdUrl;
 const Site = require('./site/site.js');
+const Member = require('./member/member');
+const { log } = require('console');
 
 mongoose.connect(connectionUrl, {
   useNewUrlParser: true,
@@ -69,7 +71,7 @@ const transporter = nodemailer.createTransport({
   auth: config.transporter.auth,
 });
 
-function sendBatchAlertEmail(alerts) {
+function sendBatchAlertEmail(alerts,emails) {
   const htmlTable = `
     <h3>🚨 MPPT Status Report</h3>
     <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse;">
@@ -96,11 +98,11 @@ function sendBatchAlertEmail(alerts) {
 
   const mailOptions = {
     from: config.mailOptions.from,
-    to: config.mailOptions.to,
+    to: (process.env.NODE_ENV=="production")? emails :'abdelmounim.metrane@gmail.com',
     subject: "[MI8 Monitoring Platform] MPPT Daily Alert Summary",
     html: htmlTable,
   };
-
+  
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
       console.error("Error sending summary email:", error);
@@ -115,11 +117,19 @@ const REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 cron.schedule(config.schedule, async () => {
   console.log("⏱️ Running MPPT performance check...");
+  
+  const users = await Member.find({ notification: true }).select('username')
+  const emails = []
+  for (const user of users){
+    emails.push(user.username+'@innovationmi8.com')
+  }
 
+  
+  
   const sites = await Site.find();
   const alerts = [];
   const now = Date.now();
-
+  
   for (const site of sites) {
     const siteKey = site.ip;
     try {
@@ -158,7 +168,7 @@ cron.schedule(config.schedule, async () => {
   }
 
   if (alerts.length > 0) {
-    sendBatchAlertEmail(alerts);
+    sendBatchAlertEmail(alerts,emails);
   } else {
     console.log("✅ No issues detected. No alerts to send.");
   }

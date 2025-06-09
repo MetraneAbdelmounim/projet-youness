@@ -115,4 +115,31 @@ module.exports = {
                 res.status(400).send(error)
             });
     },
+    changeNotification: function (req,res){
+        
+            Member.findOne({_id: req.params.idMember})
+                .then((member) => {
+                    
+                    
+                    Member.updateOne({ _id: member._id }, { ...req.body, _id: member._id })
+                        .then(() =>{
+                            if(req.body.notification){
+                               res.status(200).json({ message: `Les notifications pour ${member.username} ont été activé`})
+
+                            }
+                            else{
+                                res.status(200).json({ message: `Les notifications pour ${member.username} ont été désactivé`})
+                            }
+                              
+                        } )
+                        .catch(error =>{
+                            res.status(400).json({ error })
+                        } );
+                })
+                .catch(error => {
+    
+                    res.status(400).send(error)
+                });
+    
+     },
 }
