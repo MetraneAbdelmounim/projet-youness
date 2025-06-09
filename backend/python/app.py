@@ -232,26 +232,23 @@ def restart_endpoint(ip):
     result = loop.run_until_complete(run_playwright(ip))
     return result
 async def run_playwright(ip):
-    try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-            # Use your actual URL here:
-            await page.goto(f"http://{ip}:4444/network.html")
-        
-            # Wait for JavaScript to initialize
-            await page.wait_for_timeout(1000)
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
+        # Use your actual URL here:
+        await page.goto(f"http://{ip}:4444/network.html")
+    
+        # Wait for JavaScript to initialize
+        await page.wait_for_timeout(1000)
 
-            # Trigger Save
-            await page.evaluate("document.getElementsByName('BTNSave')[0]?.click()")
-            await page.wait_for_timeout(1000)
+        # Trigger Save
+        await page.evaluate("document.getElementsByName('BTNSave')[0]?.click()")
+        await page.wait_for_timeout(1000)
 
-            await browser.close()
-            return jsonify({"status": "success", "message": "Save button clicked!"})
+        await browser.close()
+        return jsonify({"status": "success", "message": "Save button clicked!"})
 
-    except Exception as e:
-        print(e)
-        return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)
