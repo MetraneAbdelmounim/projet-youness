@@ -328,7 +328,7 @@ module.exports = {
             }
 
             // Call the Flask API
-            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/restart/${site.ip}`);
+            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/reload/${site.ip}`);
 
             const data = response.data;
 

@@ -29,7 +29,7 @@ router.get('/data/analysis/:idSite',licenceGuard ,authUser,siteController.getDat
 router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
 router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
 router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
-router.post('/restart/:idSite',licenceGuard ,authAdmin,siteController.restarSite)
+router.post('/reload/:idSite',licenceGuard ,authAdmin,siteController.restarSite)
 router.get('/:idSite',licenceGuard ,authUser,siteController.getSiteByIdWithoutDATA)
 
 module.exports=router

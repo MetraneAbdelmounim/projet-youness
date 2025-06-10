@@ -27,10 +27,10 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 async def getDataMppt(ip):
     try:
       
-        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=2)
+        c = ModbusClient(host=ip,port=502,timeout=2)
         await c.connect()
        
-        rr = await c.read_holding_registers(0, 82, 1)
+        rr = await c.read_holding_registers(address=0,count=82,slave=1,no_response_expected=False)
 
         if not rr or not hasattr(rr, "registers") or len(rr.registers) < 63:
             raise ValueError("Données Modbus invalides")
@@ -161,9 +161,9 @@ async def getAnalysisMppt(ip):
         if lat is None or lon is None:
             lat = 45.58109
             lon = -73.48695
-        c = ModbusClient(host=ip, port=502, unit_id=1, auto_open=True, timeout=1)
+        c =ModbusClient(host=ip,port=502,timeout=2)
         await c.connect()
-        rr = await c.read_holding_registers(0, 82, 1)
+        rr = await c.read_holding_registers(address=0,count=82,slave=1,no_response_expected=False)
 
         if not rr or not hasattr(rr, "registers") or len(rr.registers) < 63:
             raise ValueError("Données Modbus invalides")
@@ -251,7 +251,43 @@ async def run_playwright(ip):
             return jsonify({"status": "success", "message": "Save button clicked!"})
 
     except Exception as e:
-        print(e)
+     
         return jsonify({"status": "error", "message": str(e)}), 500
+    
+
+@app.route('/mppt/reload/<ip>', methods=['POST'])
+def reset_mppt(ip):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    result = loop.run_until_complete(reset_mppt_async(ip))
+    return result
+
+async def reset_mppt_async(ip):
+    try:
+        client =ModbusClient(host=ip,port=502,timeout=2)
+        await client.connect()
+       
+        # Adresse du coil Reset = 256
+        address = 255
+        value = True  # 0xFF00 est interprété comme "True" dans pymodbus pour write_coil
+
+        result = await client.write_coil(address=address,value=True,slave=1)
+       
+        return jsonify({
+                "success": True,
+                "message": f"Commande de redémarrage envoyée à {ip} via coil {address}"
+            })
+ 
+    except Exception as e:
+        if str(e)=="Modbus Error: [Input/Output] No response received after 3 retries, continue with next request":
+            return jsonify({
+                "success": True,
+                "message": f"Commande de redémarrage envoyée à {ip} via coil {address}"
+            })
+ 
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 if __name__ == '__main__':
     app.run(debug=True)
