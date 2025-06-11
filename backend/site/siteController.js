@@ -343,6 +343,30 @@ module.exports = {
             console.error('Restart error:', err.message);
             res.status(500).send('Error restarting site: ' + err.message);
         }
+    },
+    refreshSite: async function (req, res) {
+        try {
+            const site = await Site.findOne({ _id: req.params.idSite });
+            if (!site) {
+                return res.status(404).send('Site not found');
+            }
+
+            // Call the Flask API
+            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/refresh/${site.ip}`);
+
+            const data = response.data;
+
+            // Example: Send the whole response back
+            res.status(200).json({ status: data.status, message: data.message });
+
+            // Optional: If your Flask returns analysis data, construct an Analysis object
+            // const analysis = new Analysis(data.analysis);
+            // res.status(200).json(analysis);
+
+        } catch (err) {
+            console.error('Restart error:', err.message);
+            res.status(500).send('Error restarting site: ' + err.message);
+        }
     }
 
 }

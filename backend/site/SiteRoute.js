@@ -30,6 +30,7 @@ router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
 router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
 router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
 router.post('/reload/:idSite',licenceGuard ,authAdmin,siteController.restarSite)
+router.post('/refresh/:idSite',licenceGuard ,authAdmin,siteController.refreshSite)
 router.get('/:idSite',licenceGuard ,authUser,siteController.getSiteByIdWithoutDATA)
 
 module.exports=router

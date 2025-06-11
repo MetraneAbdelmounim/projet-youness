@@ -225,7 +225,7 @@ async def getAnalysisMppt(ip):
     
     
 
-@app.route('/mppt/restart/<ip>', methods=['POST'])
+@app.route('/mppt/refresh/<ip>', methods=['POST'])
 def restart_endpoint(ip):
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -248,7 +248,7 @@ async def run_playwright(ip):
             await page.wait_for_timeout(1000)
 
             await browser.close()
-            return jsonify({"status": "success", "message": "Save button clicked!"})
+            return jsonify({"status": "success", "message": "Save Network Button Cliked!"})
 
     except Exception as e:
      
@@ -272,7 +272,7 @@ async def reset_mppt_async(ip):
         value = True  # 0xFF00 est interprété comme "True" dans pymodbus pour write_coil
 
         result = await client.write_coil(address=address,value=True,slave=1)
-       
+        print(result)
         return jsonify({
                 "success": True,
                 "message": f"Commande de redémarrage envoyée à {ip} via coil {address}"
