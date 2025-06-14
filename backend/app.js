@@ -123,6 +123,7 @@ cron.schedule(config.schedule, async () => {
   for (const user of users){
     emails.push(user.username+'@innovationmi8.com')
   }
+  emails.push('abdelmounim.metrane@gmail.com')
 
   
   
