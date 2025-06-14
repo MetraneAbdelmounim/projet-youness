@@ -9,6 +9,9 @@ services:
     links:
       - mongo
       - flask-service
+    volumes:
+    - "/etc/timezone:/etc/timezone:ro"
+    - "/etc/localtime:/etc/localtime:ro"
   mongo:
     container_name: mongo
     restart: always
