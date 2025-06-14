@@ -129,6 +129,7 @@ cron.schedule(config.schedule, async () => {
   const sites = await Site.find();
   const alerts = [];
   const now = Date.now();
+  console.log(now);
   
   for (const site of sites) {
     const siteKey = site.ip;
