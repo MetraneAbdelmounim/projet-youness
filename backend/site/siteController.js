@@ -187,7 +187,7 @@ module.exports = {
             });
 
             const sites = excelData.sites;
-
+            
             // Iterate through each site and upsert
             for (const site of sites) {
                 await Site.updateOne(
