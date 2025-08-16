@@ -13,6 +13,7 @@ const { pin } = require("nodemon/lib/version");
 const { log } = require('console')
 const analysis = require('../analysis/analysis')
 
+
 module.exports = {
     addSite: function (req, res) {
         const id = new mongoose.Types.ObjectId()
@@ -49,6 +50,16 @@ module.exports = {
                 );
             })
             .catch(error => res.status(500).send(error));
+    },
+    getSitesByProject: function (req, res) {
+        Site.find({project: req.params.idProject }).then(async sites => {
+            if (sites) {
+                res.status(200).json(sites);
+            }
+        }).catch(err => {
+
+            if (err) res.status(500).send('error : ' + err);
+        })
     },
     getSiteByIdWithoutDATA: function (req, res) {
         Site.findOne({ _id: req.params.idSite })
@@ -98,7 +109,11 @@ module.exports = {
         })
     },
     getAllSites2: async function (req, res) {
-        Site.find().then(async sites => {
+       
+        
+        Site.find({project:req.query.project}).then(async sites => {
+          
+            
             if (sites) {
                 for (let i = 0; i < sites.length; i++) {
                     axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
@@ -279,9 +294,18 @@ module.exports = {
                 { header: 'latitude', key: 'latitude', width: 30 },
                 { header: 'longitude', key: 'longitude', width: 30 },
                 { header: 'Battery_Type', key: 'Battery_Type', width: 30 },
+                { header: 'project', key: 'project', width: 30 },
             ];
+            const flattenedData = sites.map(site => ({
+                ip: site.ip,
+                nom: site.nom,
+                latitude: site.latitude,
+                longitude: site.longitude,
+                Battery_Type: site.Battery_Type,
+                project: site.project?.nom || '', 
+                }));
 
-            worksheet.addRows(sites);
+            worksheet.addRows(flattenedData);
 
             res.setHeader(
                 'Content-Type',

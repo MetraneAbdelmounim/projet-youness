@@ -5,6 +5,7 @@ var Float = require('mongoose-float').loadType(mongoose, 2);
 
 const siteSchema = mongoose.Schema({
     _id : {type:mongoose.Schema.Types.ObjectId,unique:true},
+    project:{type:mongoose.Schema.Types.ObjectId,ref: 'Project' },
     ip :{type: String,required:true,unique:true},
     nom:{type: String,required:true},
     Battery_Type:{type: String,required:false,default:"AGM"},
@@ -22,5 +23,12 @@ const siteSchema = mongoose.Schema({
 
 });
 
-
+siteSchema.pre('find',function(next) {
+    this.populate('project');
+    next();
+})
+siteSchema.pre('findOne',function(next) {
+    this.populate('project');
+    next();
+})
 module.exports = mongoose.model('Site', siteSchema)

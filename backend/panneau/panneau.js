@@ -3,7 +3,7 @@ var uniqueValidator = require('mongoose-unique-validator');
 
 var Float = require('mongoose-float').loadType(mongoose, 2);
 
-const modemSchema = mongoose.Schema({
+const panneauSchema = mongoose.Schema({
     _id : {type:mongoose.Schema.Types.ObjectId,unique:true},
     ip :{type: String,required:true,unique:true},
     nom:{type: String,required:true},
@@ -11,13 +11,13 @@ const modemSchema = mongoose.Schema({
   
 
 });
-modemSchema.pre('find',function(next) {
+panneauSchema.pre('find',function(next) {
     this.populate('project');
     next();
 })
-modemSchema.pre('findOne',function(next) {
+panneauSchema.pre('findOne',function(next) {
     this.populate('project');
     next();
 })
 
-module.exports = mongoose.model('Modem', modemSchema)
+module.exports = mongoose.model('Panneau', panneauSchema)

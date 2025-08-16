@@ -22,6 +22,7 @@ var upload = multer({
 router.post('',licenceGuard,authAdmin,siteController.addSite)
 router.post('/file',licenceGuard ,authAdmin,upload.single('file'),siteController.addSiteFromFile)
 router.get('',licenceGuard ,authUser,siteController.getAllSites2)
+router.get('/projects/:idProject',licenceGuard ,authUser,siteController.getSitesByProject)
 router.get('/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
 router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
 router.get('/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)

@@ -79,12 +79,16 @@ module.exports = {
         try {
             decoded = jwt.verify(req.params.token, config.secret_token_key);
             Member.findOne({_id: decoded.userId})
+                .populate('projects')      
                 .then(async (member) => {
+                   
                     delete member["password"]
                     res.status(200).send({message:'authorized',member:member});
 
                 })
                 .catch(error => {
+            
+                    
                     res.status(400).send(error)
                 });
 

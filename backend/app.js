@@ -15,7 +15,9 @@ const mongoose = require('mongoose');
 const authRoute = require('./auth/authRoute');
 const siteRoute = require('./site/SiteRoute');
 const modemRoute = require('./modem/modemRoute');
+const panneauRoute = require('./panneau/panneauRoute');
 const memberRoute = require('./member/memberRoute');
+const projectRoute=require('./project/projectRoute')
 const path = require('path');
 const PORT = config.PORT;
 const HOST = config.HOST;
@@ -180,6 +182,8 @@ app.use('/api/auth', authRoute);
 app.use('/api/stations', siteRoute);
 app.use('/api/members', memberRoute);
 app.use('/api/modems', modemRoute);
+app.use('/api/panneaus', panneauRoute);
+app.use('/api/projects', projectRoute);
 
 app.listen(PORT, () => {
   console.log(`server running at http://${HOST}:${PORT}`);
