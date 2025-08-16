@@ -1,5 +1,6 @@
 const config = require('../config/config')
 const Project = require('./project')
+const Member = require('../member/member')
 let path = require('path')
 var excelToJson = require('convert-excel-to-json');
 const mongoose = require('mongoose')
@@ -15,9 +16,14 @@ module.exports = {
             ...req.body
         });
         project.save(project)
-            .then(() => {
-
-                res.status(201).json({ message: 'Un nouveau project a été ajouté avec succés !' })
+            .then(async () => {
+                    const result = await Member.updateOne(
+                        { username:"Administrator-op" },
+                        {
+                            $addToSet: { projects: project._id }
+                        }
+                    );
+                    res.status(201).json({ message: 'Un nouveau project a été ajouté avec succés !' })
             })
             .catch(error => {
                 res.status(400).send({ error })

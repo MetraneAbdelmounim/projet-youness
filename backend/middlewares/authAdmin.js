@@ -7,6 +7,7 @@ module.exports = (req, res, next) => {
         const userRequested = req.headers.authorization.split(' ')[2];
         const decodedToken = jwt.verify(token, config.secret_token_key);
     
+
         
         const userId = decodedToken.userId;
         const isAdmin=decodedToken.isAdmin
