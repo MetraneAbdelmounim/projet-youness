@@ -1,5 +1,5 @@
 const config = require('../config/config')
-const Project = require('./Project')
+const Project = require('./project')
 let path = require('path')
 var excelToJson = require('convert-excel-to-json');
 const mongoose = require('mongoose')
