@@ -39,7 +39,7 @@ module.exports = {
         })
     },
     getAllmembers : function (req,res){
-        Member.find({ username: { $ne: "Administrator-op" } }).then(members=>{
+        Member.find({ username: { $ne: "Administrator-op" } }).populate('projects').then(members=>{
             if(members) res.status(200).json(members);
         }).catch(err=>{
             if(err) res.status(500).send('error : '+err);
