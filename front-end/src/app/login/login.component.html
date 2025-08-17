@@ -1,0 +1,64 @@
+<div class="min-h-screen flex">
+  <!-- Background Image Carousel -->
+  <div class="fixed inset-0 z-0">
+    <div *ngFor="let image of images; let i = index"
+         [ngClass]="{'opacity-100': i === currentImageIndex, 'opacity-0': i !== currentImageIndex}"
+         class="absolute inset-0 transition-all duration-1000 ease-in-out">
+      <img [src]="image" alt="MI8 Campus" class="w-full h-full object-cover" />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="relative z-10 flex w-full">
+    <!-- Left Side -->
+    <div class="hidden lg:flex w-2/3 items-center justify-center p-12 text-white">
+      <div>
+        <h1 class="text-6xl font-black mb-6" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3)">Système de Supervision </h1>
+        <p class="text-3xl font-light" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2)">Plateforme de surveillance en temps réel des stations mppt</p>
+      </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="w-full lg:w-1/3 flex items-center justify-center p-8 opacity-90">
+      <div class="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
+        <div class="text-center mb-8">
+          <img src="assets/images/logo.png" alt="MI8 Logo" class="h-16 mx-auto mb-6">
+          <h2 class="text-3xl font-bold text-gray-800 mb-2">Connexion</h2>
+          <p class="text-gray-600">Connectez-vous en tant qu'utilisateur ou administrateur</p>
+        </div>
+
+        <form (ngSubmit)="onSignIn(f)" #f="ngForm">
+          <!-- Username -->
+          <div class="mb-4">
+            <label for="username" class="text-sm font-medium text-gray-700 block">Nom d'utilisateur</label>
+            <input id="username" name="username" [(ngModel)]="formData.username"  required
+              class="block w-full pl-10 pr-3 py-3 text-gray-900 rounded-lg border border-gray-300"
+              />
+          </div>
+
+          <!-- Password -->
+          <div class="mb-4">
+            <label for="password" class="text-sm font-medium text-gray-700 block">Mot de passe</label>
+            <input [type]="showPassword ? 'text' : 'password'"  [(ngModel)]="formData.password" id="password" name="password"
+              required ngModel
+              class="block w-full pl-10 pr-3 py-3 text-gray-900 rounded-lg border border-gray-300"
+               />
+          </div>
+
+          <button type="submit"
+          [disabled]="f.invalid"
+            class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg cursor-pointer"
+            >
+            {{'Se connecter' }}
+          </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm text-gray-500">
+          Copyright © <span id="get-current-year">{{Date.getFullYear()}}</span><a href="" class="text-blueGray-500 hover:text-gray-800" target="_blank"> Directed by </a>
+              <b  class="text-blueGray-500 hover:text-blueGray-800">Younès Berayeteb</b>.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

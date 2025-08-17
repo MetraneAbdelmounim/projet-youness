@@ -1,0 +1,82 @@
+<!-- Loading Spinner -->
+<div class="flex items-center justify-center h-screen" *ngIf="spinnerSite">
+  <div class="spin"></div>
+</div>
+
+<!-- Content When Not Loading -->
+<div class="p-6 bg-gradient-to-br from-blue-100 to-blue-50 min-h-screen" *ngIf="!spinnerSite">
+
+  <!-- Top Bar -->
+  <div class="flex justify-between items-center mb-4">
+    <!-- Back Link -->
+    <button routerLink="/projects"
+      class="cursor-pointer inline-flex items-center text-blue-600 hover:underline text-sm">
+      ← Back to projects
+    </button>
+
+    <!-- Generate Report -->
+    <button [disabled]="!allAnalysesReady()"
+      class="dark:bg-gray-700 cursor-pointer hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
+      (click)="generatePDF(project.nom)">
+      <i *ngIf="!allAnalysesReady()" class="fa fa-spinner spinR" aria-hidden="true"></i>
+      <span *ngIf="allAnalysesReady()">📄</span> Generate Report
+    </button>
+  </div>
+
+  <!-- Sites Grid or Empty State -->
+  <ng-container *ngIf="sites.length > 0; else noSites">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" #reportContent>
+      <div
+        class="bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl hover:scale-[1.01] duration-300 relative"
+        *ngFor="let site of sites">
+        <!-- Details Button -->
+        <div>
+          <button class="absolute top-1 right-1 bg-white border border-gray-300 rounded-full p-1 hover:bg-gray-100"
+            (click)="analysisDetail(site._id, site.project._id)" title="View Details">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Site Info -->
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">{{ site.nom }}</h2>
+            <p class="text-sm text-gray-500">{{ site.ip }}</p>
+          </div>
+          <app-site-status [ip]="site.ip" [idSite]="site._id"></app-site-status>
+        </div>
+
+        <!-- Project Tag -->
+        <div class="mb-4">
+          <span *ngIf="project?.nom; else noProject"
+            class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
+            {{ project.nom }}
+          </span>
+          <ng-template #noProject>
+            <span class="text-xs text-gray-400 italic">Pas de projet</span>
+          </ng-template>
+        </div>
+
+        <!-- Site Analysis -->
+        <app-site-analysis [idSite]="site._id"
+          (analysisReady)="onAnalysisReceived(site._id, $event)"></app-site-analysis>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Empty State -->
+  <ng-template #noSites>
+    <div class="flex flex-col items-center justify-center h-96 text-center text-gray-600">
+      <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-6 0h6m-6 0a2 2 0 01-2-2v-6a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2m-6 0v1a2 2 0 002 2h2a2 2 0 002-2v-1" />
+      </svg>
+      <h3 class="text-lg font-semibold mb-2">Aucune station trouvé</h3>
+      <p class="text-sm">Aucune station MPPT n’est associé à ce projet.</p>
+    </div>
+  </ng-template>
+</div>

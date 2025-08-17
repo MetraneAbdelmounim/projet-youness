@@ -1,0 +1,22 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+#toast-container > div {
+    opacity:1;
+}
+
+html, body {
+  overflow: auto;
+}
+
+body {
+  margin: 0;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+button{
+  cursor: pointer;
+}

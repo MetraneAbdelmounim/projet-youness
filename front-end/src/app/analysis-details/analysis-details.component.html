@@ -1,0 +1,113 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-100 to-blue-50 p-6">
+  <!-- Back button -->
+  <button [routerLink]="['/project', site.project._id, 'analysis']"
+    class="cursor-pointer mb-4 inline-flex items-center text-blue-600 hover:underline text-sm">
+    ← Back to list 
+  </button>
+
+  <!-- Card -->
+  <div class="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-800" *ngIf="site">{{ site.nom }}</h1>
+        <div *ngIf="site">
+  <p class="text-sm text-gray-500">{{ site.ip }}  <span *ngIf="site.project?.nom"
+    class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
+    {{ site.project.nom }}
+  </span></p>
+ 
+  
+</div>
+      </div>
+      <app-site-status [ip]="site.ip" [idSite]="site._id" *ngIf="site"></app-site-status>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+      <div class="flex items-center space-x-3">
+        <span class="text-blue-600 text-xl">☁️</span>
+        <span class="text-gray-700">
+          AVG Cloud Cover:
+        </span>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.avg_remaining_cloud }} %</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-yellow-500 text-xl">🌞</span>
+        <span class="text-gray-700">Sun Hours Left:</span>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.remaining_sun_hours }} h</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-green-600 text-xl">🔋</span>
+        <span class="text-gray-700">Battery Type:</span>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.battery_type }}</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-red-500 text-xl">⚠️</span>
+        <p class="text-gray-700">Battery Loss:</p>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.battery_capacity_loss }} %</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-indigo-600 text-xl">🔌</span>
+        <p class="text-gray-700">Battery Voltage:</p>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.current_battery_voltage }} V</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-blue-700 text-xl">⚡</span>
+        <p class="text-gray-700">Charge Efficiency:</p>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.solar_charge_efficiency }} %</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+
+      </div>
+
+
+      <div class="flex items-center space-x-3">
+        <span class="text-blue-600 text-xl">☁️</span>
+        <p class="text-gray-700">Capacity Loss Cloud :</p>
+        <i class="text-gray-700" *ngIf="analysis">{{ analysis.solar_charge_loss_clouds }} %</i>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="text-purple-600 text-xl">📈</span>
+        <p class="text-gray-700">Performance:</p>
+        <span *ngIf="analysis" class="px-3 py-1 text-xs font-semibold rounded-full" [ngClass]="{
+    'bg-green-100 text-green-800': analysis.performance=='UP',
+    'bg-red-100 text-red-900': analysis.performance=='DOWN',
+    'bg-blue-100 text-blue-900': analysis.performance=='MEDIUM',
+    }">
+           <i *ngIf="analysis.performance === 'UP'" class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      Elevée
+    </i>
+    <i *ngIf="analysis.performance === 'DOWN'" class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      Faible
+    </i>
+    <i *ngIf="analysis.performance === 'MEDIUM'" class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      MEDIUM
+    </i>
+        </span>
+        <i *ngIf="!analysis"
+          class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+
+      </div>
+    </div>
+  </div>
+    <div class="rounded-2xl shadow-xl p-8 max-w-7xl mx-auto mt-6">
+
+    <app-meteo *ngIf="site" [lat]="site.latitude" [lon]="site.longitude"></app-meteo>
+    </div>
+  
+

@@ -1,0 +1,51 @@
+<div class="p-6 bg-gradient-to-br from-blue-100 to-blue-50 min-h-screen" *ngIf="!spinnerSite">
+
+  <!-- Back Button -->
+  <button routerLink="/projects"
+    class="cursor-pointer mb-4 inline-flex items-center text-blue-600 hover:underline text-sm">
+    ← Back to projects
+  </button>
+
+  <!-- Grid or Empty State -->
+  <ng-container *ngIf="panneaus.length > 0; else noPanneaus">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div
+        class="bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl hover:scale-[1.01] duration-300"
+        *ngFor="let panneau of panneaus"
+      >
+        <!-- Image -->
+        <img
+          [src]="'assets/images/panneau.jpg'"
+          alt="Image du panneau"
+          loading="lazy"
+          class="w-full h-40 object-cover rounded-xl mb-4"
+        />
+
+        <!-- Text & Status -->
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800">{{ panneau.nom }}</h2>
+            <p class="text-sm text-gray-500">{{ panneau.ip }} <span *ngIf="panneau.project?.nom"
+    class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
+    {{ panneau.project.nom }}
+  </span></p>
+          </div>
+          <app-site-status [ip]="panneau.ip"></app-site-status>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- 👇 Empty State -->
+  <ng-template #noPanneaus>
+    <div class="flex flex-col items-center justify-center h-96 text-center text-gray-600">
+      <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" stroke-width="1.5"
+           viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 6h16M4 10h16M10 14h10M4 18h10" />
+      </svg>
+      <h3 class="text-lg font-semibold mb-2">Aucun panneau trouvé</h3>
+      <p class="text-sm">Aucun panneau n’est actuellement associé à ce projet.</p>
+    </div>
+  </ng-template>
+</div>
