@@ -1,0 +1,30 @@
+.fa{
+    font-size: 25px;
+  }
+  .fa-remove{
+    color: #c23636;
+  }
+  .fa-edit{
+    color: #010e50;
+  }
+  button{
+    background: #005eb8;
+  }
+  .spin {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 10px solid #dcd7d7;
+    border-top: 10px solid #000942;
+    border-bottom: 10px solid #000942;
+    animation: round 1.2s linear infinite;
+  }
+  
+  @keyframes round {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }

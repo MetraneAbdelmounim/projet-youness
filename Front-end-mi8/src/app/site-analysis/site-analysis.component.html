@@ -1,0 +1,111 @@
+<div class="grid grid-cols-2 gap-x-6 gap-y-4 text-sm text-gray-700">
+  <!-- Cloud Cover -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 15a4 4 0 010-8 4.992 4.992 0 015.657-3.954A6 6 0 1118 13h-1" />
+    </svg>
+    <span class="font-semibold">AVG Cloud Cover:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.avg_remaining_cloud }} %</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Remaining Sun Hours -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71-.71M21 12h1M2 12H1m2.34-4.95l.71.71M19.95 19.95l.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+    <span class="font-semibold">Sun Hours Left:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.remaining_sun_hours }} h</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Battery Type -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M16 7H8v10h8V7zM20 11h1v2h-1zM3 11h1v2H3z" />
+    </svg>
+    <span class="font-semibold">Battery Type:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.battery_type }}</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Battery Capacity Loss -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9 12l2 2 4-4m-9 4a9 9 0 1118 0 9 9 0 01-18 0z" />
+    </svg>
+    <span class="font-semibold">Battery Loss:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.battery_capacity_loss }} %</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Solar Charge Loss Clouds -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 15a4 4 0 010-8 4.992 4.992 0 015.657-3.954A6 6 0 1118 13h-1" />
+    </svg>
+    <span class="font-semibold">Loss (Cloud):</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.solar_charge_loss_clouds }} %</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Solar Charge Efficiency -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+    <span class="font-semibold">Charge Eff.:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.solar_charge_efficiency }} %</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Current Battery Voltage -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M13 16h-1v-4H8v-4h5V4l7 7-7 7v-4z" />
+    </svg>
+    <span class="font-semibold">Battery Volt:</span>
+    <i *ngIf="siteAnalysis">{{ siteAnalysis.current_battery_voltage }} V</i>
+    <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+
+  <!-- Performance -->
+  <div class="flex items-center gap-2">
+    <svg class="w-5 h-5 text-fuchsia-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 17l6-6 4 4 8-8" />
+    </svg>
+    <span class="font-semibold">Performance:</span>
+    <ng-container *ngIf="siteAnalysis">
+    
+    <span
+   
+    class="px-3 py-1 text-xs font-semibold rounded-full"
+    [ngClass]="{
+    'bg-green-100 text-green-800': siteAnalysis.performance=='UP',
+    'bg-red-100 text-red-900': siteAnalysis.performance=='DOWN',
+    'bg-blue-100 text-blue-900': siteAnalysis.performance=='MEDIUM',
+    }"
+>
+    <i *ngIf="siteAnalysis.performance === 'UP'" class="w-4 h-4 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      Elevée
+    </i>
+    <i *ngIf="siteAnalysis.performance === 'DOWN'" class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      Faible
+    </i>
+    <i *ngIf="siteAnalysis.performance === 'MEDIUM'" class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      MEDIUM
+    </i>
+</span>
+
+  </ng-container>
+  <i *ngIf="!siteAnalysis" class="border-t-transparent border-solid animate-spin rounded-full border-blue-300 border-8 h-5 w-5"></i>
+  </div>
+</div>

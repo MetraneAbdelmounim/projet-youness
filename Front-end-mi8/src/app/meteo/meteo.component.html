@@ -1,0 +1,27 @@
+<div class="p-6">
+  <h2 class="text-2xl font-semibold text-gray-800 mb-4"><span class="text-yellow-500 text-xl">🌞</span> Prévision Météo</h2>
+
+  <div class="flex gap-2 justify-end mb-4">
+    <button
+      *ngFor="let day of [1,2,3,4,5]; let i = index"
+      (click)="updateChartForDay(i)"
+      [ngClass]="{
+        'bg-blue-950 text-white': selectedDayIndex === i,
+        'bg-blue-100 text-blue-950': selectedDayIndex !== i
+      }"
+      class="cursor-pointer px-4 py-1 rounded-full font-semibold transition hover:scale-105"
+    >
+  
+      <i *ngIf="day!=1">day {{day}}</i>
+      <i *ngIf="day==1">Today</i>
+    </button>
+  </div>
+
+  <div class="w-full h-[400px]">
+    <canvas baseChart
+      [data]="chartData"
+      [options]="chartOptions"
+      [type]="'bar'">
+    </canvas>
+  </div>
+</div>
