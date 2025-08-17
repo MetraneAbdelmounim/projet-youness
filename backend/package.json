@@ -25,6 +25,7 @@
     "jsonwebtoken": "^9.0.2",
     "modbus-tcp": "^0.4.13",
     "modbus-tcp-ip": "^1.0.3",
+    "moment-timezone": "^0.6.0",
     "mongoose": "^5.11.15",
     "mongoose-float": "^1.0.4",
     "mongoose-unique-validator": "^4.0.1",

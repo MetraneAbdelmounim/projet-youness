@@ -25,6 +25,7 @@ const app = express();
 const connectionUrl = config.bdUrl;
 const Site = require('./site/site.js');
 const Member = require('./member/member');
+const Panneau = require('./panneau/panneau')
 const { log } = require('console');
 
 mongoose.connect(connectionUrl, {
@@ -73,35 +74,40 @@ const transporter = nodemailer.createTransport({
   auth: config.transporter.auth,
 });
 
-function sendBatchAlertEmail(alerts,emails) {
+function sendBatchAlertEmail(alerts,emails,project) {
   const htmlTable = `
-    <h3>🚨 MPPT Status Report</h3>
-    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse;">
-      <thead>
-        <tr style="background-color: #f2f2f2;">
-          <th>Site</th>
-          <th>IP</th>
-          <th>Status</th>
-          <th>Date</th>
+  <h3>🚨 MPPT & Panneaux Status Report</h3>
+  <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse;">
+    <thead>
+      <tr style="background-color: #f2f2f2;">
+        <th>Type</th>
+        <th>Name</th>
+        <th>IP</th>
+        <th>Project</th>
+        <th>Status</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${alerts.map(alert => `
+        <tr>
+          <td>${alert.type === 'Panneau' ? 'Panneau de parcours' : 'Station MPPT'}</td>
+          <td>${alert.nom}</td>
+          <td>${alert.ip}</td>
+          <td>${alert.project}</td>
+          <td>${alert.reason}</td>
+          <td>${new Date().toLocaleString()}</td>
         </tr>
-      </thead>
-      <tbody>
-        ${alerts.map(alert => `
-          <tr>
-            <td>${alert.nom}</td>
-            <td>${alert.ip}</td>
-            <td>${alert.reason}</td>
-            <td>${new Date()}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
+      `).join('')}
+    </tbody>
+  </table>
+`;
+
 
   const mailOptions = {
     from: config.mailOptions.from,
     to: (process.env.NODE_ENV=="production")? emails :'abdelmounim.metrane@gmail.com',
-    subject: "[MI8 Monitoring Platform] MPPT Daily Alert Summary",
+    subject: `[MI8 Monitoring Platform][${project}] MPPT Daily Alert Summary `,
     html: htmlTable,
   };
   
@@ -118,24 +124,26 @@ const siteAlertStatus = new Map();
 const REMINDER_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 cron.schedule(config.schedule, async () => {
-  console.log("⏱️ Running MPPT performance check...");
-  
-  const users = await Member.find({ notification: true }).select('username')
-  const emails = []
-  for (const user of users){
-    emails.push(user.username+'@innovationmi8.com')
-  }
-  //emails.push('abdelmounim.metrane@gmail.com')
 
-  
-  
-  const sites = await Site.find();
-  const alerts = [];
+console.log("⏱️ Running MPPT performance check...");
+  // Get all users who enabled notifications, along with their projects
+  const users = await Member.find({ notification: true }).select('username projects').populate('projects');
+ 
+  // Prepare a map: email -> set of project IDs
+  const userMap = new Map();
+  for (const user of users) {
+    const email = `${user.username}@innovationmi8.com`;
+    userMap.set(email, new Set(user.projects.map(p => p._id.toString())));
+  }
+
+  // Get all sites
+  const sites = await Site.find().populate('project');
+  const alertsByUser = new Map();
   const now = Date.now();
-  console.log(now);
-  
+
   for (const site of sites) {
     const siteKey = site.ip;
+
     try {
       const response = await axios.get(
         `http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}&lat=${site.latitude}&lon=${site.longitude}`
@@ -152,9 +160,20 @@ cron.schedule(config.schedule, async () => {
 
       if (reason) {
         const alertInfo = siteAlertStatus.get(siteKey);
-
         if (!alertInfo || alertInfo.lastAlert !== reason || now - alertInfo.timestamp > REMINDER_INTERVAL_MS) {
-          alerts.push({ nom: site.nom, ip: site.ip, reason });
+          // Add alert to each user authorized for this site's project
+          for (const [email, projectSet] of userMap.entries()) {
+            if (site.project && projectSet.has(site.project._id.toString())) {
+              if (!alertsByUser.has(email)) alertsByUser.set(email, []);
+              alertsByUser.get(email).push({
+                nom: site.nom,
+                ip: site.ip,
+                project:site.project.nom,
+                reason,
+              type: 'Site'
+              });
+            }
+          }
           siteAlertStatus.set(siteKey, { lastAlert: reason, timestamp: now });
         }
       } else {
@@ -165,17 +184,100 @@ cron.schedule(config.schedule, async () => {
       const alertInfo = siteAlertStatus.get(siteKey);
 
       if (!alertInfo || alertInfo.lastAlert !== reason || now - alertInfo.timestamp > REMINDER_INTERVAL_MS) {
-        alerts.push({ nom: site.nom, ip: site.ip, reason });
+        for (const [email, projectSet] of userMap.entries()) {
+          if (site.project && projectSet.has(site.project._id.toString())) {
+            if (!alertsByUser.has(email)) alertsByUser.set(email, []);
+            alertsByUser.get(email).push({
+              nom: site.nom,
+              ip: site.ip,
+              project:site.project.nom,
+              reason,
+              type: 'Site'
+            });
+          }
+        }
         siteAlertStatus.set(siteKey, { lastAlert: reason, timestamp: now });
       }
     }
   }
+    // Get all panneaux
+  const panneaux = await Panneau.find().populate('project');
 
-  if (alerts.length > 0) {
-    sendBatchAlertEmail(alerts,emails);
+  for (const panneau of panneaux) {
+    const panneauKey = panneau.ip;
+
+    try {
+      const ping_panel = await ping.promise.probe(panneau.ip, { timeout: 4 });
+
+      if (!ping_panel.alive) {
+        const reason = 'Panneau is DOWN (no ping response)';
+        const alertInfo = siteAlertStatus.get(panneauKey);
+
+        if (!alertInfo || alertInfo.lastAlert !== reason || now - alertInfo.timestamp > REMINDER_INTERVAL_MS) {
+          for (const [email, projectSet] of userMap.entries()) {
+            if (panneau.project && projectSet.has(panneau.project._id.toString())) {
+              if (!alertsByUser.has(email)) alertsByUser.set(email, []);
+              alertsByUser.get(email).push({
+                nom: panneau.nom,
+                ip: panneau.ip,
+                project: panneau.project.nom,
+                reason,
+                type: 'Panneau'
+              });
+            }
+          }
+          siteAlertStatus.set(panneauKey, { lastAlert: reason, timestamp: now });
+        }
+      } else {
+        siteAlertStatus.delete(panneauKey);
+      }
+    } catch (err) {
+      console.error(`Error checking panneau ${panneau.nom}:`, err.message);
+    }
+  }
+
+
+  // Send emails per user
+  if (alertsByUser.size > 0) {
+    for (const [email, alerts] of alertsByUser.entries()) {
+      
+      sendBatchAlertEmail(alerts, [email],alerts[0].project);
+    }
   } else {
     console.log("✅ No issues detected. No alerts to send.");
   }
+});
+
+
+cron.schedule('0 0 * * *', async () => {
+  console.log('🌙 [MIDNIGHT] Starting refresh + restart for all stations...');
+
+  try {
+    const sites = await Site.find();
+
+    const refreshPromises = sites.map(site => {
+      const url = `http://${config.HOST_PY}:${config.PORT_PY}/mppt/refresh/${site.ip}`;
+      return axios.post(url)
+        .then(() => console.log(`✅ Refreshed ${site.nom} (${site.ip})`))
+        .catch(err => console.error(`❌ Refresh failed for ${site.nom} (${site.ip}): ${err.message}`));
+    });
+
+    const reloadPromises = sites.map(site => {
+      const url = `http://${config.HOST_PY}:${config.PORT_PY}/mppt/reload/${site.ip}`;
+      return axios.post(url)
+        .then(() => console.log(`✅ Restarted ${site.nom} (${site.ip})`))
+        .catch(err => console.error(`❌ Restart failed for ${site.nom} (${site.ip}): ${err.message}`));
+    });
+
+    // Wait for all refresh and restart operations in parallel
+    await Promise.all([...refreshPromises, ...reloadPromises]);
+
+    console.log('🎯 All refresh and restart operations completed.');
+  } catch (err) {
+    console.error('❌ Global failure during midnight task:', err.message);
+  }
+}, {
+  timezone: 'America/Montreal' // 🇨🇦 Montreal (Eastern Time)
 });
 
 app.use('/api/auth', authRoute);
