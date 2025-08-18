@@ -112,6 +112,10 @@
                           <th
                             class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                             Actions</th>
+                            <th
+                            class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Refresh&nbsp;&nbsp;Reload </th>
+                            
                         </tr>
                       </thead>
                       <tbody>
@@ -137,14 +141,11 @@
                               class="fa cursor-pointer fa-edit"></i>
                             <i (click)="openDeletedModal(site._id)" data-label="supprimer" title="supprimer"
                               class="fa cursor-pointer fa-remove ml-5"></i>
-
-
-                           
-                              <app-reload-site [idSite]="site._id" (siteReloaded)="onSiteReloaded(site._id, $event)" ></app-reload-site>
-                           <app-refresh-site [idSite]="site._id" ></app-refresh-site>
-
-
                           </td>
+                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm" >  
+                           <app-refresh-site [idSite]="site._id" ></app-refresh-site>
+                           <app-reload-site [idSite]="site._id" (siteReloaded)="onSiteReloaded(site._id, $event)" ></app-reload-site>
+                          </td >
 
                         </tr>
                       </tbody>
@@ -203,11 +204,21 @@
                           <i (click)="openDeletedModal(site._id)" data-label="supprimer" title="supprimer"
                             class="fa cursor-pointer fa-remove ml-5"></i>
                           
-                          <app-reload-site [idSite]="site._id" (siteReloaded)="onSiteReloaded(site._id, $event)"></app-reload-site>
-                        
-                          <app-refresh-site [idSite]="site._id" ></app-refresh-site>
+                          
                         </div>
                       </div>
+                      <hr class="my-2 border-gray-100" />
+                      <div>
+                        <span class="text-xs font-semibold text-gray-500 uppercase"> Refresh&nbsp;&nbsp;Reload </span>
+                        <div class="mt-1">
+                        
+                        
+                          <app-refresh-site [idSite]="site._id" ></app-refresh-site>
+                          <app-reload-site [idSite]="site._id" (siteReloaded)="onSiteReloaded(site._id, $event)"></app-reload-site>
+                          
+                        </div>
+                        
+                        </div>
                     </div>
 
                   </div>

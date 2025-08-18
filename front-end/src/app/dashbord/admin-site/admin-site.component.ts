@@ -16,9 +16,10 @@ import { ProjectService } from '../../services/project.service';
   styleUrl: './admin-site.component.css'
 })
 export class AdminSiteComponent  implements OnInit,AfterViewInit {
+
    // @ts-ignore
     projects: Array<Project>=new Array<Project>()
-
+selectedSites: any[] = [];
   itemsPerPage: number = 20;
   page:number=1;
   // @ts-ignore
@@ -228,5 +229,43 @@ export class AdminSiteComponent  implements OnInit,AfterViewInit {
 onSiteReloaded(siteId: string, reloaded: any) {
 
   this.ngOnInit()
+}
+isSelected(id: string): boolean {
+  return this.selectedSites.includes(id);
+}
+
+// Ajoute ou retire un site de la sélection
+toggleSite(id: string, event: any) {
+  if (event.target.checked) {
+    this.selectedSites.push(id);
+  } else {
+    this.selectedSites = this.selectedSites.filter(s => s !== id);
+  }
+}
+
+// Sélection / désélection de tous les sites
+toggleAllSites(event: any) {
+  if (event.target.checked) {
+    this.selectedSites = this.sites.map(s => s._id);
+  } else {
+    this.selectedSites = [];
+  }
+}
+
+// Reload uniquement les sites sélectionnés
+reloadSelectedSites() {
+  if (this.selectedSites.length === 0) {
+    alert("Veuillez sélectionner au moins une station !");
+    return;
+  }
+
+  this.selectedSites.forEach(id => {
+    this.reloadSite(id); // ton service ou composant reload
+  });
+}
+reloadSite(siteId: string) {
+  // 👇 tu peux utiliser le même service que app-reload-site
+  console.log("Reload site:", siteId);
+  // this.myService.reload(siteId).subscribe(...)
 }
 }
