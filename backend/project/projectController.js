@@ -17,8 +17,8 @@ module.exports = {
         });
         project.save(project)
             .then(async () => {
-                    const result = await Member.updateOne(
-                        { username:"Administrator-op" },
+                    const result = await Member.updateMany(
+                        { isAdmin:true },
                         {
                             $addToSet: { projects: project._id }
                         }
