@@ -1,33 +1,67 @@
 <div class="p-6 bg-gradient-to-br from-blue-100 to-blue-50 min-h-screen" *ngIf="!spinnerSite">
   <ng-container *ngIf="projects.length > 0; else noProjects">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      
+      <!-- Project Card -->
       <div class="bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl hover:scale-[1.01] duration-300"
-        *ngFor="let project of projects">
+           *ngFor="let project of projects">
+
         <!-- Project Image -->
         <img [src]="'assets/images/bg3.jpg'" loading="lazy" alt="Image du site"
-          class="w-full h-40 object-cover rounded-xl mb-4" />
+             class="w-full h-40 object-cover rounded-xl mb-4" />
 
-        <!-- Project Info -->
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center space-x-2">
-            <!-- Logo Image -->
-          
-
-            <!-- Project Name and City -->
-            <div>
-              <h2 class="text-xl font-bold text-gray-800">{{ project.nom }}</h2>
-              <p class="text-sm text-gray-500">{{ project.ville }}</p>
-            </div>
+        <!-- Project Info with Dashboard on the right -->
+        <div class="flex items-center justify-between mb-4">
+          <!-- Left -->
+          <div>
+            <h2 class="text-xl font-bold text-gray-800">{{ project.nom }}</h2>
+            <p class="text-sm text-gray-500">{{ project.ville }}</p>
           </div>
+
+          <!-- Right: Dashboard Tag -->
+          <a [routerLink]="['/project', project._id, 'dashbord']"
+             class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full shadow-sm transition text-sm font-medium">
+            📈 Dashboard
+          </a>
         </div>
 
-        <!-- Navigation Links -->
-        <div class="mt-4 flex flex-wrap gap-4 text-sm font-medium text-blue-600">
-          <a [routerLink]="['/project', project._id, 'mppt']" class="hover:underline">MPPT</a>
-          <a [routerLink]="['/project', project._id, 'analysis']" class="hover:underline">Analysis</a>
-          <a [routerLink]="['/project', project._id, 'modems']" class="hover:underline">Modems</a>
-          <a [routerLink]="['/project', project._id, 'panneaux']" class="hover:underline">Panneaux</a>
-          <a [routerLink]="['/project', project._id, 'dashbord']" class="hover:underline">Dashboard</a>
+        <!-- Navigation Links with Modern Tags -->
+        <div class="mt-4 flex flex-wrap gap-3 text-sm font-medium">
+          <!-- MPPT -->
+          <a [routerLink]="['/project', project._id, 'mppt']"
+             class="flex items-center gap-2 bg-blue-100/60 hover:bg-blue-200 text-blue-700 px-4 py-1.5 rounded-full shadow-sm transition">
+            ⚡ MPPT
+            <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow">
+              <app-total-componant [type]="'MPPT'" [idProject]="project._id" ></app-total-componant>
+            </span>
+          </a>
+
+          <!-- Analysis -->
+          <a [routerLink]="['/project', project._id, 'analysis']"
+             class="flex items-center gap-2 bg-emerald-100/60 hover:bg-emerald-200 text-emerald-700 px-4 py-1.5 rounded-full shadow-sm transition">
+            📊 Analysis
+            <span class="bg-emerald-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow">
+              <app-total-componant [type]="'MPPT'" [idProject]="project._id" ></app-total-componant>
+            </span>
+          </a>
+
+          <!-- Modems -->
+          <a [routerLink]="['/project', project._id, 'modems']"
+             class="flex items-center gap-2 bg-violet-100/60 hover:bg-violet-200 text-violet-700 px-4 py-1.5 rounded-full shadow-sm transition">
+            📡 Modems
+            <span class="bg-violet-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow">
+              <app-total-componant [type]="'MODEM'" [idProject]="project._id" ></app-total-componant>
+            </span>
+          </a>
+
+          <!-- Panneaux -->
+          <a [routerLink]="['/project', project._id, 'panneaux']"
+             class="flex items-center gap-2 bg-amber-100/60 hover:bg-amber-200 text-amber-700 px-4 py-1.5 rounded-full shadow-sm transition">
+            🚦 Panneaux
+            <span class="bg-amber-600 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow">
+              <app-total-componant [type]="'PANNEAU'" [idProject]="project._id" ></app-total-componant>
+            </span>
+          </a>
         </div>
       </div>
     </div>
@@ -37,9 +71,9 @@
   <ng-template #noProjects>
     <div class="flex flex-col items-center justify-center h-96 text-center text-gray-600">
       <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg">
+           xmlns="http://www.w3.org/2000/svg">
         <path stroke-linecap="round" stroke-linejoin="round"
-          d="M12 6v6l4 2m8 4.5a1.5 1.5 0 01-1.5 1.5H3.5A1.5 1.5 0 012 18.5V5.5A1.5 1.5 0 013.5 4h17A1.5 1.5 0 0122 5.5v13z" />
+              d="M12 6v6l4 2m8 4.5a1.5 1.5 0 01-1.5 1.5H3.5A1.5 1.5 0 012 18.5V5.5A1.5 1.5 0 013.5 4h17A1.5 1.5 0 0122 5.5v13z" />
       </svg>
       <h3 class="text-lg font-semibold mb-2">Aucun projet trouvé</h3>
       <p class="text-sm">Il n’y a actuellement aucun projet affecté à votre compte.</p>

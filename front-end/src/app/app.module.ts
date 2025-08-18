@@ -38,6 +38,7 @@ import { AdminProjectComponent } from './dashbord/admin-project/admin-project.co
 import { ListProjectsComponent } from './list-projects/list-projects.component';
 import { AdminPanneauComponent } from './dashbord/admin-panneau/admin-panneau.component';
 import { PanneausComponent } from './panneaus/panneaus.component';
+import { TotalComponantComponent } from './total-componant/total-componant.component';
 
 
 
@@ -67,7 +68,8 @@ import { PanneausComponent } from './panneaus/panneaus.component';
     AdminProjectComponent,
     ListProjectsComponent,
     AdminPanneauComponent,
-    PanneausComponent
+    PanneausComponent,
+    TotalComponantComponent
   ],
   imports: [
     BrowserModule,

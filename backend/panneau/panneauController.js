@@ -10,7 +10,8 @@ const excelJS = require('exceljs');
 const ping = require('ping')
 const { pin } = require("nodemon/lib/version");
 const { log } = require('console')
-
+const Project=require('../project/project');
+const project = require('../project/project');
 module.exports = {
     addPanneau: function (req, res) {
         const id = new mongoose.Types.ObjectId()
@@ -95,24 +96,30 @@ module.exports = {
             const excelData = excelToJson({
                 sourceFile: filePath,
                 sheets: [{
-                    name: 'panneaus',
+                    name: 'panneaux',
                     header: { rows: 1 },
                     columnToKey: {
                         A: 'ip',
                         B: 'nom',
+                        C: 'project'
                     }
                 }]
             });
 
-            const panneaus = excelData.panneaus;
+            const panneaus = excelData.panneaux;
 
             // Iterate through each panneau and upsert
             for (const panneau of panneaus) {
-                await Panneau.updateOne(
+                project.findOne({nom:panneau.project}).then(async(project)=>{
+                    panneau.project=project._id
+                    await Panneau.updateOne(
                     { ip: panneau.ip },               // Filter
                     { $set: panneau },                // Update
                     { upsert: true }               // Insert if not found
                 );
+
+                })
+                
             }
 
             res.status(201).json({ message: 'Les panneaus ont été ajoutés/modifiés avec succès' });
@@ -129,18 +136,25 @@ module.exports = {
         try {
 
 
-            const panneaus = await Panneau.find();
+            const panneaus = await Panneau.find().populate('project');
 
 
             const workbook = new excelJS.Workbook();
-            const worksheet = workbook.addWorksheet('panneaus');
+            const worksheet = workbook.addWorksheet('panneaux');
 
-            worksheet.columns = [
+             worksheet.columns = [
                 { header: 'ip', key: 'ip', width: 30 },
                 { header: 'nom', key: 'nom', width: 30 },
+                { header: 'project', key: 'project', width: 30 },
             ];
+            const flattenedData = panneaus.map(panneau => ({
+                ip: panneau.ip,
+                nom: panneau.nom,
+                
+                project: panneau.project?.nom || '', 
+                }));
 
-            worksheet.addRows(panneaus);
+            worksheet.addRows(flattenedData);
 
             res.setHeader(
                 'Content-Type',
@@ -148,7 +162,7 @@ module.exports = {
             );
             res.setHeader(
                 'Content-Disposition',
-                'attachment; filename=panneaus.xlsx'
+                'attachment; filename=panneaux.xlsx'
             );
 
             await workbook.xlsx.write(res);

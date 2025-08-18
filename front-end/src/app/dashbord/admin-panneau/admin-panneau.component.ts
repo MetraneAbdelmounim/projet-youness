@@ -215,7 +215,7 @@ export class AdminPanneauComponent   implements OnInit,AfterViewInit {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'panneaus.xlsx';
+      a.download = 'panneaux.xlsx';
       a.click();
     },err=>{
       console.log(err);

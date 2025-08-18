@@ -8,8 +8,10 @@ let fs = require('fs')
 const excelJS = require('exceljs');
 const ping = require('ping')
 const { pin } = require("nodemon/lib/version");
-const { log } = require('console')
-
+const { log } = require('console');
+const modem = require('./modem');
+const Poject = require('../project/project');
+const project = require('../project/project');
 module.exports = {
     addModem: function (req, res) {
         const id = new mongoose.Types.ObjectId()
@@ -99,6 +101,7 @@ module.exports = {
                     columnToKey: {
                         A: 'ip',
                         B: 'nom',
+                        C: 'project'
                     }
                 }]
             });
@@ -107,11 +110,16 @@ module.exports = {
 
             // Iterate through each modem and upsert
             for (const modem of modems) {
-                await Modem.updateOne(
+                project.findOne({nom:modem.project}).then(async (project)=>{
+                    modem.project=project._id
+                    await Modem.updateOne(
                     { ip: modem.ip },               // Filter
                     { $set: modem },                // Update
                     { upsert: true }               // Insert if not found
                 );
+
+                })
+                
             }
 
             res.status(201).json({ message: 'Les modems ont été ajoutés/modifiés avec succès' });
@@ -128,7 +136,7 @@ module.exports = {
         try {
 
 
-            const modems = await Modem.find();
+            const modems = await Modem.find().populate('project');
 
 
             const workbook = new excelJS.Workbook();
@@ -137,9 +145,16 @@ module.exports = {
             worksheet.columns = [
                 { header: 'ip', key: 'ip', width: 30 },
                 { header: 'nom', key: 'nom', width: 30 },
+                { header: 'project', key: 'project', width: 30 },
             ];
+            const flattenedData = modems.map(modem => ({
+                ip: modem.ip,
+                nom: modem.nom,
+                
+                project: modem.project?.nom || '', 
+                }));
 
-            worksheet.addRows(modems);
+            worksheet.addRows(flattenedData);
 
             res.setHeader(
                 'Content-Type',

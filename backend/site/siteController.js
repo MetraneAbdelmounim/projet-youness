@@ -12,7 +12,8 @@ const ping = require('ping')
 const { pin } = require("nodemon/lib/version");
 const { log } = require('console')
 const analysis = require('../analysis/analysis')
-
+const Project = require('../project/project')
+const project = require('../project/project')
 
 module.exports = {
     addSite: function (req, res) {
@@ -196,7 +197,8 @@ module.exports = {
                         B: 'nom',
                         C: 'latitude',
                         D: 'longitude',
-                        E: 'Battery_Type'
+                        E: 'Battery_Type',
+                        F : 'project'
                     }
                 }]
             });
@@ -205,11 +207,17 @@ module.exports = {
             
             // Iterate through each site and upsert
             for (const site of sites) {
-                await Site.updateOne(
+                Project.findOne({nom:site.project})
+                .then(async(project)=>{
+                    site.project=project._id
+                    await Site.updateOne(
                     { ip: site.ip },               // Filter
                     { $set: site },                // Update
                     { upsert: true }               // Insert if not found
                 );
+
+                })
+                
             }
 
             res.status(201).json({ message: 'Les sites ont été ajoutés/modifiés avec succès' });
