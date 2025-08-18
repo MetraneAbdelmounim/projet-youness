@@ -9,7 +9,7 @@ module.exports = {
   token_expiration :"24h",
   PORT_PY:8000,
   HOST_PY: (process.env.NODE_ENV=="production")?"flask-service":"127.0.0.1",
-  DATE_Licence : new Date('2025-09-15'),
+  DATE_Licence : new Date('2026-09-01'),
   mailOptions : {
         from:  (process.env.NODE_ENV=="production")? 'notifications@innovationmi8.com' : 'postmaster@sandbox3976616a1044434c8376786625419e21.mailgun.org'  ,
         to:  (process.env.NODE_ENV=="production")? ['dgagnon@innovationmi8.com','yberayeteb@innovationmi8.com','berayeteb.younes@gmail.com','metranea7@gmail.com']:'abdelmounim.metrane@gmail.com',
