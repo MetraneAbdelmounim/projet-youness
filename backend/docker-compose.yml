@@ -18,6 +18,9 @@ services:
     image: mongo
     ports:
       - "27017:27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
   flask-service:
     build:
       context: .
@@ -26,6 +29,9 @@ services:
     ports:
       - "8000:8000"
     restart: always
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
   proxy:
     restart: always
     build:
