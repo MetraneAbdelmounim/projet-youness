@@ -11,6 +11,7 @@ import { Project } from '../models/project';
   styleUrl: './list-projects.component.css'
 })
 export class ListProjectsComponent {
+
 // @ts-ignore
   private authListenerSub : Subscription;
   memberIsAuthenticated : boolean = false;
@@ -52,6 +53,14 @@ export class ListProjectsComponent {
         
       })
     }
+  }
+  dahsbord(arg0: string) {
+
+    this.router.navigate(['/project', arg0, 'dashbord'])
+    .then(()=>{
+      window.location.reload()
+    })
+
   }
 
 

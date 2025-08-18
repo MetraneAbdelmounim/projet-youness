@@ -19,8 +19,8 @@
             <li>
               <a routerLink="dashbord/change-password" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Change Password</a>
             </li>
-             <li *ngIf="isAdmin">
-              <a routerLink="dashbord/members" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Members</a>
+             <li *ngIf="this.role==='Admin'">
+              <a routerLink="dashbord/members" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Dashbord</a>
             </li>
             <li>
               <a  (click)="onLogout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-gray-200 dark:hover:text-white">Sign out</a>

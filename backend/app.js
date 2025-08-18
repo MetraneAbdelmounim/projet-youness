@@ -27,6 +27,7 @@ const Site = require('./site/site.js');
 const Member = require('./member/member');
 const Panneau = require('./panneau/panneau')
 const { log } = require('console');
+const member = require('./member/member');
 
 mongoose.connect(connectionUrl, {
   useNewUrlParser: true,
@@ -253,31 +254,84 @@ cron.schedule('0 0 * * *', async () => {
   console.log('🌙 [MIDNIGHT] Starting refresh + restart for all stations...');
 
   try {
-    const sites = await Site.find();
+    // Step 1: Fetch Admins
+    const admins = await Member.find({ isAdmin:true , notification: true }).select('username');
+    const emails = admins.map(a => `${a.username}@innovationmi8.com`);
 
-    const refreshPromises = sites.map(site => {
-      const url = `http://${config.HOST_PY}:${config.PORT_PY}/mppt/refresh/${site.ip}`;
-      return axios.post(url)
-        .then(() => console.log(`✅ Refreshed ${site.nom} (${site.ip})`))
-        .catch(err => console.error(`❌ Refresh failed for ${site.nom} (${site.ip}): ${err.message}`));
-    });
+    if (!admins.length) {
+      console.log("ℹ️ No admins to notify.");
+      return;
+    }
 
-    const reloadPromises = sites.map(site => {
-      const url = `http://${config.HOST_PY}:${config.PORT_PY}/mppt/reload/${site.ip}`;
-      return axios.post(url)
-        .then(() => console.log(`✅ Restarted ${site.nom} (${site.ip})`))
-        .catch(err => console.error(`❌ Restart failed for ${site.nom} (${site.ip}): ${err.message}`));
-    });
+    // Step 2: Restart logic & collect results
+    const sites = await Site.find().populate('project');
+    const results = [];
 
-    // Wait for all refresh and restart operations in parallel
-    await Promise.all([...refreshPromises, ...reloadPromises]);
+    for (const site of sites) {
+      let refreshStatus = "✅ Success";
+      let reloadStatus = "✅ Success";
 
-    console.log('🎯 All refresh and restart operations completed.');
+      try {
+        const reloadUrl = `http://${config.HOST_PY}:${config.PORT_PY}/mppt/reload/${site.ip}`;
+        await axios.post(reloadUrl);
+      } catch (err) {
+        reloadStatus = `❌ Can't Access to the Station`;
+      }
+
+      results.push({
+        name: site.nom,
+        ip: site.ip,
+        project: site.project ? site.project.nom : "N/A",
+        refresh: refreshStatus,
+        restart: reloadStatus,
+        date: new Date().toLocaleString()
+      });
+    }
+
+    // Step 3: Build HTML table
+    const htmlTable = `
+      <h3>🌙 Nightly Restart Report</h3>
+      <p>Below is the status of all stations after the scheduled restart:</p>
+      <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width:100%;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th>Station</th>
+            <th>IP</th>
+            <th>Project</th>
+            <th>Restart</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results.map(r => `
+            <tr>
+              <td>${r.name}</td>
+              <td>${r.ip}</td>
+              <td>${r.project}</td>
+              <td>${r.restart}</td>
+              <td>${r.date}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    // Step 4: Send email to Admins
+    const mailOptions = {
+      from: config.mailOptions.from,
+      to: (process.env.NODE_ENV === "production") ? emails : 'abdelmounim.metrane@gmail.com',
+      subject: "[MI8 Monitoring Platform] 🌙 Station Restart Report",
+      html: htmlTable
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Restart report sent to admins.");
+
   } catch (err) {
     console.error('❌ Global failure during midnight task:', err.message);
   }
 }, {
-  timezone: 'America/Montreal' // 🇨🇦 Montreal (Eastern Time)
+  timezone: 'America/Montreal'
 });
 
 app.use('/api/auth', authRoute);

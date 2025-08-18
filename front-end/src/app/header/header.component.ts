@@ -37,6 +37,8 @@ export class HeaderComponent implements OnInit {
 
             this.memberConnected=connectedMember
             this.role= connectedMember.member.isAdmin?'Admin':'User';
+            console.log(this.role);
+            
             this.username = connectedMember.member.username;
             
             this.userId = connectedMember.member.userId;
@@ -56,7 +58,7 @@ export class HeaderComponent implements OnInit {
         this.memberConnected=connectedMember
         this.role= connectedMember.member.isAdmin?'Admin':'User';
         this.username = connectedMember.member.username;
-        
+        console.log(this.role);
         this.userId = connectedMember.member.userId;
       })
     }
