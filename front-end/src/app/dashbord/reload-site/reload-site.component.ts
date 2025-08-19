@@ -14,10 +14,12 @@ export class ReloadSiteComponent {
 
   @Input()
   idSite: string = ""
+ @Input()
+  ipSite: string = ""
   spinnerReload: boolean = false
 
   constructor(private siteServices: SiteService,private message:ToastrService,private router:Router) { }
-  reloadSite(idSite: string) {
+  reloadSite(idSite: string,ipSite:string) {
 
     this.spinnerReload = true
     this.siteServices.reloadSite(idSite).subscribe((result: any) => {
@@ -28,7 +30,10 @@ export class ReloadSiteComponent {
       this.siteReloaded.emit(true)
     }, err => {
       this.spinnerReload = false
-      this.message.error("Une erreur s’est produite pendant le redémarrage de la station")
+
+      
+      
+      this.message.error("Une erreur s’est produite pendant le redémarrage de la station "+err.error.site)
     })
   }
 

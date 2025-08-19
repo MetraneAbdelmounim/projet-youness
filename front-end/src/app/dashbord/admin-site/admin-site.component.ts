@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, viewChildren } from '@angular/core';
 import { config } from '../../../Config/config';
 import { SiteService } from '../../services/site.service';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -7,6 +7,7 @@ import { Site } from '../../models/site';
 import { ToastrService } from 'ngx-toastr';
 import { Modal } from 'flowbite';
 import { ProjectService } from '../../services/project.service';
+import { ReloadSiteComponent } from '../reload-site/reload-site.component';
 
 
 @Component({
@@ -67,6 +68,7 @@ selectedSites: any[] = [];
   constructor(private siteServices:SiteService,private message:ToastrService,private projectService:ProjectService) { }
 
   ngOnInit(): void {
+     
     this.filename ='Importer un fichier';
     // @ts-ignore
     this.selectedFile=null
@@ -76,7 +78,7 @@ selectedSites: any[] = [];
     this.projectService.getAllProjects().subscribe((projects:Array<Project>)=>{
           this.spinnerSite=false
           this.projects=projects
-          console.log(this.projects);
+      
           
         },err=>{
           this.spinnerSite=false
@@ -230,42 +232,18 @@ onSiteReloaded(siteId: string, reloaded: any) {
 
   this.ngOnInit()
 }
-isSelected(id: string): boolean {
-  return this.selectedSites.includes(id);
-}
+@ViewChildren('reloadBtn', { read: ElementRef }) reloadButtons!: QueryList<ElementRef>;
 
-// Ajoute ou retire un site de la sélection
-toggleSite(id: string, event: any) {
-  if (event.target.checked) {
-    this.selectedSites.push(id);
-  } else {
-    this.selectedSites = this.selectedSites.filter(s => s !== id);
-  }
-}
-
-// Sélection / désélection de tous les sites
-toggleAllSites(event: any) {
-  if (event.target.checked) {
-    this.selectedSites = this.sites.map(s => s._id);
-  } else {
-    this.selectedSites = [];
-  }
-}
-
-// Reload uniquement les sites sélectionnés
-reloadSelectedSites() {
-  if (this.selectedSites.length === 0) {
-    alert("Veuillez sélectionner au moins une station !");
-    return;
-  }
-
-  this.selectedSites.forEach(id => {
-    this.reloadSite(id); // ton service ou composant reload
+    reloadAllSites() {
+     this.reloadButtons.forEach((cmp, i) => {
+    const icon: HTMLElement | null = cmp.nativeElement.querySelector('i');
+    if (icon) {
+     
+      icon.click();
+    } else {
+      
+    }
   });
-}
-reloadSite(siteId: string) {
-  // 👇 tu peux utiliser le même service que app-reload-site
-  console.log("Reload site:", siteId);
-  // this.myService.reload(siteId).subscribe(...)
-}
+  }
+
 }

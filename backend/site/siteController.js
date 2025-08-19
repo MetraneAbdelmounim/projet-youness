@@ -14,6 +14,7 @@ const { log } = require('console')
 const analysis = require('../analysis/analysis')
 const Project = require('../project/project')
 const project = require('../project/project')
+const site = require('./site')
 
 module.exports = {
     addSite: function (req, res) {
@@ -353,6 +354,7 @@ module.exports = {
         });
     },
     restarSite: async function (req, res) {
+        
         try {
             const site = await Site.findOne({ _id: req.params.idSite });
             if (!site) {
@@ -365,15 +367,16 @@ module.exports = {
             const data = response.data;
 
             // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message });
+            res.status(200).json({ status: data.status, message: data.message+' '+site.nom });
 
             // Optional: If your Flask returns analysis data, construct an Analysis object
             // const analysis = new Analysis(data.analysis);
             // res.status(200).json(analysis);
 
         } catch (err) {
+            const site = await Site.findOne({ _id: req.params.idSite });
             console.error('Restart error:', err.message);
-            res.status(500).send('Error restarting site: ' + err.message);
+            res.status(500).send({error : err.message,site:site.nom});
         }
     },
     refreshSite: async function (req, res) {
@@ -389,7 +392,7 @@ module.exports = {
             const data = response.data;
 
             // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message });
+            res.status(200).json({ status: data.status, message: data.message+' '+site.nom });
 
             // Optional: If your Flask returns analysis data, construct an Analysis object
             // const analysis = new Analysis(data.analysis);
