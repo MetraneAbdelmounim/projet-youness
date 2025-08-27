@@ -250,7 +250,7 @@ console.log("⏱️ Running MPPT performance check...");
 });
 
 
-cron.schedule('0 0 * * *', async () => {
+/*cron.schedule('0 0 * * *', async () => {
   console.log('🌙 [MIDNIGHT] Starting refresh + restart for all stations...');
 
   try {
@@ -332,7 +332,7 @@ cron.schedule('0 0 * * *', async () => {
   }
 }, {
   timezone: 'America/Montreal'
-});
+});*/
 
 app.use('/api/auth', authRoute);
 app.use('/api/stations', siteRoute);
