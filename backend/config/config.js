@@ -22,6 +22,7 @@ module.exports = {
         pass: 'Axians@2024'
     }  
   },
-  schedule:(process.env.NODE_ENV=="production")? '*/15 * * * *' : '*/2 * * * *'
+  schedule:(process.env.NODE_ENV=="production")? '*/15 * * * *' : '*/2 * * * *',
+  reload_midnight : false
 
 }

@@ -7,6 +7,8 @@ const BACKEND_URL = environment.apiUri
   providedIn: 'root'
 })
 export class SiteService {
+  
+  
 
   constructor(private http:HttpClient) { }
 
@@ -66,5 +68,11 @@ export class SiteService {
   }
   refreshSite(id:string){
     return this.http.post(BACKEND_URL + 'stations/refresh/'+id,{})
+  }
+  getMidnightReload() {
+    return this.http.get(BACKEND_URL + 'stations/midnightReload',{})
+  }
+  changeMidnightReload(value:any) {
+   return this.http.put(BACKEND_URL+'stations/midnightReload',value)
   }
 }

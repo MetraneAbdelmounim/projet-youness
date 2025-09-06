@@ -54,7 +54,7 @@ module.exports = {
             .catch(error => res.status(500).send(error));
     },
     getSitesByProject: function (req, res) {
-        Site.find({project: req.params.idProject }).then(async sites => {
+        Site.find({ project: req.params.idProject }).then(async sites => {
             if (sites) {
                 res.status(200).json(sites);
             }
@@ -111,11 +111,11 @@ module.exports = {
         })
     },
     getAllSites2: async function (req, res) {
-       
-        
-        Site.find({project:req.query.project}).then(async sites => {
-          
-            
+
+
+        Site.find({ project: req.query.project }).then(async sites => {
+
+
             if (sites) {
                 for (let i = 0; i < sites.length; i++) {
                     axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
@@ -199,26 +199,26 @@ module.exports = {
                         C: 'latitude',
                         D: 'longitude',
                         E: 'Battery_Type',
-                        F : 'project'
+                        F: 'project'
                     }
                 }]
             });
 
             const sites = excelData.sites;
-            
+
             // Iterate through each site and upsert
             for (const site of sites) {
-                Project.findOne({nom:site.project})
-                .then(async(project)=>{
-                    site.project=project._id
-                    await Site.updateOne(
-                    { ip: site.ip },               // Filter
-                    { $set: site },                // Update
-                    { upsert: true }               // Insert if not found
-                );
+                Project.findOne({ nom: site.project })
+                    .then(async (project) => {
+                        site.project = project._id
+                        await Site.updateOne(
+                            { ip: site.ip },               // Filter
+                            { $set: site },                // Update
+                            { upsert: true }               // Insert if not found
+                        );
 
-                })
-                
+                    })
+
             }
 
             res.status(201).json({ message: 'Les sites ont été ajoutés/modifiés avec succès' });
@@ -311,8 +311,8 @@ module.exports = {
                 latitude: site.latitude,
                 longitude: site.longitude,
                 Battery_Type: site.Battery_Type,
-                project: site.project?.nom || '', 
-                }));
+                project: site.project?.nom || '',
+            }));
 
             worksheet.addRows(flattenedData);
 
@@ -354,7 +354,7 @@ module.exports = {
         });
     },
     restarSite: async function (req, res) {
-        
+
         try {
             const site = await Site.findOne({ _id: req.params.idSite });
             if (!site) {
@@ -367,7 +367,7 @@ module.exports = {
             const data = response.data;
 
             // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message+' '+site.nom });
+            res.status(200).json({ status: data.status, message: data.message + ' ' + site.nom });
 
             // Optional: If your Flask returns analysis data, construct an Analysis object
             // const analysis = new Analysis(data.analysis);
@@ -376,7 +376,7 @@ module.exports = {
         } catch (err) {
             const site = await Site.findOne({ _id: req.params.idSite });
             console.error('Restart error:', err.message);
-            res.status(500).send({error : err.message,site:site.nom});
+            res.status(500).send({ error: err.message, site: site.nom });
         }
     },
     refreshSite: async function (req, res) {
@@ -392,7 +392,7 @@ module.exports = {
             const data = response.data;
 
             // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message+' '+site.nom });
+            res.status(200).json({ status: data.status, message: data.message + ' ' + site.nom });
 
             // Optional: If your Flask returns analysis data, construct an Analysis object
             // const analysis = new Analysis(data.analysis);
@@ -402,6 +402,26 @@ module.exports = {
             console.error('Restart error:', err.message);
             res.status(500).send('Error restarting site: ' + err.message);
         }
-    }
+    },
+    getMidgnightReload: function (req, res) {
+
+        res.status(200).json(config.reload_midnight);
+
+
+    },
+    changeMidgnightReload: function (req, res) {
+    
+        
+        config.reload_midnight = req.body.reload_midgniht; // 🔥 On change la valeur
+        if (req.body.reload_midgniht) {
+            res.status(200).json({ message: `Le redémarrage à minuit des stations a été activé` })
+
+        }
+        else {
+            res.status(200).json({ message: `Le redémarrage à minuit des stations a été désactivé` })
+        }
+
+
+    },
 
 }

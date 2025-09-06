@@ -23,6 +23,8 @@ var upload = multer({
 router.post('',licenceGuard,authAdmin,siteController.addSite)
 router.post('/file',licenceGuard ,authAdmin,upload.single('file'),siteController.addSiteFromFile)
 router.get('',licenceGuard ,authUser,siteController.getAllSites2)
+router.get('/midnightReload',licenceGuard ,authAdmin,siteController.getMidgnightReload)
+router.put('/midnightReload',licenceGuard ,authAdmin,siteController.changeMidgnightReload)
 router.get('/projects/:idProject',licenceGuard ,authUser,authProject,siteController.getSitesByProject)
 router.get('/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
 router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
@@ -34,5 +36,6 @@ router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
 router.post('/reload/:idSite',licenceGuard ,authAdmin,siteController.restarSite)
 router.post('/refresh/:idSite',licenceGuard ,authAdmin,siteController.refreshSite)
 router.get('/:idSite',licenceGuard ,authUser,siteController.getSiteByIdWithoutDATA)
+
 
 module.exports=router

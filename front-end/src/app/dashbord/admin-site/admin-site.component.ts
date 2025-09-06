@@ -18,6 +18,7 @@ import { ReloadSiteComponent } from '../reload-site/reload-site.component';
 })
 export class AdminSiteComponent  implements OnInit,AfterViewInit {
 
+
    // @ts-ignore
     projects: Array<Project>=new Array<Project>()
 selectedSites: any[] = [];
@@ -43,6 +44,7 @@ selectedSites: any[] = [];
   filename ='Importer un fichier';
   // @ts-ignore
   fileUploaded: boolean;
+  midnightReloadEnabled:boolean=false
   uploaded: boolean = false;
   term: string = "";
   spinnerSite: boolean=false;
@@ -74,6 +76,15 @@ selectedSites: any[] = [];
     this.selectedFile=null
     this.uploaded=false
     this.spinnerSite=true
+    
+     this.siteServices.getMidnightReload().subscribe(result=>{
+
+      
+      
+     this.midnightReloadEnabled=Boolean(result)
+      
+    })
+
     // @ts-ignore
     this.projectService.getAllProjects().subscribe((projects:Array<Project>)=>{
           this.spinnerSite=false
@@ -245,5 +256,18 @@ onSiteReloaded(siteId: string, reloaded: any) {
     }
   });
   }
+
+toggleMidnightReload(arg0: boolean) {
+
+  
+  const value = {reload_midgniht:arg0}
+ this.siteServices.changeMidnightReload(value).subscribe((result:any)=>{
+    this.message.success(result.message)
+    this.ngOnInit()
+  },err=>{
+    this.message.error("Une erreur est survenue lors du modification")
+    this.ngOnInit()
+  })
+}
 
 }

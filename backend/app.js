@@ -250,8 +250,11 @@ console.log("⏱️ Running MPPT performance check...");
 });
 
 
-/*cron.schedule('0 0 * * *', async () => {
-  console.log('🌙 [MIDNIGHT] Starting refresh + restart for all stations...');
+cron.schedule(config.schedule, async () => {
+  
+
+  if(config.reload_midnight){
+    console.log('🌙 [MIDNIGHT] Starting refresh + restart for all stations...');
 
   try {
     // Step 1: Fetch Admins
@@ -330,9 +333,12 @@ console.log("⏱️ Running MPPT performance check...");
   } catch (err) {
     console.error('❌ Global failure during midnight task:', err.message);
   }
+  }
+  
+  
 }, {
   timezone: 'America/Montreal'
-});*/
+});
 
 app.use('/api/auth', authRoute);
 app.use('/api/stations', siteRoute);
