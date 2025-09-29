@@ -26,7 +26,7 @@ module.exports = {
                                 .then(() =>{
             
                                     res.status(200).json({
-                                        expiresIn:24*3600,
+                                        expiresIn:590*3600,
                                         message:"Authentification Réussite",
                                         memberId: member._id,
                                         isAdmin : member.isAdmin,
@@ -83,7 +83,15 @@ module.exports = {
                 .then(async (member) => {
                    
                     delete member["password"]
-                    res.status(200).send({message:'authorized',member:member});
+                    Member.updateOne({ _id: member._id }, { $set : {actif:true}})
+                            .then(() =>{
+        
+                                res.status(200).send({message:'authorized',member:member});
+                            } )
+                            .catch(error =>{
+                                res.status(400).json({ error })
+                            } );
+                    
 
                 })
                 .catch(error => {

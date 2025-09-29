@@ -11,10 +11,13 @@ export class AdminGuardService {
 
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean>  | boolean {
+    
     if(!(this.loginService.getAuthStatus() && this.loginService.getMemberStatus)){
       return this.router.navigateByUrl('/');
 
     }
+    
+    
     return   this.loginService.getMemberStatus();
   }
   constructor(private loginService : LoginService,private router : Router) { }
