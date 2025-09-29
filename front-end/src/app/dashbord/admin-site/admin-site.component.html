@@ -25,7 +25,7 @@
             </div>
 
             <!-- Right: Buttons -->
-            <div class="flex flex-col sm:flex-row gap-2">
+            <div class="flex flex-col sm:flex-row gap-2 items-center">
               <button (click)="openCrudModal()"
                 class="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 w-full md:w-auto">
                 <i class="fas fa-plus mr-2"></i> Ajouter
@@ -35,22 +35,24 @@
                 class="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700 w-full md:w-auto">
                 <i class="fas fa-download mr-2"></i> Exporter
               </button>
+
               <button (click)="reloadAllSites()"
                 class="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700 w-full md:w-auto">
                 <i class="fas fa-sync-alt mr-2"></i> Reload All
               </button>
+
+              <!-- 🔥 Toggle Switch Midnight Reload -->
+              <label class="inline-flex items-center cursor-pointer px-3">
+                <input type="checkbox" [(ngModel)]="midnightReloadEnabled"
+                  (change)="toggleMidnightReload(midnightReloadEnabled)" class="sr-only peer">
+                <div class="relative w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-blue-400 
+             dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] 
+             after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 
+             after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white">
+                </div>
+                <span class="ml-3 text-sm font-medium text-gray-900">Midnight Reload</span>
+              </label>
             </div>
-            <label class="inline-flex items-center cursor-pointer px-3">
-              <input type="checkbox" [(ngModel)]="midnightReloadEnabled"
-                (change)="toggleMidnightReload(midnightReloadEnabled)" class="sr-only peer">
-              <div
-                class="relative w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-blue-400 
-                      dark:bg-gray-700 peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] 
-                      after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 
-                      after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white">
-              </div>
-              <span class="ml-3 text-sm font-medium text-gray-900">Midnight Reload</span>
-            </label>
 
           </div>
         </div>
@@ -127,10 +129,10 @@
                           <th
                             class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                             Actions</th>
-                            <th
+                          <th
                             class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                             Refresh&nbsp;&nbsp;Reload </th>
-                            
+
                         </tr>
                       </thead>
                       <tbody>
@@ -142,7 +144,8 @@
                           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ site.latitude }}</td>
                           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ site.longitude }}</td>
                           <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                            <span class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
+                            <span
+                              class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
                               {{ site?.project?.nom }}
                             </span>
                           </td>
@@ -157,10 +160,11 @@
                             <i (click)="openDeletedModal(site._id)" data-label="supprimer" title="supprimer"
                               class="fa cursor-pointer fa-remove ml-5"></i>
                           </td>
-                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm" >  
-                           <app-refresh-site [idSite]="site._id" ></app-refresh-site>
-                           <app-reload-site #reloadBtn [idSite]="site._id" (siteReloaded)="onSiteReloaded(site._id, $event)" ></app-reload-site>
-                          </td >
+                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <app-refresh-site [idSite]="site._id"></app-refresh-site>
+                            <app-reload-site #reloadBtn [idSite]="site._id"
+                              (siteReloaded)="onSiteReloaded(site._id, $event)"></app-reload-site>
+                          </td>
 
                         </tr>
                       </tbody>
@@ -191,13 +195,14 @@
                         <span class="text-xs font-semibold text-gray-500 uppercase">Longitude</span>
                         <p class="text-gray-800">{{ site.longitude }}</p>
                       </div>
-                       <hr class="my-3 border-gray-200" />
-                        <div class="mb-3">
-                          <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Projet</span>
-                          <span class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
-                            {{ site?.project?.nom || 'Non défini' }}
-                          </span>
-                        </div>
+                      <hr class="my-3 border-gray-200" />
+                      <div class="mb-3">
+                        <span class="block text-xs font-semibold text-gray-500 uppercase tracking-wide">Projet</span>
+                        <span
+                          class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
+                          {{ site?.project?.nom || 'Non défini' }}
+                        </span>
+                      </div>
                       <hr class="my-2 border-gray-100" />
                       <div class="mb-2">
                         <span class="text-xs font-semibold text-gray-500 uppercase">Battery_Type</span>
@@ -218,22 +223,23 @@
                             class="fa cursor-pointer fa-edit"></i>
                           <i (click)="openDeletedModal(site._id)" data-label="supprimer" title="supprimer"
                             class="fa cursor-pointer fa-remove ml-5"></i>
-                          
-                          
+
+
                         </div>
                       </div>
                       <hr class="my-2 border-gray-100" />
                       <div>
                         <span class="text-xs font-semibold text-gray-500 uppercase"> Refresh&nbsp;&nbsp;Reload </span>
                         <div class="mt-1">
-                        
-                        
-                          <app-refresh-site [idSite]="site._id" ></app-refresh-site>
-                          <app-reload-site [idSite]="site._id" [ipSite]="site.ip" (siteReloaded)="onSiteReloaded(site._id, $event)"></app-reload-site>
-                          
+
+
+                          <app-refresh-site [idSite]="site._id"></app-refresh-site>
+                          <app-reload-site [idSite]="site._id" [ipSite]="site.ip"
+                            (siteReloaded)="onSiteReloaded(site._id, $event)"></app-reload-site>
+
                         </div>
-                        
-                        </div>
+
+                      </div>
                     </div>
 
                   </div>
@@ -248,7 +254,7 @@
               </pagination-controls>
             </div>
           </div>
-          
+
 
         </section>
 
@@ -274,7 +280,7 @@
                       <span class="block text-gray-400 font-normal">{{filename}}</span>
                     </div>
                   </div>
-                  
+
 
                   <input type="file" class="h-full w-full opacity-0" type="file" id="customFile"
                     (change)="detectFile($event)"
@@ -429,7 +435,7 @@
         </div>
 
         <!-- Submit Buttons -->
-        <button type="submit" [disabled]="f.invalid" 
+        <button type="submit" [disabled]="f.invalid"
           class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
           <i class="fa fa-save mr-2"></i> Enregistrer
         </button>
