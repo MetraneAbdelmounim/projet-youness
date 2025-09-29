@@ -26,7 +26,7 @@ module.exports = {
                                 .then(() =>{
             
                                     res.status(200).json({
-                                        expiresIn:24*3600,
+                                        expiresIn:30*24*3600,
                                         message:"Authentification Réussite",
                                         memberId: member._id,
                                         isAdmin : member.isAdmin,
