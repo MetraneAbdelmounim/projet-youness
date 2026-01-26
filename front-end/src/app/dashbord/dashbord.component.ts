@@ -149,8 +149,8 @@ export class DashbordComponent implements OnInit,OnDestroy {
       maintainAspectRatio: false,
       scales: {
         y: {
-          min: 22,
-          max:27.5,
+          min: 9,
+          max:35,
           display: true,
           stacked:false,
           ticks: {
@@ -172,7 +172,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
             family: 'Comic Sans MS',
             size: 20,
             weight: 'bold',
-            lineHeight: 1.2,
+            lineHeight: '1.2',
           },
         },
         legend: {
@@ -217,6 +217,7 @@ export class DashbordComponent implements OnInit,OnDestroy {
       const config: ChartConfiguration = {
         type: 'bar',
         data: data,
+        // @ts-ignore
         options: options
       }
       const chartItem: ChartItem = document.getElementById('my-chart') as ChartItem
