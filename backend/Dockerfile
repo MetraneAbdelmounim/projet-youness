@@ -10,7 +10,21 @@ FROM node:22-slim AS frontend
 WORKDIR /src/front-end
 
 COPY front-end/package.json front-end/package-lock.json ./
-RUN npm ci
+
+# `npm ci` alone is not enough here. package-lock.json was generated on Windows,
+# and npm records optional platform binaries only for the platform it ran on —
+# so the lock lists lightningcss-win32-x64-msvc and @rollup/rollup-win32-* but
+# no Linux equivalents, and the Angular build dies on a missing .node binary.
+# The versions are read back from what the lock actually installed, so these can
+# never drift out of step with it.
+# Read the manifests by path, not by module specifier: lightningcss does not
+# expose ./package.json through its "exports" map.
+RUN npm ci \
+ && LIGHTNINGCSS=$(node -p "require('./node_modules/lightningcss/package.json').version") \
+ && ROLLUP=$(node -p "require('./node_modules/rollup/package.json').version") \
+ && npm install --no-save --no-package-lock \
+      "lightningcss-linux-x64-gnu@${LIGHTNINGCSS}" \
+      "@rollup/rollup-linux-x64-gnu@${ROLLUP}"
 
 COPY front-end/ ./
 # angular.json writes to ../backend/public, i.e. /src/backend/public
