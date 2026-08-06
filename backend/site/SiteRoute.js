@@ -27,6 +27,7 @@ router.get('/data/analysis/:idSite', siteController.getAnalysisBySite);
 router.get('/data/:idSite', siteController.getDataBySite);
 router.get('/history/:idSite', siteController.getHistoryBySite);
 
+router.post('/poll/:idSite', siteController.pollSite);
 router.post('/reload/:idSite', requireAdmin, siteController.restartSite);
 router.post('/refresh/:idSite', requireAdmin, siteController.refreshSite);
 

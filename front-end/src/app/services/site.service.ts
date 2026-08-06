@@ -61,6 +61,17 @@ export class SiteService {
     return this.http.get(`${BACKEND_URL}stations/export`, { responseType: 'blob' });
   }
 
+  /**
+   * Forces an immediate re-read of one station instead of waiting for the next
+   * scheduled sweep. Returns its fresh reachability.
+   */
+  pollSite(id: string): Observable<{ _id: string; status: boolean; lastSeenAt: string | null }> {
+    return this.http.post<{ _id: string; status: boolean; lastSeenAt: string | null }>(
+      `${BACKEND_URL}stations/poll/${id}`,
+      {}
+    );
+  }
+
   reloadSite(id: string) {
     return this.http.post<{ message: string }>(`${BACKEND_URL}stations/reload/${id}`, {});
   }

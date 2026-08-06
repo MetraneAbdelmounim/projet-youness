@@ -50,10 +50,23 @@ async def _ensure_timeseries() -> None:
     log.info("Created time-series collection '%s'", READINGS)
 
 
+SITE_FIELDS = {
+    "ip": 1,
+    "nom": 1,
+    "project": 1,
+    "latitude": 1,
+    "longitude": 1,
+    "Battery_Type": 1,
+}
+
+
 async def list_sites() -> List[dict]:
-    return await _db.sites.find(
-        {}, {"ip": 1, "nom": 1, "project": 1, "latitude": 1, "longitude": 1, "Battery_Type": 1}
-    ).to_list(length=None)
+    return await _db.sites.find({}, SITE_FIELDS).to_list(length=None)
+
+
+async def find_site_by_ip(ip: str) -> Optional[dict]:
+    """Same projection as `list_sites`, so a single site can be re-polled."""
+    return await _db.sites.find_one({"ip": ip}, SITE_FIELDS)
 
 
 async def list_simple_devices(collection: str) -> List[dict]:
@@ -102,6 +115,19 @@ async def save_site_poll(
         await _db[READINGS].insert_one(
             {"ts": now, "meta": {"site": site_id, "project": project_id}, **reading}
         )
+
+
+async def site_status(site_id) -> dict:
+    """Reachability and last reading time, as stored after a poll."""
+    doc = await _db.sites.find_one(
+        {"_id": site_id}, {"status": 1, "lastSeenAt": 1, "lastReading.measuredAt": 1}
+    ) or {}
+    measured = (doc.get("lastReading") or {}).get("measuredAt")
+    return {
+        "status": bool(doc.get("status")),
+        "lastSeenAt": doc.get("lastSeenAt").isoformat() if doc.get("lastSeenAt") else None,
+        "measuredAt": measured.isoformat() if measured else None,
+    }
 
 
 async def save_device_status(collection: str, device_id, reachable: bool) -> None:

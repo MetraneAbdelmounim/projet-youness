@@ -99,7 +99,21 @@ class Poller:
         # return_exceptions keeps one failing device from cancelling the sweep.
         await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _poll_site(self, site: dict) -> None:
+    async def poll_now(self, site: dict) -> None:
+        """
+        Re-reads one station immediately, outside the scheduled sweep.
+
+        Used after a restart so the operator sees the station drop and return
+        without waiting up to POLL_INTERVAL_SECONDS for the next sweep.
+
+        The forecast is deliberately skipped: it is the slow part of a sweep
+        (a cold weather cache costs seconds) and it cannot have changed in the
+        minute since the last one. That keeps this call quick enough to drive a
+        live status badge.
+        """
+        await self._poll_site(site, with_analysis=False)
+
+    async def _poll_site(self, site: dict, with_analysis: bool = True) -> None:
         ip = site.get("ip")
         if not ip:
             return
@@ -116,14 +130,18 @@ class Poller:
                 )
                 reading = MpptReading.from_registers(registers)
                 reading_dict = reading.as_dict()
-                analysis_result = await self._analyse(site, reading)
+                if with_analysis:
+                    analysis_result = await self._analyse(site, reading)
             except Exception as exc:
                 error = str(exc)
                 log.warning("Modbus read failed for %s (%s): %s", site.get("nom"), ip, exc)
         else:
             error = "Host unreachable"
 
-        if analysis_result is None:
+        # Only replace the stored forecast when one was actually computed.
+        # Writing "unknown" on a quick status check would blank a perfectly good
+        # analysis from the last full sweep.
+        if with_analysis and analysis_result is None:
             analysis_result = analysis_mod.unknown(
                 site.get("Battery_Type"),
                 (reading_dict or {}).get("Battery_Voltage"),

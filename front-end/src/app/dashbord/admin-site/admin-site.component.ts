@@ -1,18 +1,27 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin } from 'rxjs';
+import { EMPTY, Subscription, forkJoin, timer } from 'rxjs';
+import { catchError, exhaustMap, take } from 'rxjs/operators';
 import { Site } from '../../models/site';
 import { Project } from '../../models/project';
 import { SiteService } from '../../services/site.service';
 import { ProjectService } from '../../services/project.service';
+
+/**
+ * How long, and how often, to re-check a station after a restart.
+ * The check is reachability-only server-side, so it returns in a second or two
+ * and a short interval is affordable.
+ */
+const RECOVERY_WATCH_MS = 3 * 60 * 1000;
+const RECOVERY_POLL_MS = 4 * 1000;
 
 @Component({
   selector: 'app-admin-site',
   standalone: false,
   templateUrl: './admin-site.component.html',
 })
-export class AdminSiteComponent implements OnInit {
+export class AdminSiteComponent implements OnInit, OnDestroy {
   sites: Site[] = [];
   projects: Project[] = [];
 
@@ -36,6 +45,10 @@ export class AdminSiteComponent implements OnInit {
   /** Stations with an action in flight, so each row shows its own spinner. */
   restarting = new Set<string>();
   refreshing = new Set<string>();
+  /** Stations being re-checked after a restart. */
+  watching = new Set<string>();
+
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private siteService: SiteService,
@@ -45,6 +58,11 @@ export class AdminSiteComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    // Stops any recovery watchers still running when the screen is left.
+    this.subscriptions.unsubscribe();
   }
 
   /**
@@ -137,19 +155,69 @@ export class AdminSiteComponent implements OnInit {
     });
   }
 
-  /** Restarts a single station. */
+  /** Restarts a single station, then watches it come back. */
   reload(site: Site): void {
     this.restarting.add(site._id);
     this.siteService.reloadSite(site._id).subscribe({
       next: (res) => {
         this.restarting.delete(site._id);
         this.message.success(res.message);
+        // The station was just told to reboot, so it is going down. Show that
+        // straight away rather than leaving a stale "En ligne" badge until the
+        // first re-check lands; the watcher corrects it either way.
+        site.status = false;
+        this.watchRecovery(site);
       },
       error: (e) => {
         this.restarting.delete(site._id);
         this.message.error(e?.error?.error ?? `Redémarrage impossible — ${site.nom}`);
       },
     });
+  }
+
+  /**
+   * Re-reads one station repeatedly for a short while after a restart.
+   *
+   * The poller sweeps every few minutes, so without this the row keeps showing
+   * "En ligne" through a restart the operator can see happening on their own
+   * ping — the list reflects the last sweep, not the present.
+   */
+  private watchRecovery(site: Site): void {
+    // Clicking restart twice should not stack watchers on the same station.
+    if (this.watching.has(site._id)) return;
+    this.watching.add(site._id);
+
+    const attempts = Math.ceil(RECOVERY_WATCH_MS / RECOVERY_POLL_MS);
+
+    // exhaustMap, not switchMap: switchMap cancels the request in flight when
+    // the next tick arrives, so a check slower than the interval never
+    // delivered a result and the badge stayed on its last value. exhaustMap
+    // lets the running check finish and ignores ticks until it does.
+    const subscription = timer(0, RECOVERY_POLL_MS)
+      .pipe(
+        take(attempts),
+        exhaustMap(() => this.siteService.pollSite(site._id).pipe(catchError(() => EMPTY)))
+      )
+      .subscribe({
+        next: (fresh) => {
+          const row = this.sites.find((s) => s._id === fresh._id);
+          if (!row) return;
+
+          // Stop once it has come back up — the restart cycle is complete.
+          if (!row.status && fresh.status) {
+            this.message.success(`${site.nom} est de nouveau en ligne`);
+            this.watching.delete(site._id);
+            subscription.unsubscribe();
+          }
+          row.status = fresh.status;
+          row.lastSeenAt = fresh.lastSeenAt;
+        },
+        // The window elapsed without the station returning; leave the badge
+        // showing its last observed state rather than guessing.
+        complete: () => this.watching.delete(site._id),
+      });
+
+    this.subscriptions.add(subscription);
   }
 
   /**

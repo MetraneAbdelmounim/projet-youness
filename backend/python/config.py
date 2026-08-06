@@ -37,7 +37,17 @@ MODBUS_PORT = _int("MODBUS_PORT", 502)
 MODBUS_TIMEOUT = _float("MODBUS_TIMEOUT", 3.0)
 MODBUS_UNIT_ID = _int("MODBUS_UNIT_ID", 1)
 MODBUS_REGISTER_COUNT = _int("MODBUS_REGISTER_COUNT", 82)
-# Coil that triggers a controller restart.
+# Reset coil on the charge controller (unit MODBUS_UNIT_ID).
+#
+# This resets the CHARGE CONTROLLER only. The EMC-1 Ethernet module keeps
+# running, so the station carries on answering pings throughout — that is
+# expected, not a failure.
+#
+# There is no working reset for the EMC-1 itself over this interface. Its own
+# web page tries coil 4351 on unit 10 (MBADDR_OFFSET 4096 + 255), and the
+# firmware answers "illegal data address" — which is why its Save button
+# reports "Error writing coil" and never restarts the module. Rebooting the
+# network side requires cutting power, e.g. through the site's web relay.
 MODBUS_RESET_COIL = _int("MODBUS_RESET_COIL", 255)
 # Drop a pooled connection after this long without use.
 MODBUS_IDLE_TIMEOUT = _float("MODBUS_IDLE_TIMEOUT", 900.0)
@@ -57,4 +67,6 @@ DEFAULT_LON = _float("DEFAULT_LON", -73.48695)
 
 # --- Device web UI ---------------------------------------------------------
 EMC_HTTP_PORT = _int("EMC_HTTP_PORT", 4444)
-REFRESH_TIMEOUT_MS = _int("REFRESH_TIMEOUT_MS", 15000)
+# 30s, not 15s: these controllers serve their web UI slowly, and a station that
+# was restarted moments earlier needs time to come back before its page loads.
+REFRESH_TIMEOUT_MS = _int("REFRESH_TIMEOUT_MS", 30000)

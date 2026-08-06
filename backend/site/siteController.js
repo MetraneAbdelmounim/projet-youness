@@ -8,7 +8,12 @@ const { accessibleProjectIds } = require('../middlewares/auth');
 const { parseSheet, importByIp, sendWorkbook } = require('../shared/spreadsheet');
 
 const PY_BASE = `http://${config.HOST_PY}:${config.PORT_PY}`;
-const CONTROL_TIMEOUT_MS = 15000;
+/**
+ * Must exceed the Python service's own action timeout (REFRESH_TIMEOUT_MS, 30s)
+ * plus browser start-up. If this proxy gives up first, the operator is told the
+ * refresh failed while it is still running and about to succeed.
+ */
+const CONTROL_TIMEOUT_MS = Number(process.env.CONTROL_TIMEOUT_MS) || 45000;
 
 /** Fields a client may set on a station. */
 const WRITABLE = ['ip', 'nom', 'Battery_Type', 'latitude', 'longitude', 'project'];
@@ -216,6 +221,38 @@ module.exports = {
       return res
         .status(502)
         .json({ error: `Impossible de rafraîchir ${site.nom}`, site: site.nom });
+    }
+  }),
+
+  /**
+   * Forces an immediate re-read of one station.
+   *
+   * The poller sweeps on a fixed interval, so a station restarted moments ago
+   * still shows its last swept state. The admin screen calls this after a
+   * control action to reflect what actually happened.
+   */
+  pollSite: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ _id: req.params.idSite }, req.member))
+      .select('ip nom')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+
+    try {
+      const { data } = await axios.post(
+        `${PY_BASE}/control/poll/${site.ip}`,
+        {},
+        { timeout: CONTROL_TIMEOUT_MS }
+      );
+      return res.status(200).json({
+        _id: site._id,
+        ip: site.ip,
+        status: data.status,
+        lastSeenAt: data.lastSeenAt,
+        measuredAt: data.measuredAt,
+      });
+    } catch (err) {
+      console.error(`Immediate poll failed for ${site.nom} (${site.ip}):`, err.message);
+      return res.status(502).json({ error: `Impossible de sonder ${site.nom}` });
     }
   }),
 
