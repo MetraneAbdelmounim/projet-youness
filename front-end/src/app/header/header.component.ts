@@ -1,83 +1,70 @@
-import { Component, OnInit } from '@angular/core';
-import { LoginService } from '../services/login.service';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { MemberService } from '../services/member.service';
+import { Subscription } from 'rxjs';
+import { LoginService } from '../services/login.service';
 
 @Component({
   selector: 'app-header',
   standalone: false,
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css'
 })
-export class HeaderComponent implements OnInit {
-  // @ts-ignore
-  private authListenerSub : Subscription;
-  memberIsAuthenticated : boolean = false;
-  // @ts-ignore
-  private userId : string;
-  // @ts-ignore
-  username: string;
-  // @ts-ignore
-  
-  memberConnected : any
-// @ts-ignore
-  role:string
+export class HeaderComponent implements OnInit, OnDestroy {
+  memberIsAuthenticated = false;
+  username = '';
+  role = '';
+  isAdmin = false;
+  menuOpen = false;
 
-  constructor(private loginService:LoginService,private router :Router,private memberService: MemberService) { }
+  private readonly subscriptions = new Subscription();
+
+  constructor(
+    private loginService: LoginService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    this.authListenerSub = this.loginService.getAuthStatusListener()
-      .subscribe((isAuthenticated)=> {
+    this.subscriptions.add(
+      this.loginService.getAuthStatusListener().subscribe((isAuthenticated) => {
         this.memberIsAuthenticated = isAuthenticated;
-        if(this.memberIsAuthenticated){
-          this.memberService.getMemberFromToken(this.loginService.getToken())
-          this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-
-            this.memberConnected=connectedMember
-            this.role= connectedMember.member.isAdmin?'Admin':'User';
-         
-            
-            this.username = connectedMember.member.username;
-            
-            this.userId = connectedMember.member.userId;
-          })
-
-        }
-
-
-      });
-
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    if(this.memberIsAuthenticated) {
-      this.memberService.getMemberFromToken(this.loginService.getToken())
-      this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-
-        
-        this.memberConnected=connectedMember
-        this.role= connectedMember.member.isAdmin?'Admin':'User';
-        this.username = connectedMember.member.username;
-        console.log(this.role);
-        this.userId = connectedMember.member.userId;
+        if (!isAuthenticated) this.menuOpen = false;
       })
-    }
+    );
+
+    this.subscriptions.add(
+      this.loginService.getCurrentMember().subscribe((member) => {
+        this.username = member?.username ?? '';
+        this.isAdmin = member?.isAdmin ?? false;
+        this.role = this.isAdmin ? 'Administrateur' : 'Utilisateur';
+      })
+    );
   }
 
-  onLogout() {
-    this.loginService.logout()
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
-  isActive(services: string) {
-    return this.router.url=='/'+services
+  /** Closes the account menu on any click outside it, and on Escape. */
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const host = (event.target as HTMLElement).closest('[aria-haspopup="menu"], [role="menu"]');
+    if (!host) this.menuOpen = false;
   }
 
-  isAdmin(admin: string) {
-    return this.router.url.startsWith('/'+admin)
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.menuOpen = false;
   }
-  home(){
 
-    this.router.navigate(['/projects'])
-    
+  get initials(): string {
+    return (this.username || '?').slice(0, 2).toUpperCase();
+  }
+
+  onLogout(): void {
+    this.menuOpen = false;
+    this.loginService.logout();
+  }
+
+  home(): void {
+    void this.router.navigate(['/projects']);
   }
 }

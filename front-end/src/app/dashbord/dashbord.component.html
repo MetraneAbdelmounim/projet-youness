@@ -1,203 +1,127 @@
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-<div class="p-4 sm:ml-64">
-  <div class="p-4">
-    <div class="dash">
+  <app-page-header title="Tableau de bord"
+                   [subtitle]="subtitle"
+                   [backLink]="['/projects']" backLabel="Tous les projets">
+    <button type="button" class="btn btn-ghost" (click)="onRefresh()" [disabled]="spinnerSite">
+      <svg class="h-4 w-4" [class.animate-spin]="spinnerSite" fill="none" stroke="currentColor"
+           stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.023 9.348h4.992V4.356m-4.992 4.992l3.181-3.183a8.25 8.25 0 00-13.803 3.7M4.031 9.865v4.992m0 0h4.99m-4.99 0l3.181 3.183a8.25 8.25 0 0013.803-3.7" />
+      </svg>
+      Actualiser
+    </button>
+    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'mppt']" class="btn btn-primary">Stations</a>
+  </app-page-header>
 
-      <div id="app">
+  <!-- Fleet summary -->
+  <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <app-stat-tile label="Stations" [value]="sites.length" icon="🔌"></app-stat-tile>
+    <app-stat-tile label="En ligne" [value]="onlineCount" tone="good" icon="📡"
+                   [hint]="onlinePercent + '% du parc'"></app-stat-tile>
+    <app-stat-tile label="Hors ligne" [value]="offlineCount"
+                   [tone]="offlineCount ? 'crit' : 'default'" icon="🚫"></app-stat-tile>
+    <app-stat-tile label="Sous le seuil" [value]="belowThresholdCount"
+                   [tone]="belowThresholdCount ? 'warn' : 'default'" icon="🪫"
+                   hint="Tension < seuil AGM"></app-stat-tile>
+  </div>
 
-        <app-aside></app-aside>
-
-        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-          <!-- Breadcrumb -->
-          <nav class="text-sm text-gray-500 mb-2">
-            <ol class="flex items-center space-x-2">
-              <li><a routerLink="/projects" class="hover:underline">Projects</a></li>
-              <li>/</li>
-              <li class="font-semibold text-black"><span *ngIf="project?.nom"
-    class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
-    {{ project.nom }}
-  </span></li>
-            </ol>
-          </nav>
-
-          <!-- Page Title -->
-          <h1 class="text-2xl font-semibold text-gray-800">Dashboard</h1>
-        </div>
-
-        <section class="section main-section"  *ngIf="sites.length > 0; else noSites">
-
-          <div class="p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-
-              <!-- Card 2 -->
-              <div class="bg-white rounded-2xl shadow-lg p-6 transition-transform hover:scale-[1.02]">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500">Stations</p>
-                    <h2 class="text-4xl font-bold text-gray-900 mt-2">{{sites.length}}</h2>
-                  </div>
-                  <div class="w-12 h-12 bg-blue-100 text-blue-600 flex items-center justify-center rounded-full">
-                    <span class="icon widget-icon text-blue-500"><i class="fas fa-broadcast-tower "></i></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Card 3 -->
-              <div class="bg-white rounded-2xl shadow-lg p-6 transition-transform hover:scale-[1.02]">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-gray-500">Performance Batteries</p>
-                    <h2 class="text-4xl font-bold text-gray-900 mt-2">{{upVoltage}} %</h2>
-                  </div>
-                  <div class="w-12 h-12 bg-red-100 text-red-600 flex items-center justify-center rounded-full">
-                    <span class="icon widget-icon text-red-500"><i class="fa fa-line-chart "></i></span>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <div class="h-full mx-auto">
-            <!-- Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-              <!-- Card Header -->
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold text-gray-800"><i class="fas fa-battery-full"></i> Surveillance des Batteries</h2>
-                <span *ngIf="spinnerSite">
-                  <svg class="animate-spin h-6 w-6 text-blue-600 "  xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                  </svg>
-                </span>
-                <span *ngIf="!spinnerSite">
-                  <button (click)="onRefresh(chart)" title="Refresh"
-                    class="p-2 rounded-full hover:bg-blue-100 text-gray-600 cursor-pointer hover:text-blue-600 transition duration-200">
-                    <!-- Heroicon Refresh Icon -->
-                    <i class="fa fa-refresh" aria-hidden="true"></i>
-                  </button>
-                </span>
-              </div>
-              <!-- Chart Container -->
-              <div class="relative w-full overflow-x-auto">
-                <div class="w-full max-w-full h-[300px] sm:h-[400px] md:h-[500px]">
-                  <canvas id="my-chart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="h-full mt-8 mx-auto">
-            <!-- Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-              <!-- Card Header -->
-              <div class="flex flex-wrap justify-between items-center mb-4 gap-4">
-                <h2 class="text-lg font-semibold flex items-center gap-2">
-                
-                  <i class="fas fa-broadcast-tower "></i> Status des sites
-                </h2>
-                <div class="relative">
-                  <input type="text" placeholder="Search..." [(ngModel)]="term"
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent w-72" />
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M12.9 14.32a8 8 0 111.414-1.414l4.387 4.387a1 1 0 01-1.414 1.414l-4.387-4.387zM10 16a6 6 0 100-12 6 6 0 000 12z"
-                        clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Chart Container -->
-              <div class="relative">
-                <!-- Loading Spinner -->
-                <div class="flex items-center justify-center" *ngIf="spinnerSite">
-                  <div class="spin"></div>
-                </div>
-
-                <!-- Content -->
-                <div class="card-content">
-                  <!-- Desktop Table -->
-                  <div class="hidden md:block overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                      <thead class="!bg-blue-600 text-white">
-                        <tr>
-                          <th
-                            class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Nom
-                          </th>
-                          <th
-                            class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            IP Address
-                          </th>
-                          <th
-                            class="px-5 py-3 border-b-2 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            Status
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr
-                          *ngFor="let site of sites | filterBy: ['ip']: this.term | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }">
-                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ site.nom }}</td>
-                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">{{ site.ip }}</td>
-                          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                            <app-site-status [ip]="site.ip"></app-site-status>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <!-- Mobile Cards -->
-                  <div class="md:hidden space-y-4">
-                    <div
-                      *ngFor="let site of sites |  filterBy: ['ip']: this.term | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }"
-                      class="bg-white shadow rounded-lg p-4 border border-gray-200 transition transform hover:scale-[1.01] duration-150">
-                      <div class="mb-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Nom</span>
-                        <p class="text-gray-800 font-medium">{{ site.nom }}</p>
-                      </div>
-                      <hr class="my-2 border-gray-100" />
-                      <div class="mb-2">
-                        <span class="text-xs font-semibold text-gray-500 uppercase">IP Address</span>
-                        <p class="text-gray-800">{{ site.ip }}</p>
-                      </div>
-                      <hr class="my-2 border-gray-100" />
-                      <div>
-                        <span class="text-xs font-semibold text-gray-500 uppercase">Status</span>
-                        <div class="mt-1">
-                          <app-site-status [ip]="site.ip"></app-site-status>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="section main-section mt-4">
-              <pagination-controls *ngIf="sites.length > 0" class="paginationforum" [class.active]="'colorActive'"
-                id="listing_pagination" (pageChange)="page = $event">
-              </pagination-controls>
-            </div>
-          </div>
-
-        </section>
-        <ng-template #noSites>
-      <div class="flex flex-col items-center justify-center h-72 text-center text-gray-600">
-        <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" stroke-width="1.5"
-          viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M12 8c-1.657 0-3 1.343-3 3v2H7c-1.105 0-2 .895-2 2v3h14v-3c0-1.105-.895-2-2-2h-2v-2c0-1.657-1.343-3-3-3z" />
-        </svg>
-        <h3 class="text-lg font-semibold mb-2">Aucune station trouvé</h3>
-        <p class="text-sm">Aucune station n’est associé à ce pros
-      </div>
-    </ng-template>
+  <!-- Voltage chart. One measure, one axis; the two reference lines carry the
+       thresholds, so the bars need no second colour encoding. -->
+  <section class="card mb-6 p-6">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-ink">Tension des batteries</h2>
+        <p class="mt-0.5 text-sm text-ink-muted">
+          Dernier relevé par station, comparé aux seuils de chaque chimie.
+        </p>
       </div>
     </div>
-  </div>
+
+    <div *ngIf="spinnerSite" class="skeleton h-80 w-full"></div>
+    <div class="relative h-80" [class.hidden]="spinnerSite || !sites.length">
+      <canvas #voltageCanvas></canvas>
+    </div>
+    <p *ngIf="!spinnerSite && !sites.length" class="py-16 text-center text-sm text-ink-muted">
+      Aucune donnée à représenter.
+    </p>
+  </section>
+
+  <!-- Station table -->
+  <section class="card overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
+      <h2 class="text-lg font-semibold text-ink">Stations</h2>
+      <div class="relative">
+        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+             fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+        </svg>
+        <input type="text" [(ngModel)]="term" placeholder="Filtrer par IP…"
+               class="field w-full pl-9 sm:w-64" aria-label="Filtrer les stations par adresse IP" />
+      </div>
+    </div>
+
+    <div *ngIf="spinnerSite" class="space-y-3 p-5">
+      <div *ngFor="let placeholder of [1, 2, 3, 4, 5]" class="skeleton h-12 w-full"></div>
+    </div>
+
+    <ng-container *ngIf="!spinnerSite">
+      <div *ngIf="sites.length; else noSites">
+        <!-- Table on wide screens -->
+        <table class="hidden w-full md:table">
+          <thead>
+            <tr class="border-b border-line bg-sunken">
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Station</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse IP</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Tension</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">État</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-row"
+                *ngFor="let site of sites | filterBy: ['ip']: term | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }">
+              <td class="px-5 py-3.5 text-sm font-medium text-ink">{{ site.nom }}</td>
+              <td class="px-5 py-3.5 font-mono text-sm text-ink-secondary">{{ site.ip }}</td>
+              <td class="px-5 py-3.5 text-right text-sm font-semibold tnum text-ink">
+                {{ site.lastReading?.Battery_Voltage | measure: 'V' }}
+              </td>
+              <td class="px-5 py-3.5">
+                <app-site-status [isAlive]="site.status" [lastSeenAt]="site.lastSeenAt"></app-site-status>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Cards on narrow screens -->
+        <div class="divide-y divide-line md:hidden">
+          <div class="p-4"
+               *ngFor="let site of sites | filterBy: ['ip']: term | paginate: { id: 'listing_pagination', itemsPerPage: itemsPerPage, currentPage: page }">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-ink">{{ site.nom }}</p>
+                <p class="mt-0.5 font-mono text-xs text-ink-muted">{{ site.ip }}</p>
+              </div>
+              <app-site-status [isAlive]="site.status" [lastSeenAt]="site.lastSeenAt"></app-site-status>
+            </div>
+            <p class="mt-2 text-lg font-bold tnum text-ink">
+              {{ site.lastReading?.Battery_Voltage | measure: 'V' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="border-t border-line p-4">
+          <pagination-controls id="listing_pagination" (pageChange)="page = $event"
+                               previousLabel="Précédent" nextLabel="Suivant">
+          </pagination-controls>
+        </div>
+      </div>
+
+      <ng-template #noSites>
+        <app-empty-state icon="🔌" title="Aucune station"
+                         description="Aucune station n'est associée à ce projet.">
+        </app-empty-state>
+      </ng-template>
+    </ng-container>
+  </section>
 </div>

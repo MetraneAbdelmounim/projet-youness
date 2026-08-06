@@ -1,20 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>INNOVATION MI 8 - MPPT Supervision</title>
+  <title>INNOVATION MI 8 — Supervision MPPT</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plateforme de supervision des stations solaires MPPT.">
+  <meta name="color-scheme" content="light dark">
   <link rel="icon" type="image/x-icon" href="./favicon.ico">
-  <!-- Add this in the <head> of your HTML -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  
-
-  
-
 </head>
-<body class="dark">
-  <app-root></app-root>
+<!--
+  No hard-coded theme class here: ThemeService owns the `dark` class on <html>,
+  applied from main.ts before bootstrap so the two cannot disagree. The body
+  previously carried a permanent `class="dark"`, which pinned the whole app to
+  the dark palette regardless of the user's choice.
 
+  The Font Awesome CDN link was also removed — nothing referenced it any more,
+  and the Content-Security-Policy blocks third-party stylesheets in any case.
+-->
+<body>
+  <app-root></app-root>
 </body>
 </html>

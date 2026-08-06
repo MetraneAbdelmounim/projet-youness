@@ -1,0 +1,186 @@
+<!--
+  Shared by the modem and panneau admin screens. Both were 343-line templates
+  that differed only in wording, which now comes from the component.
+-->
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+
+  <app-page-header [title]="resourceLabelPlural"
+                   [subtitle]="spinnerSite ? 'Chargement…' : devices.length + ' enregistré(s) · ' + onlineCount + ' en ligne'"
+                   [backLink]="['/projects']" backLabel="Retour aux projets">
+
+    <label class="btn btn-ghost">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
+      </svg>
+      Importer
+      <input type="file" class="sr-only" accept=".xlsx,.xls" (change)="detectFile($event)" />
+    </label>
+
+    <button type="button" class="btn btn-ghost" (click)="exportFile()">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M12 3v12m0 0l-3.75-3.75M12 15l3.75-3.75M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
+      </svg>
+      Exporter
+    </button>
+
+    <button type="button" class="btn btn-primary" (click)="openCrudModal()">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      Ajouter
+    </button>
+  </app-page-header>
+
+  <section class="card overflow-hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
+      <p class="text-sm text-ink-secondary">
+        Importez un fichier Excel avec les colonnes <code class="font-mono text-xs">ip</code>,
+        <code class="font-mono text-xs">nom</code>, <code class="font-mono text-xs">project</code>.
+      </p>
+      <div class="relative">
+        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+             fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+        </svg>
+        <input type="text" [(ngModel)]="term" placeholder="Filtrer par IP…"
+               class="field w-full pl-9 sm:w-64" aria-label="Filtrer par adresse IP" />
+      </div>
+    </div>
+
+    <div *ngIf="spinnerSite" class="space-y-3 p-5">
+      <div *ngFor="let placeholder of [1, 2, 3, 4, 5]" class="skeleton h-12 w-full"></div>
+    </div>
+
+    <ng-container *ngIf="!spinnerSite">
+      <div *ngIf="devices.length; else noDevices">
+        <table class="hidden w-full md:table">
+          <thead>
+            <tr class="border-b border-line bg-sunken">
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Nom</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse IP</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Projet</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">État</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="table-row"
+                *ngFor="let device of devices | filterBy: ['ip']: term | paginate: { id: 'device_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
+              <td class="px-5 py-3.5 text-sm font-medium text-ink">{{ device.nom }}</td>
+              <td class="px-5 py-3.5 font-mono text-sm text-ink-secondary">{{ device.ip }}</td>
+              <td class="px-5 py-3.5">
+                <span *ngIf="device.project?.nom" class="chip chip-brand">{{ device.project?.nom }}</span>
+                <span *ngIf="!device.project?.nom" class="text-xs italic text-ink-muted">—</span>
+              </td>
+              <td class="px-5 py-3.5">
+                <app-site-status [isAlive]="device.status" [lastSeenAt]="device.lastSeenAt"></app-site-status>
+              </td>
+              <td class="px-5 py-3.5">
+                <div class="flex justify-end gap-1.5">
+                  <button type="button" (click)="onEdit(device)" title="Modifier"
+                          class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                    </svg>
+                  </button>
+                  <button type="button" (click)="openDeletedModal(device)" title="Supprimer"
+                          class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:border-crit hover:text-crit">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Cards on narrow screens -->
+        <div class="divide-y divide-line md:hidden">
+          <div class="p-4"
+               *ngFor="let device of devices | filterBy: ['ip']: term | paginate: { id: 'device_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-ink">{{ device.nom }}</p>
+                <p class="mt-0.5 font-mono text-xs text-ink-muted">{{ device.ip }}</p>
+              </div>
+              <app-site-status [isAlive]="device.status" [lastSeenAt]="device.lastSeenAt"></app-site-status>
+            </div>
+            <div class="mt-3 flex items-center justify-between gap-2">
+              <span *ngIf="device.project?.nom" class="chip chip-brand">{{ device.project?.nom }}</span>
+              <div class="flex gap-1.5">
+                <button type="button" (click)="onEdit(device)" class="btn btn-ghost px-3 py-1 text-xs">Modifier</button>
+                <button type="button" (click)="openDeletedModal(device)" class="btn btn-danger px-3 py-1 text-xs">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-line p-4">
+          <pagination-controls id="device_pagination" (pageChange)="page = $event"
+                               previousLabel="Précédent" nextLabel="Suivant">
+          </pagination-controls>
+        </div>
+      </div>
+
+      <ng-template #noDevices>
+        <app-empty-state icon="📭" [title]="'Aucun ' + resourceLabel"
+                         description="Ajoutez-en un ou importez un fichier Excel pour démarrer.">
+          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">Ajouter</button>
+        </app-empty-state>
+      </ng-template>
+    </ng-container>
+  </section>
+</div>
+
+<!-- Create / edit -->
+<app-modal [open]="crudOpen" (closed)="crudOpen = false"
+           [title]="(type === 'Edit' ? 'Modifier le ' : 'Ajouter un ') + resourceLabel"
+           [hasFooter]="false">
+  <form (ngSubmit)="onSubmit(f)" #f="ngForm" class="space-y-4">
+    <div>
+      <label for="nom" class="label">Nom</label>
+      <input id="nom" name="nom" class="field" required
+             [ngModel]="type === 'Edit' ? deviceEdited?.nom : null" />
+    </div>
+
+    <div>
+      <label for="ip" class="label">Adresse IP</label>
+      <input id="ip" name="ip" class="field" required placeholder="10.8.0.10"
+             [ngModel]="type === 'Edit' ? deviceEdited?.ip : null" />
+    </div>
+
+    <div>
+      <label for="project" class="label">Projet</label>
+      <select id="project" name="project" class="field"
+              [ngModel]="type === 'Edit' ? deviceEdited?.project?._id : null">
+        <option [ngValue]="null">— Aucun —</option>
+        <option *ngFor="let project of projects" [ngValue]="project._id">{{ project.nom }}</option>
+      </select>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">Annuler</button>
+      <button type="submit" class="btn btn-primary" [disabled]="f.invalid || saving">
+        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+    </div>
+  </form>
+</app-modal>
+
+<!-- Delete confirmation -->
+<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" title="Confirmer la suppression" size="sm">
+  <p class="text-sm text-ink-secondary">
+    Voulez-vous vraiment supprimer <strong class="text-ink">{{ deletedDeviceName }}</strong> ?
+    Cette action est irréversible.
+  </p>
+  <ng-container modalFooter>
+    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">Annuler</button>
+    <button type="button" class="btn btn-danger" (click)="remove()">Supprimer</button>
+  </ng-container>
+</app-modal>

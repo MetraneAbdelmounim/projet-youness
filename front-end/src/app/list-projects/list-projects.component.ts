@@ -1,68 +1,54 @@
-import { Component } from '@angular/core';
-import { LoginService } from '../services/login.service';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { MemberService } from '../services/member.service';
+import { Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { Project } from '../models/project';
+import { ProjectService } from '../services/project.service';
 
 @Component({
   selector: 'app-list-projects',
   standalone: false,
   templateUrl: './list-projects.component.html',
-  styleUrl: './list-projects.component.css'
+  styleUrl: './list-projects.component.css',
 })
-export class ListProjectsComponent {
+export class ListProjectsComponent implements OnInit, OnDestroy {
+  projects: Project[] = [];
+  spinnerSite = true;
 
-// @ts-ignore
-  private authListenerSub : Subscription;
-  memberIsAuthenticated : boolean = false;
-  // @ts-ignore
+  private readonly subscriptions = new Subscription();
 
-  
-  memberConnected : any
-  spinnerSite: boolean=false;
-// @ts-ignore
-  role:string
-  projects : Array<Project> = []
-  constructor(private loginService:LoginService,private router :Router,private memberService: MemberService) { }
+  constructor(
+    private projectService: ProjectService,
+    private router: Router,
+    private message: ToastrService
+  ) {}
 
   ngOnInit(): void {
-    this.spinnerSite=true
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    this.authListenerSub = this.loginService.getAuthStatusListener()
-      .subscribe((isAuthenticated)=> {
-        this.memberIsAuthenticated = isAuthenticated;
-        if(this.memberIsAuthenticated){
-          this.memberService.getMemberFromToken(this.loginService.getToken())
-          this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-
-            this.memberConnected=connectedMember
-            
-          })
-
-        }
-
-
-      });
-
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    if(this.memberIsAuthenticated) {
-      this.memberService.getMemberFromToken(this.loginService.getToken())
-      this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-        this.projects=connectedMember.member.projects
-        this.spinnerSite=false
-        
+    // Read the project list from the API, which scopes it to the caller,
+    // rather than from the member payload embedded in the auth response.
+    this.subscriptions.add(
+      this.projectService.getAllProjects().subscribe({
+        next: (projects) => {
+          this.projects = projects;
+          this.spinnerSite = false;
+        },
+        error: () => {
+          this.spinnerSite = false;
+          this.message.error('Impossible de charger les projets');
+        },
       })
-    }
-  }
-  dahsbord(arg0: string) {
-
-    this.router.navigate(['/project', arg0, 'dashbord'])
-    .then(()=>{
-      window.location.reload()
-    })
-
+    );
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
+  trackById(_index: number, project: Project): string {
+    return project._id;
+  }
 
+  dahsbord(projectId: string): void {
+    void this.router.navigate(['/project', projectId, 'dashbord']);
+  }
 }

@@ -1,22 +1,25 @@
+const licenceService = require('../licence/licenceService');
 
-const config = require('../config/config')
-
+/**
+ * Blocks the API when no valid licence is installed.
+ *
+ * Replaces the previous check against a date compiled into the source, which
+ * anyone with the code could read and edit. Validity now rests on an Ed25519
+ * signature the application can verify but not produce.
+ *
+ * Responds 402 with a stable `code` so the client can route to the licence
+ * screen instead of guessing from message text. Auth, health and the licence
+ * endpoints themselves are intentionally not behind this guard, so an operator
+ * can still sign in and upload a replacement.
+ */
 module.exports = (req, res, next) => {
-    try {
-       const date = Date.now()
+  if (licenceService.isValid()) return next();
 
-        if (config.DATE_Licence-date<0 ) {
-            res.status(401).send({
-                error: "Votre license gratuite a été expiré ! Veuillez contactez votre Administrateur"
-            });
-        } else {
-            
-            
-            next();
-        }
-    } catch {
-        res.status(401).send({
-            error: "Vous n'êtes pas autorisé ! Veuillez contactez votre Administrateur"
-        });
-    }
+  const state = licenceService.status();
+  return res.status(402).json({
+    code: state.installed ? 'LICENCE_EXPIRED' : 'LICENCE_MISSING',
+    error: state.installed
+      ? 'Votre licence a expiré. Veuillez installer une licence valide.'
+      : "Aucune licence n'est installée. Veuillez téléverser votre fichier de licence.",
+  });
 };

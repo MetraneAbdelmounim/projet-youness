@@ -41,11 +41,8 @@
             "styles": [
               "src/styles.css",
               "node_modules/ngx-toastr/toastr.css"
-               //"node_modules/ng-zorro-antd/ng-zorro-antd.min.css"
             ],
-            "scripts": [
-               "node_modules/flowbite/dist/flowbite.min.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -67,7 +64,15 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              }
             },
             "development": {
               "optimization": false,
@@ -117,6 +122,11 @@
     }
   },
   "cli": {
-    "analytics": false
+    "analytics": false,
+    "cache": {
+      "enabled": true,
+      "environment": "all",
+      "path": "C:/Users/nassi/AppData/Local/ng-cache/projet-youness"
+    }
   }
 }

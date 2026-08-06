@@ -1,49 +1,70 @@
-<nav class="bg-white top-0 border-gray-200 dark:bg-gray-900" *ngIf="memberIsAuthenticated">
-    <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-2">
-    <a  class="flex items-center space-x-3 rtl:space-x-reverse">
-        <img src="assets/images/white-logo.png" width="70" height="40" alt="Flowbite Logo" />
-    </a>
-    <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse opacity-100" *ngIf="memberIsAuthenticated">
-        <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 cursor-pointer focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
-          <span class="sr-only">Open user menu</span>
-          <img class="w-8 h-8 rounded-full" src="assets/images/white-logo.png" alt="user photo">
-        </button>
-        <!-- Dropdown menu -->
-        <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:divide-gray-600" id="user-dropdown">
-          <div class="px-4 py-3">
-            <span class="block text-sm text-gray-900 dark:text-white">{{username}}</span>
-            <!--<span class="block text-sm  text-gray-500 truncate dark:text-gray-400">{{username+'@innovationmi8.com'}}</span>-->
-          </div>
-          <ul class="py-2" aria-labelledby="user-menu-button">
-            
-            <li>
-              <a routerLink="dashbord/change-password" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Change Password</a>
-            </li>
-             <li *ngIf="this.role==='Admin'">
-              <a routerLink="dashbord/members" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Dashbord</a>
-            </li>
-            <li>
-              <a  (click)="onLogout()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-gray-200 dark:hover:text-white">Sign out</a>
-            </li>
-           
-          </ul>
-        </div>
-        <button data-collapse-toggle="navbar-user" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-user" aria-expanded="false">
-          <span class="sr-only">Open main menu</span>
-          <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+<header *ngIf="memberIsAuthenticated"
+        class="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+
+    <!-- Brand -->
+    <button type="button" (click)="home()" class="flex items-center gap-3">
+      <img src="assets/images/logo.png" alt="" class="h-8 w-auto dark:brightness-0 dark:invert" />
+      <span class="hidden text-sm font-semibold tracking-tight text-ink sm:block">
+        Supervision MPPT
+      </span>
+    </button>
+
+    <!-- Primary navigation -->
+    <nav class="flex items-center gap-1">
+      <a routerLink="/projects" routerLinkActive="bg-brand-soft text-brand-ink"
+         class="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-secondary transition hover:bg-hover hover:text-ink">
+        Projets
+      </a>
+      <a *ngIf="isAdmin" routerLink="/dashbord/sites" routerLinkActive="bg-brand-soft text-brand-ink"
+         class="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-secondary transition hover:bg-hover hover:text-ink">
+        Administration
+      </a>
+    </nav>
+
+    <!-- Right cluster -->
+    <div class="flex items-center gap-2">
+      <app-theme-toggle></app-theme-toggle>
+
+      <!-- Account menu. Built natively rather than with Flowbite's data-attribute
+           dropdown, which needed a re-init on every navigation to work at all. -->
+      <div class="relative">
+        <button type="button" (click)="menuOpen = !menuOpen"
+                class="flex items-center gap-2 rounded-lg border border-line py-1 pl-1 pr-2 transition hover:bg-hover"
+                [attr.aria-expanded]="menuOpen" aria-haspopup="menu">
+          <span class="flex h-7 w-7 items-center justify-center rounded-md bg-brand text-xs font-bold text-ink-inverse">
+            {{ initials }}
+          </span>
+          <span class="hidden text-sm font-medium text-ink sm:block">{{ username }}</span>
+          <svg class="h-4 w-4 text-ink-muted transition" [class.rotate-180]="menuOpen"
+               fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-      </button>
+        </button>
+
+        <div *ngIf="menuOpen" role="menu"
+             class="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-surface shadow-pop"
+             style="box-shadow: var(--shadow-pop)">
+          <div class="border-b border-line px-4 py-3">
+            <p class="truncate text-sm font-semibold text-ink">{{ username }}</p>
+            <p class="mt-0.5 text-xs text-ink-muted">{{ role }}</p>
+          </div>
+          <div class="p-1.5">
+            <a routerLink="/dashbord/change-password" role="menuitem" (click)="menuOpen = false"
+               class="block rounded-lg px-3 py-2 text-sm text-ink-secondary transition hover:bg-hover hover:text-ink">
+              Changer le mot de passe
+            </a>
+            <a *ngIf="isAdmin" routerLink="/dashbord/licence" role="menuitem" (click)="menuOpen = false"
+               class="block rounded-lg px-3 py-2 text-sm text-ink-secondary transition hover:bg-hover hover:text-ink">
+              Licence
+            </a>
+            <button type="button" role="menuitem" (click)="onLogout()"
+                    class="block w-full rounded-lg px-3 py-2 text-left text-sm text-crit transition hover:bg-crit-soft">
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-user" *ngIf="memberIsAuthenticated">
-      <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
-        
-       
-        <li>
-          <a  (click)="home()" class="cursor-pointer block py-2 px-3 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Home</a>
-        </li>
-       
-      </ul>
-    </div>
-    </div>
-  </nav>
+  </div>
+</header>

@@ -1,151 +1,171 @@
 import { Injectable } from '@angular/core';
-import {Subject} from 'rxjs';
-import {Router} from '@angular/router';
-import {HttpClient} from '@angular/common/http';
-import {environment} from '../../environments/environment';
-
-import {config} from '../../Config/config';
-import {MemberService} from './member.service';
-
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
+import { environment } from '../../environments/environment';
+import { Member } from '../models/member';
+
 const BACKEND_URL = environment.apiUri;
-@Injectable({
-  providedIn: 'root'
-})
+
+const TOKEN_KEY = 'token';
+const MEMBER_KEY = 'memberId';
+const EXPIRY_KEY = 'expiration';
+
+interface SignInResponse {
+  token: string;
+  expiresIn: number;
+  memberId: string;
+  isAdmin: boolean;
+  mustChangePassword: boolean;
+  message: string;
+}
+
+@Injectable({ providedIn: 'root' })
 export class LoginService {
+  /**
+   * Authentication state, seeded from storage on construction.
+   *
+   * A BehaviorSubject means late subscribers — route guards in particular — get
+   * the current value immediately. The previous plain Subject only emitted on
+   * change, so a guard that subscribed after login never received anything.
+   */
+  private readonly authenticated$ = new BehaviorSubject<boolean>(false);
+  private readonly currentMember$ = new BehaviorSubject<Member | null>(null);
 
-  // @ts-ignore
-  token : string;
-  private authStatusListener = new Subject<boolean>();
-  private isAuthenticated = false;
-  redirectUrl: string="";
-  private tokenTimer: any;
+  redirectUrl = '';
+  private tokenTimer?: ReturnType<typeof setTimeout>;
 
-  private memberRoleSub =new Subject<boolean>();
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private message: ToastrService
+  ) {}
 
-  constructor(private http : HttpClient, private router : Router,private message:ToastrService,private  memberService:MemberService) { }
-  getToken(){
-    return this.token;
+  getAuthStatusListener(): Observable<boolean> {
+    return this.authenticated$.asObservable();
   }
-  getAuthStatusListener() {
-    return this.authStatusListener.asObservable();
+
+  getAuthStatus(): boolean {
+    return this.authenticated$.value;
   }
-  getAuthStatus(){
-    return this.isAuthenticated;
+
+  getToken(): string | null {
+    return localStorage.getItem(TOKEN_KEY);
   }
-  signIn(username : String, password : String) {
-    const authData = {username : username, password : password};
-    this.http.post<{token : string, expiresIn : number, memberId : string,role : string,message:string}>(
-      BACKEND_URL+'auth/signin',authData).subscribe((result)=>{
-      
-        
-      const token = result.token;
-      this.token = token;
 
-      if(token){
-        const expiresInDuration = result.expiresIn;
-
-        this.setAuthTimer(expiresInDuration);
-
-        const now = new Date();
-        if (this.redirectUrl) {
-          
-          this.router.navigate([this.redirectUrl.slice(1,this.redirectUrl.length)]);
-          // @ts-ignore
-          this.redirectUrl = null;
-        
-        }
-        this.message.success(result.message)
-        const expirationDate = new Date(now.getTime()+expiresInDuration*1000);
-
-        this.saveAuthData(token,expirationDate,result.memberId);
-        this.authStatusListener.next(true);
-        this.isAuthenticated = true;
-        this.router.navigate(['projects']);
-      }
-
-    },(error)=>{
-      this.message.error(error.error.error)
-    });
-
+  getMemberId(): string | null {
+    return localStorage.getItem(MEMBER_KEY);
   }
-  logout(){
 
-    // @ts-ignore
-    this.token = null;
-    this.authStatusListener.next(false);
-    this.isAuthenticated = false;
-    clearTimeout(this.tokenTimer);
-    
-    this.memberService.logoutMember(localStorage.getItem("memberId")).subscribe(()=>{
+  getCurrentMember(): Observable<Member | null> {
+    return this.currentMember$.asObservable();
+  }
 
+  /**
+   * Resolves the caller's admin flag, asking the API only when it is not
+   * already known.
+   *
+   * The old implementation opened a fresh subscription to a never-completing
+   * Subject on every call, so each admin-guard evaluation leaked one more
+   * subscriber and the guard's observable never settled.
+   */
+  isAdmin(): Observable<boolean> {
+    const cached = this.currentMember$.value;
+    if (cached) return of(cached.isAdmin);
+
+    return this.loadCurrentMember().pipe(map((member) => member?.isAdmin ?? false));
+  }
+
+  loadCurrentMember(): Observable<Member | null> {
+    return this.http.get<{ member: Member }>(`${BACKEND_URL}auth/me`).pipe(
+      map((response) => response.member),
+      tap((member) => this.currentMember$.next(member)),
+      catchError(() => {
+        this.currentMember$.next(null);
+        return of(null);
+      })
+    );
+  }
+
+  signIn(username: string, password: string): void {
+    this.http
+      .post<SignInResponse>(`${BACKEND_URL}auth/signin`, { username, password })
+      .subscribe({
+        next: (result) => {
+          this.saveAuthData(result.token, result.memberId, result.expiresIn);
+          this.setAuthTimer(result.expiresIn);
+          this.authenticated$.next(true);
+          this.message.success(result.message);
+
+          this.loadCurrentMember().subscribe(() => {
+            const target = this.redirectUrl || '/projects';
+            this.redirectUrl = '';
+            void this.router.navigateByUrl(target);
+          });
+        },
+        error: (error) => {
+          this.message.error(error?.error?.error ?? 'Connexion impossible');
+        },
+      });
+  }
+
+  logout(): void {
+    // Clear locally first so a failing request cannot strand the session.
+    const finish = () => {
       this.clearAuthData();
-      this.router.navigate(['']);
-    })
-    
-  }
-  private saveAuthData(token: string, expirationDate: Date, memberId: string) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("memberId", memberId);
-    localStorage.setItem("expiration", expirationDate.toISOString());
-
-  }
-  private clearAuthData(){
-    localStorage.removeItem("token");
-    localStorage.removeItem("memberId");
-    localStorage.removeItem("expiration");
-  }
-  private getAuthData() {
-    const token = localStorage.getItem("token");
-    const expirationDate = localStorage.getItem("expiration");
-    const memberId = localStorage.getItem("memberId");
-    if (!token || !expirationDate) {
-      return;
-    }
-
-    return {
-      token: token,
-      expirationDate: new Date (expirationDate),
-      memberId:memberId
+      this.authenticated$.next(false);
+      this.currentMember$.next(null);
+      clearTimeout(this.tokenTimer);
+      void this.router.navigate(['']);
     };
+
+    if (!this.getToken()) return finish();
+
+    this.http
+      .put(`${BACKEND_URL}auth/logout`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe(finish);
   }
-  getMemberStatus(){
-    this.memberService.getMemberFromToken(this.getToken())
-    this.memberService.userFromTokenSubject.asObservable().subscribe((data:any)=>{
-    
-      
-      this.memberRoleSub.next(data.member.isAdmin)
-    })
-    return this.memberRoleSub.asObservable()
-  }
-  
-  getAuthorizedFromLocal(){
-    return String(localStorage.getItem('memberId'))
-  }
-  getTokenFromLocal(){
-    return localStorage.getItem('token')
-  }
-  autoAuthUser() {
-    const authInfo = this.getAuthData();
-    if (!authInfo) {
+
+  /** Restores the session on page load, if the stored token has not expired. */
+  autoAuthUser(): void {
+    const token = localStorage.getItem(TOKEN_KEY);
+    const expiry = localStorage.getItem(EXPIRY_KEY);
+    if (!token || !expiry) return;
+
+    const remainingMs = new Date(expiry).getTime() - Date.now();
+    if (remainingMs <= 0) {
+      this.clearAuthData();
       return;
     }
 
-    // @ts-ignore
-    const now = new Date();
-    const expiresIn = authInfo.expirationDate.getTime() - now.getTime();
-    if (expiresIn > 0) {
-      
-      this.token = authInfo.token;
-      this.isAuthenticated = true;
-      this.setAuthTimer(expiresIn / 1000);
-      this.authStatusListener.next(true);
-    }
+    this.authenticated$.next(true);
+    this.setAuthTimer(remainingMs / 1000);
+    this.loadCurrentMember().subscribe();
   }
-  private setAuthTimer(duration: number) {
-   
-    this.tokenTimer = setTimeout(() => {
-      this.logout();
-    }, duration * 1000);
+
+  private saveAuthData(token: string, memberId: string, expiresInSeconds: number): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(MEMBER_KEY, memberId);
+    localStorage.setItem(
+      EXPIRY_KEY,
+      new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+    );
+  }
+
+  private clearAuthData(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(MEMBER_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
+  }
+
+  private setAuthTimer(durationSeconds: number): void {
+    clearTimeout(this.tokenTimer);
+    // setTimeout saturates above ~24.8 days; the token life is far shorter now,
+    // but clamp anyway so an out-of-range value cannot fire immediately.
+    const ms = Math.min(durationSeconds * 1000, 2 ** 31 - 1);
+    this.tokenTimer = setTimeout(() => this.logout(), ms);
   }
 }

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python
+**/venv/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+.angular/
+backend/public/browser/
+backend/public/prerendered-routes.json
+backend/public/3rdpartylicenses.txt
+
+# Runtime data
+backend/uploads/*
+!backend/uploads/.gitkeep
+*.log
+npm-debug.log*
+
+# Editors / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Licence signing key — the vendor's signing authority. Never commit.
+*.pem
+!backend/config/licence-public-key.pem
+*.mi8lic

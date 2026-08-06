@@ -1,16 +1,16 @@
-const authUser = require('../middlewares/authUser.js')
-const authAdmin = require('../middlewares/authAdmin.js')
-const licenceGuard = require('../middlewares/licenceGuard.js')
-const projectController = require('./projectController.js')
-let path =require('path')
-let express = require('express');
-let router = express.Router();
+const express = require('express');
+const projectController = require('./projectController');
+const licenceGuard = require('../middlewares/licenceGuard');
+const { authenticate, requireAdmin, requireProjectAccess } = require('../middlewares/auth');
 
+const router = express.Router();
 
-router.post('',licenceGuard,authAdmin,projectController.addProject)
-router.get('',licenceGuard ,authUser,projectController.getAllProjects)
-router.get('/:idProject',licenceGuard ,authUser,projectController.getProjectByID)
-router.delete('/:idProject',licenceGuard ,authAdmin,projectController.deleteProject)
-router.put('/:idProject',licenceGuard ,authAdmin,projectController.updateProject)
+router.use(licenceGuard, authenticate);
 
-module.exports=router
+router.post('', requireAdmin, projectController.addProject);
+router.get('', projectController.getAllProjects);
+router.get('/:idProject', requireProjectAccess(), projectController.getProjectByID);
+router.delete('/:idProject', requireAdmin, projectController.deleteProject);
+router.put('/:idProject', requireAdmin, projectController.updateProject);
+
+module.exports = router;

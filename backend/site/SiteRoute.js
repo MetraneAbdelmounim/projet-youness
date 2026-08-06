@@ -1,41 +1,37 @@
-const authUser = require('../middlewares/authUser')
-const authAdmin = require('../middlewares/authAdmin')
-const authProject = require('../middlewares/authProjects')
-const licenceGuard = require('../middlewares/licenceGuard')
-const siteController = require('./siteController')
-let path =require('path')
-let express = require('express');
-let router = express.Router();
-const multer = require('multer')
-var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null,path.join('uploads/'));
-    },
-    filename: function (req, file, cb) {
-        cb(null, path.join(Date.now().toString()+file.originalname))
-    }
-});
-var upload = multer({
-    storage: storage
-});
+const express = require('express');
+const siteController = require('./siteController');
+const licenceGuard = require('../middlewares/licenceGuard');
+const { uploadSpreadsheet } = require('../middlewares/upload');
+const { authenticate, requireAdmin, requireProjectAccess } = require('../middlewares/auth');
 
+const router = express.Router();
 
-router.post('',licenceGuard,authAdmin,siteController.addSite)
-router.post('/file',licenceGuard ,authAdmin,upload.single('file'),siteController.addSiteFromFile)
-router.get('',licenceGuard ,authUser,siteController.getAllSites2)
-router.get('/midnightReload',licenceGuard ,authAdmin,siteController.getMidgnightReload)
-router.put('/midnightReload',licenceGuard ,authAdmin,siteController.changeMidgnightReload)
-router.get('/projects/:idProject',licenceGuard ,authUser,authProject,siteController.getSitesByProject)
-router.get('/ping',licenceGuard ,authUser,siteController.getAllSitesWithoutData)
-router.get('/status/:ip',licenceGuard ,authUser,siteController.getStatusSite)
-router.get('/data/:idSite',licenceGuard ,authUser,siteController.getDataBySiteFromMPPT)
-router.get('/data/analysis/:idSite',licenceGuard ,authUser,siteController.getDataAnalysisBySiteFromMPPT)
-router.delete('/:idSite',licenceGuard ,authAdmin,siteController.deleteSite)
-router.put('/:idSite',licenceGuard ,authAdmin,siteController.updateSite)
-router.get('/export',licenceGuard ,authAdmin,siteController.exportAllSites)
-router.post('/reload/:idSite',licenceGuard ,authAdmin,siteController.restarSite)
-router.post('/refresh/:idSite',licenceGuard ,authAdmin,siteController.refreshSite)
-router.get('/:idSite',licenceGuard ,authUser,siteController.getSiteByIdWithoutDATA)
+router.use(licenceGuard, authenticate);
 
+// --- Static paths first, so they are not captured by /:idSite ---
+router.get('/midnightReload', requireAdmin, siteController.getMidnightReload);
+router.put('/midnightReload', requireAdmin, siteController.changeMidnightReload);
+router.get('/export', requireAdmin, siteController.exportAllSites);
+router.get('/ping', siteController.getAllSites);
 
-module.exports=router
+router.post('', requireAdmin, siteController.addSite);
+router.post('/file', requireAdmin, uploadSpreadsheet, siteController.addSiteFromFile);
+
+// The project must be one the caller belongs to; `getAllSites` is scoped to the
+// caller's projects rather than returning every station on the platform.
+router.get('', requireProjectAccess('project'), siteController.getSitesByProject);
+router.get('/projects/:idProject', requireProjectAccess(), siteController.getSitesByProject);
+
+router.get('/status/:ip', siteController.getStatusSite);
+router.get('/data/analysis/:idSite', siteController.getAnalysisBySite);
+router.get('/data/:idSite', siteController.getDataBySite);
+router.get('/history/:idSite', siteController.getHistoryBySite);
+
+router.post('/reload/:idSite', requireAdmin, siteController.restartSite);
+router.post('/refresh/:idSite', requireAdmin, siteController.refreshSite);
+
+router.delete('/:idSite', requireAdmin, siteController.deleteSite);
+router.put('/:idSite', requireAdmin, siteController.updateSite);
+router.get('/:idSite', siteController.getSiteById);
+
+module.exports = router;

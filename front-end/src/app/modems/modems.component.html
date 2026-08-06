@@ -1,53 +1,45 @@
-<!-- Main Container -->
-<div class="p-6 bg-gradient-to-br from-blue-100 to-blue-50 min-h-screen" *ngIf="!spinnerSite">
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <!-- Back Button -->
-  <button routerLink="/projects"
-    class="cursor-pointer mb-4 inline-flex items-center text-blue-600 hover:underline text-sm">
-    ← Back to projects
-  </button>
+  <app-page-header title="Modems" [subtitle]="subtitle"
+                   [backLink]="['/projects']" backLabel="Tous les projets">
+  </app-page-header>
 
-  <!-- Modems Grid or Empty State -->
-  <ng-container *ngIf="modems.length > 0; else noModems">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div
-        class="bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl hover:scale-[1.01] duration-300"
-        *ngFor="let modem of modems"
-      >
-        <!-- Image -->
-        <img
-          [src]="'assets/images/modem.jpg'"
-          loading="lazy"
-          alt="Image du site"
-          class="w-full h-40 object-cover rounded-xl mb-4"
-        />
+  <div *ngIf="spinnerSite" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div *ngFor="let placeholder of [1, 2, 3]" class="card p-6">
+      <div class="skeleton h-5 w-2/3"></div>
+      <div class="skeleton mt-3 h-4 w-1/2"></div>
+    </div>
+  </div>
 
-        <!-- Text & Status -->
-        <div class="flex items-center justify-between mb-2">
-          <div>
-            <h2 class="text-xl font-bold text-gray-800">{{ modem.nom }}</h2>
-            <p class="text-sm text-gray-500">{{ modem.ip }}  <span *ngIf="modem.project?.nom"
-              class="inline-block mt-1 bg-blue-100 text-blue-800 text-xs font-medium px-3 py-1 rounded-full border border-blue-200">
-              {{ modem.project.nom }}
-            </span> </p>
-           
+  <ng-container *ngIf="!spinnerSite">
+    <div *ngIf="modems.length; else noModems"
+         class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+
+      <article *ngFor="let modem of modems; trackBy: trackById" class="card card-interactive p-6">
+        <header class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="truncate text-lg font-semibold text-ink" [title]="modem.nom">{{ modem.nom }}</h2>
+            <p class="mt-0.5 font-mono text-xs text-ink-muted">{{ modem.ip }}</p>
           </div>
-          <app-site-status [ip]="modem.ip"></app-site-status>
-        </div>
-      </div>
-    </div>
-  </ng-container>
+          <app-site-status [isAlive]="modem.status" [lastSeenAt]="modem.lastSeenAt"></app-site-status>
+        </header>
 
-  <!-- Empty State -->
-  <ng-template #noModems>
-    <div class="flex flex-col items-center justify-center h-96 text-center text-gray-600">
-      <svg class="w-16 h-16 mb-4 text-blue-300" fill="none" stroke="currentColor" stroke-width="1.5"
-           viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M3 7l9 6 9-6" />
-      </svg>
-      <h3 class="text-lg font-semibold mb-2">Aucun modem trouvé</h3>
-      <p class="text-sm">Il n’y a actuellement aucun modem associé à ce projet.</p>
+        <p class="mt-4">
+          <span *ngIf="modem.project?.nom" class="chip chip-brand">{{ modem.project?.nom }}</span>
+          <span *ngIf="!modem.project?.nom" class="text-xs italic text-ink-muted">Pas de projet</span>
+        </p>
+
+        <a [href]="'http://' + modem.ip + '/'" target="_blank" rel="noopener"
+           class="btn btn-ghost mt-5 w-full">
+          📡 Ouvrir la console
+        </a>
+      </article>
     </div>
-  </ng-template>
+
+    <ng-template #noModems>
+      <app-empty-state icon="📡" title="Aucun modem"
+                       description="Aucun modem n'est rattaché à ce projet.">
+      </app-empty-state>
+    </ng-template>
+  </ng-container>
 </div>

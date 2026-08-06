@@ -1,3 +1,15 @@
-<app-header></app-header>
-<router-outlet  style="margin-top: 50px"></router-outlet>
+<div class="min-h-screen bg-app">
+  <app-header *ngIf="!chromeless"></app-header>
+  <app-admin-nav *ngIf="showAdminNav"></app-admin-nav>
 
+  <!-- Renewal notice: warn ahead of the lapse, not at the moment of it. -->
+  <div *ngIf="licenceWarning && !chromeless"
+       class="border-b border-line bg-warn-soft px-4 py-2.5 text-center text-sm font-medium text-warn">
+    {{ licenceWarning }}
+    <a routerLink="/dashbord/licence" class="ml-1 underline underline-offset-2">Renouveler</a>
+  </div>
+
+  <main [class.pt-2]="!chromeless">
+    <router-outlet></router-outlet>
+  </main>
+</div>

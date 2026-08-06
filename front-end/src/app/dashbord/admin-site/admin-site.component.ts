@@ -1,273 +1,235 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, viewChildren } from '@angular/core';
-import { config } from '../../../Config/config';
-import { SiteService } from '../../services/site.service';
-import { NzMessageService } from 'ng-zorro-antd/message';
+import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Site } from '../../models/site';
 import { ToastrService } from 'ngx-toastr';
-import { Modal } from 'flowbite';
+import { forkJoin } from 'rxjs';
+import { Site } from '../../models/site';
+import { Project } from '../../models/project';
+import { SiteService } from '../../services/site.service';
 import { ProjectService } from '../../services/project.service';
-import { ReloadSiteComponent } from '../reload-site/reload-site.component';
-
 
 @Component({
   selector: 'app-admin-site',
   standalone: false,
   templateUrl: './admin-site.component.html',
-  styleUrl: './admin-site.component.css'
 })
-export class AdminSiteComponent  implements OnInit,AfterViewInit {
+export class AdminSiteComponent implements OnInit {
+  sites: Site[] = [];
+  projects: Project[] = [];
 
+  itemsPerPage = 15;
+  page = 1;
+  term = '';
 
-   // @ts-ignore
-    projects: Array<Project>=new Array<Project>()
-selectedSites: any[] = [];
-  itemsPerPage: number = 20;
-  page:number=1;
-  // @ts-ignore
-  type: string = "Create"
+  type: 'Create' | 'Edit' = 'Create';
+  siteEdited: Site | null = null;
+  idEditSite = '';
+  deletedSiteId = '';
+  deletedSiteName = '';
 
-  // @ts-ignore
-  sites: Array<Site>=new Array<Site>()
-  // @ts-ignore
-  saving: boolean = false;
-  // @ts-ignore
-  editSite: Site;
-  hiddenModal: boolean = true;
-  // @ts-ignore
-  siteEdited: Site = null;
-  // @ts-ignore
-  idEditSite: string
-  // @ts-ignore
-  selectedFile: File=null;
+  crudOpen = false;
+  deleteOpen = false;
 
-  filename ='Importer un fichier';
-  // @ts-ignore
-  fileUploaded: boolean;
-  midnightReloadEnabled:boolean=false
-  uploaded: boolean = false;
-  term: string = "";
-  spinnerSite: boolean=false;
-  deletedSiteId: string = "";
-  deletedModal: Modal | null = null;
-  crudModal : Modal | null = null;
-  spinnerReload : boolean=false
-  idSiteReloaded :  String=""
+  saving = false;
+  spinnerSite = false;
+  midnightReloadEnabled = false;
 
-  ngAfterViewInit(): void {
-    const modalDEl = document.getElementById('delete-modal');
-    const modalCrud = document.getElementById('crud-modal');
-    if (modalDEl) {
-      this.deletedModal = new Modal(modalDEl);
+  /** Stations with an action in flight, so each row shows its own spinner. */
+  restarting = new Set<string>();
+  refreshing = new Set<string>();
 
-    }
-    if (modalCrud) {
-      this.crudModal = new Modal(modalCrud);
-
-    }
-  }
-
-  constructor(private siteServices:SiteService,private message:ToastrService,private projectService:ProjectService) { }
+  constructor(
+    private siteService: SiteService,
+    private projectService: ProjectService,
+    private message: ToastrService
+  ) {}
 
   ngOnInit(): void {
-     
-    this.filename ='Importer un fichier';
-    // @ts-ignore
-    this.selectedFile=null
-    this.uploaded=false
-    this.spinnerSite=true
-    
-     this.siteServices.getMidnightReload().subscribe(result=>{
-
-      
-      
-     this.midnightReloadEnabled=Boolean(result)
-      
-    })
-
-    // @ts-ignore
-    this.projectService.getAllProjects().subscribe((projects:Array<Project>)=>{
-          this.spinnerSite=false
-          this.projects=projects
-      
-          
-        },err=>{
-          this.spinnerSite=false
-          this.message.error("Une erreur est survenue ! ")
-        })
-
-     // @ts-ignore
-    this.siteServices.getAllWithoutData().subscribe((sites:Array<Site>)=>{
-      this.spinnerSite=false
-      this.sites=sites
-    },err=>{
-      this.spinnerSite=false
-      this.message.error("Une erreur est survenue ! ")
-    })
+    this.load();
   }
 
-  onAddStock(f: NgForm, site: Site,sites:Array<Site>) {
+  /**
+   * Loads everything the screen needs in parallel.
+   *
+   * Mutations call this rather than re-entering ngOnInit, which also re-ran the
+   * modal wiring and reset unrelated view state on every save.
+   */
+  private load(): void {
+    this.spinnerSite = true;
 
-    if (f.valid) {
-
-
-      if (this.type !== "Edit") {
-        this.saving = true 
-        
-        this.siteServices.addSite(f.value).subscribe((res: any) => {
-          this.saving = false
-          this.message.success(res.message)
-          this.crudModal?.hide()
-          this.ngOnInit()
-          f.resetForm()
-          
-        }, e => {
-          this.saving = false
-          this.crudModal?.hide()
-          this.message.error(e.error )
-        })
-      } else {
-        this.saving = true
-        this.siteServices.editSite(this.idEditSite, f.value).subscribe((res: any) => {
-          this.saving = false
-          this.message.success(res.message)
-          this.crudModal?.hide()
-          this.ngOnInit()
-          
-        }, e => {
-          this.saving = false
-          this.crudModal?.hide()
-          this.message.error(e.error,)
-        })
-      }
-
-    }
-  }
-  onFitchSite(site:Site) {
-    this.idEditSite = site?._id
-    this.type = "Edit"
-    this.siteEdited = site
-    this.crudModal?.show()
-
-  }
-
-
-  openAddModal() {
-    this.ngOnInit()
-    // @ts-ignore
-    this.editStock = null
-    this.type = 'Create'
-    this.hiddenModal = false
-  }
-
-  onCloseAddModal() {
-    this.hiddenModal = true
-  }
-
-  ShowModale(_id: string, nom: string) {
-    /*if (_id) {
-      this.modal.confirm({
-        nzTitle: 'Vous êtes sûr de supprimer ce site ?',
-        nzContent: "' " + nom + " '",
-        nzOkText: 'Yes',
-        nzOkType: 'primary',
-        nzOkDanger: true,
-        nzOnOk: () => this.deleteSite(_id),
-        nzCancelText: 'No',
-      });
-    }*/
-  }
-
-  deleteSite(_id: string) {
-    if (_id) {
-      this.siteServices.deleteSite(_id).subscribe((res: any) => {
-        this.message.success(res.message)
-        this.ngOnInit()
-      }, e => {
-        this.message.error(e.error)
-      })
-    }
-    ;
-    
-  }
-
-  openDeletedModal(arg0: string) {
-    this.deletedSiteId=arg0
-    this.deletedModal?.show()
-  }
-  openCrudModal() {
-    this.type="Create"
-    this.crudModal?.show()
-  }
-
-  detectFile(event: any) {
-    this.spinnerSite=true
-    this.selectedFile = event.target.files[0] ;
-    if (event.target.files && event.target.files.length > 0) {
-      this.onUploadFile(event.target.files[0]);
-      this.siteServices.addSiteFromFile(this.selectedFile).subscribe((res: any) => {
-        this.spinnerSite=false
-        this.uploaded=false
-        this.message.success(res.message)
-        this.ngOnInit()
-      }, e => {
-        this.spinnerSite=false
-        this.uploaded=false
-        this.message.error(e.error)
-      })
-      this.filename = this.selectedFile.name;
-    }
-  }
-  private onUploadFile(file: File) {
-
-    this.fileUploaded=true;
-  }
-  onStartUpload() {
-    this.uploaded = true
-  }
-
-  exportFile(){
-    this.siteServices.exportToExcel().subscribe((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'sites.xlsx';
-      a.click();
-    },err=>{
-      console.log(err);
-      
+    forkJoin({
+      projects: this.projectService.getAllProjects(),
+      sites: this.siteService.getAllSites(),
+      midnightReload: this.siteService.getMidnightReload(),
+    }).subscribe({
+      next: ({ projects, sites, midnightReload }) => {
+        this.projects = projects;
+        this.sites = sites;
+        this.midnightReloadEnabled = Boolean(midnightReload);
+        this.spinnerSite = false;
+      },
+      error: () => {
+        this.spinnerSite = false;
+        this.message.error('Une erreur est survenue !');
+      },
     });
   }
-  
-onSiteReloaded(siteId: string, reloaded: any) {
 
-  this.ngOnInit()
-}
-@ViewChildren('reloadBtn', { read: ElementRef }) reloadButtons!: QueryList<ElementRef>;
-
-    reloadAllSites() {
-     this.reloadButtons.forEach((cmp, i) => {
-    const icon: HTMLElement | null = cmp.nativeElement.querySelector('i');
-    if (icon) {
-     
-      icon.click();
-    } else {
-      
-    }
-  });
+  trackById(_index: number, site: Site): string {
+    return site._id;
   }
 
-toggleMidnightReload(arg0: boolean) {
+  get onlineCount(): number {
+    return this.sites.filter((s) => s.status).length;
+  }
 
-  
-  const value = {reload_midgniht:arg0}
- this.siteServices.changeMidnightReload(value).subscribe((result:any)=>{
-    this.message.success(result.message)
-    this.ngOnInit()
-  },err=>{
-    this.message.error("Une erreur est survenue lors du modification")
-    this.ngOnInit()
-  })
-}
+  onSubmit(form: NgForm): void {
+    if (!form.valid) return;
 
+    this.saving = true;
+    const request =
+      this.type === 'Edit'
+        ? this.siteService.editSite(this.idEditSite, form.value)
+        : this.siteService.addSite(form.value);
+
+    request.subscribe({
+      next: (res) => {
+        this.saving = false;
+        this.crudOpen = false;
+        this.message.success(res.message);
+        form.resetForm();
+        this.load();
+      },
+      error: (e) => {
+        this.saving = false;
+        this.message.error(e?.error?.error ?? 'Enregistrement impossible');
+      },
+    });
+  }
+
+  onEdit(site: Site): void {
+    this.idEditSite = site._id;
+    this.type = 'Edit';
+    this.siteEdited = site;
+    this.crudOpen = true;
+  }
+
+  openCrudModal(): void {
+    this.type = 'Create';
+    this.siteEdited = null;
+    this.crudOpen = true;
+  }
+
+  openDeletedModal(site: Site): void {
+    this.deletedSiteId = site._id;
+    this.deletedSiteName = site.nom;
+    this.deleteOpen = true;
+  }
+
+  remove(): void {
+    if (!this.deletedSiteId) return;
+    this.siteService.deleteSite(this.deletedSiteId).subscribe({
+      next: (res) => {
+        this.message.success(res.message);
+        this.deleteOpen = false;
+        this.load();
+      },
+      error: (e) => this.message.error(e?.error?.error ?? 'Suppression impossible'),
+    });
+  }
+
+  /** Restarts a single station. */
+  reload(site: Site): void {
+    this.restarting.add(site._id);
+    this.siteService.reloadSite(site._id).subscribe({
+      next: (res) => {
+        this.restarting.delete(site._id);
+        this.message.success(res.message);
+      },
+      error: (e) => {
+        this.restarting.delete(site._id);
+        this.message.error(e?.error?.error ?? `Redémarrage impossible — ${site.nom}`);
+      },
+    });
+  }
+
+  /**
+   * Re-applies the station's network configuration by pressing Save on its own
+   * web UI. Slower than a restart — it drives a headless browser server-side.
+   */
+  refresh(site: Site): void {
+    this.refreshing.add(site._id);
+    this.siteService.refreshSite(site._id).subscribe({
+      next: (res) => {
+        this.refreshing.delete(site._id);
+        this.message.success(res.message);
+      },
+      error: (e) => {
+        this.refreshing.delete(site._id);
+        this.message.error(e?.error?.error ?? `Rafraîchissement impossible — ${site.nom}`);
+      },
+    });
+  }
+
+  /**
+   * Restarts every station.
+   *
+   * Issued directly against the service. The previous implementation reached
+   * into the DOM for each row's button and synthesised a click on its icon.
+   */
+  reloadAllSites(): void {
+    if (!this.sites.length) return;
+    this.message.info(`Redémarrage de ${this.sites.length} station(s)…`);
+    this.sites.forEach((site) => this.reload(site));
+  }
+
+  detectFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.spinnerSite = true;
+
+    this.siteService.addSiteFromFile(file).subscribe({
+      next: (res) => {
+        this.spinnerSite = false;
+        this.message.success(res.message);
+        // Per-row problems are reported instead of being swallowed.
+        res.errors?.forEach((error) => this.message.warning(error));
+        input.value = '';
+        this.load();
+      },
+      error: (e) => {
+        this.spinnerSite = false;
+        input.value = '';
+        this.message.error(e?.error?.error ?? 'Import impossible');
+      },
+    });
+  }
+
+  exportFile(): void {
+    this.siteService.exportToExcel().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'sites.xlsx';
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.message.error('Export impossible'),
+    });
+  }
+
+  toggleMidnightReload(enabled: boolean): void {
+    this.siteService.changeMidnightReload(enabled).subscribe({
+      next: (result) => {
+        this.message.success(result.message);
+        this.midnightReloadEnabled = enabled;
+      },
+      error: () => {
+        this.message.error('Une erreur est survenue lors de la modification');
+        this.load();
+      },
+    });
+  }
 }

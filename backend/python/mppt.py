@@ -1,30 +1,69 @@
-class mppt:
+"""Decoding of the MPPT controller's holding registers."""
+
+from dataclasses import dataclass, asdict
+from typing import Optional, Sequence
+
+# Holding-register offsets, relative to address 0.
+REGISTER_MAP = {
+    "Charge_Current": 16,
+    "Array_Voltage": 19,
+    "Load_Voltage": 20,
+    "Load_Current": 22,
+    "Battery_Voltage": 24,
+    "Temperature_Battery": 27,
+    "Temperature_Ambient": 28,
+    "Sweep_Pmax": 62,
+}
+
+HIGHEST_REGISTER = max(REGISTER_MAP.values())
 
 
-    def __init__(self: object, Battery_Voltage: int, Temperature_Ambient:int,Temperature_Battery:int, Charge_Current:int,Array_Voltage:int,Sweep_Pmax:int,Load_Voltage:int,Load_Current:int):
+def float_from_unsigned16(n: int) -> Optional[float]:
+    """
+    Decodes an IEEE-754 binary16 (half precision) value held in one register.
 
-        self.Battery_Voltage=self._float_from_unsigned16(Battery_Voltage)
-        self.Temperature_Ambient = self._float_from_unsigned16(Temperature_Ambient)
-        self.Temperature_Battery = self._float_from_unsigned16(Temperature_Battery)
-        self.Charge_Current=self._float_from_unsigned16(Charge_Current)
-        self.Array_Voltage=self._float_from_unsigned16(Array_Voltage)
-        self.Sweep_Pmax=self._float_from_unsigned16(Sweep_Pmax)
-        self.Load_Voltage=self._float_from_unsigned16(Load_Voltage)
-        self.Load_Current=self._float_from_unsigned16(Load_Current)
+    Returns None for NaN and the infinities so a malformed register surfaces as
+    "no value" rather than propagating into arithmetic downstream.
+    """
+    sign = n >> 15
+    exponent = (n >> 10) & 0b11111
+    fraction = n & 0x3FF
 
-    def _float_from_unsigned16(self,n):
+    if exponent == 0:
+        if fraction == 0:
+            return 0.0
+        return (-1) ** sign * fraction / 2**10 * 2**-14  # subnormal
+    if exponent == 0b11111:
+        return None  # inf or NaN
 
-        sign = n >> 15
-        exp = (n >> 10) & 0b011111
-        fraction = n & (2**10 - 1)
-        if exp == 0:
-            if fraction == 0:
-                return -0.0 if sign else 0.0
-            else:
-                return (-1)**sign * fraction / 2**10 * 2**(-14)  # subnormal
-        elif exp == 0b11111:
-            if fraction == 0:
-                return float('-inf') if sign else float('inf')
-            else:
-                return float('nan')
-        return (-1)**sign * (1 + fraction / 2**10) * 2**(exp - 15)
+    return (-1) ** sign * (1 + fraction / 2**10) * 2 ** (exponent - 15)
+
+
+@dataclass
+class MpptReading:
+    """One decoded sample. Fields are None when the register was unreadable."""
+
+    Battery_Voltage: Optional[float] = None
+    Temperature_Ambient: Optional[float] = None
+    Temperature_Battery: Optional[float] = None
+    Charge_Current: Optional[float] = None
+    Array_Voltage: Optional[float] = None
+    Sweep_Pmax: Optional[float] = None
+    Load_Voltage: Optional[float] = None
+    Load_Current: Optional[float] = None
+
+    @classmethod
+    def from_registers(cls, registers: Sequence[int]) -> "MpptReading":
+        if len(registers) <= HIGHEST_REGISTER:
+            raise ValueError(
+                f"Expected more than {HIGHEST_REGISTER} registers, got {len(registers)}"
+            )
+        return cls(
+            **{
+                name: float_from_unsigned16(registers[offset])
+                for name, offset in REGISTER_MAP.items()
+            }
+        )
+
+    def as_dict(self) -> dict:
+        return asdict(self)

@@ -1,14 +1,5 @@
-export class Project {
-    _id: string
-    ville: string
-    nom: string
-
-
-
-    constructor(id: string, ville: string, nom: string) {
-        this._id = id;
-        this.ville = ville;
-        this.nom = nom;
-
-    }
+export interface Project {
+  _id: string;
+  nom: string;
+  ville: string;
 }

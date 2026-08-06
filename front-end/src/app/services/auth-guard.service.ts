@@ -1,40 +1,33 @@
-import { Injectable } from '@angular/core';
-import {ActivatedRouteSnapshot, Router, RouterStateSnapshot} from "@angular/router";
-import {Observable} from "rxjs";
-import {LoginService} from "./login.service";
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { map } from 'rxjs/operators';
+import { LoginService } from './login.service';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthGuardService {
+/** Requires a live session; remembers the attempted URL for post-login redirect. */
+export const authGuard: CanActivateFn = (_route, state) => {
+  const loginService = inject(LoginService);
+  const router = inject(Router);
 
-  /*canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean>  | boolean  {
-    if(!this.loginService.getAuthStatus()){
+  if (loginService.getAuthStatus()) return true;
 
-      return  this.router.navigateByUrl('/');
+  loginService.redirectUrl = state.url;
+  return router.createUrlTree(['/']);
+};
 
-    }
-    return   this.loginService.getAuthStatus();
-  }
-  constructor(private loginService : LoginService,private router : Router) { }*/
-  constructor(private authService: LoginService, private router: Router) {}
+/**
+ * Requires an admin account.
+ *
+ * The previous guard tested `getMemberStatus` — a method reference, so always
+ * truthy — and then returned an observable that never completed, so the router
+ * hung rather than denying access.
+ */
+export const adminGuard: CanActivateFn = () => {
+  const loginService = inject(LoginService);
+  const router = inject(Router);
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    let url: string = state.url;
+  if (!loginService.getAuthStatus()) return router.createUrlTree(['/']);
 
-    return this.checkLogin(url);
-  }
-
-  checkLogin(url: string): boolean {
-    if (this.authService.getAuthStatus()) {
-      return this.authService.getAuthStatus();
-    }
-
-    // Store the attempted URL for redirecting
-    this.authService.redirectUrl = url;
-
-    this.router.navigate(['/']);
-
-    return false;
-  }
-}
+  return loginService.isAdmin().pipe(
+    map((isAdmin) => isAdmin || router.createUrlTree(['/projects']))
+  );
+};

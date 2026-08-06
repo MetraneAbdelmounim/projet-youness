@@ -1,98 +1,54 @@
-const config = require('../config/config')
-const Project = require('./project')
-const Member = require('../member/member')
-let path = require('path')
-var excelToJson = require('convert-excel-to-json');
-const mongoose = require('mongoose')
-let fs = require('fs')
-const excelJS = require('exceljs');
-const ping = require('ping')
+const Project = require('./project');
+const Member = require('../member/member');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { accessibleProjectIds } = require('../middlewares/auth');
+
+const WRITABLE = ['nom', 'ville'];
+
+function pick(body) {
+  return Object.fromEntries(
+    Object.entries(body || {}).filter(([k]) => WRITABLE.includes(k))
+  );
+}
 
 module.exports = {
-    addProject: function (req, res) {
-        const id = new mongoose.Types.ObjectId()
-        const project = new Project({
-            _id: id,
-            ...req.body
-        });
-        project.save(project)
-            .then(async () => {
-                    const result = await Member.updateMany(
-                        { isAdmin:true },
-                        {
-                            $addToSet: { projects: project._id }
-                        }
-                    );
-                    res.status(201).json({ message: 'Un nouveau project a été ajouté avec succés !' })
-            })
-            .catch(error => {
-                res.status(400).send({ error })
-            }
-            );
-    },
+  addProject: asyncHandler(async (req, res) => {
+    const project = await Project.create(pick(req.body));
+    // Admins implicitly manage every project.
+    await Member.updateMany({ isAdmin: true }, { $addToSet: { projects: project._id } });
+    return res
+      .status(201)
+      .json({ message: 'Un nouveau projet a été ajouté avec succès !', project });
+  }),
 
-    getAllProjects: function (req, res) {
-        Project.find().then(async projects => {
-            if (projects) {
-                res.status(200).json(projects);
-            }
-        }).catch(err => {
+  /** Only the projects the caller belongs to; admins see all. */
+  getAllProjects: asyncHandler(async (req, res) => {
+    const allowed = accessibleProjectIds(req.member);
+    const filter = allowed === null ? {} : { _id: { $in: allowed } };
+    const projects = await Project.find(filter).sort({ nom: 1 }).lean();
+    return res.status(200).json(projects);
+  }),
 
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    getProjectByID: function (req, res) {
-        Project.findOne({ _id: req.params.idProject })
-            .then((project) => {
-                res.status(200).json(project);
-            })
-            .catch(error => res.status(500).send(error));
-    },
-    deleteProject: function (req, res) {
-        Project.findOne({ _id: req.params.idProject })
-            .then((project) => {
-                Project.deleteOne({ _id: project._id }).then(
-                    () => {
+  getProjectByID: asyncHandler(async (req, res) => {
+    const project = await Project.findById(req.projectId).lean();
+    if (!project) return res.status(404).json({ error: 'Projet introuvable' });
+    return res.status(200).json(project);
+  }),
 
-                        res.status(200).json({
-                            message: "Le project a été supprimé avec succés"
-                        });
-                    }
-                ).catch(
-                    (error) => {
-                        res.status(400).json({
-                            error: error
-                        });
-                    }
-                );
-            })
-            .catch(error => {
-                console.log(error);
+  updateProject: asyncHandler(async (req, res) => {
+    const project = await Project.findByIdAndUpdate(
+      req.params.idProject,
+      { $set: pick(req.body) },
+      { new: true, runValidators: true }
+    );
+    if (!project) return res.status(404).json({ error: 'Projet introuvable' });
+    return res.status(200).json({ message: 'Le projet a été modifié avec succès !', project });
+  }),
 
-                res.status(500).send(error)
-            });
-    },
-    updateProject: function (req, res) {
-
-
-        Project.findOne({ _id: req.params.idProject })
-            .then((project) => {
-
-                Project.updateOne({ _id: project._id }, { ...req.body, _id: project._id })
-                    .then(() => {
-
-                        res.status(200).json({ message: "Le projet a été modifé avec succés !" })
-                    })
-                    .catch(error => {
-
-                        res.status(400).json({ error })
-                    });
-            })
-            .catch(error => {
-
-                res.status(400).send(error)
-            });
-
-    },
-
-}
+  deleteProject: asyncHandler(async (req, res) => {
+    // deleteOne is used (not findByIdAndDelete) so the schema's cascade hook runs.
+    const result = await Project.deleteOne({ _id: req.params.idProject });
+    if (!result.deletedCount) return res.status(404).json({ error: 'Projet introuvable' });
+    return res.status(200).json({ message: 'Le projet a été supprimé avec succès' });
+  }),
+};

@@ -1,50 +1,46 @@
 import { Injectable } from '@angular/core';
-import {Subject} from 'rxjs';
-import {HttpClient} from '@angular/common/http';
-import {environment} from '../../environments/environment';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { Member } from '../models/member';
 
-const BACKEND_URL = environment.apiUri
-@Injectable({
-  providedIn: 'root'
-})
+const BACKEND_URL = environment.apiUri;
+
+@Injectable({ providedIn: 'root' })
 export class MemberService {
+  constructor(private http: HttpClient) {}
 
-  
-  userFromTokenSubject = new Subject<any>();
-  userFromToken :any
-
-  constructor(private http:HttpClient) { }
-
-  getMemberFromToken(token : string){
-    this.http.get(BACKEND_URL+'auth/members/tokens/'+token).subscribe((result:any)=>{
-
-      this.userFromToken=result
-      this.emitSubjectUserFromToken()
-    })
+  getAllMembers(): Observable<Member[]> {
+    return this.http.get<Member[]>(`${BACKEND_URL}members`);
   }
 
-  private emitSubjectUserFromToken() {
-    this.userFromTokenSubject.next(this.userFromToken)
+  addMember(data: { username: string; isAdmin?: boolean; projects?: string[] }) {
+    // `temporaryPassword` is returned once, on creation, and is the only time
+    // the value exists outside a hash.
+    return this.http.post<{ message: string; member: Member; temporaryPassword: string }>(
+      `${BACKEND_URL}members`,
+      data
+    );
   }
-  getAllMembers(){
-    return this.http.get(BACKEND_URL+'members')
+
+  editMember(id: string, data: Partial<Member>) {
+    return this.http.put<{ message: string }>(`${BACKEND_URL}members/${id}`, data);
   }
-  deleteMember(_id: string) {
-    return this.http.delete(BACKEND_URL+'members/'+_id);
+
+  deleteMember(id: string) {
+    return this.http.delete<{ message: string }>(`${BACKEND_URL}members/${id}`);
   }
-  addMember(value: any) {
-    return this.http.post(BACKEND_URL+'members',value);
+
+  editPassword(
+    id: string,
+    data: { currentPass?: string; newPass: string; confirmedPass: string }
+  ) {
+    return this.http.put<{ message: string }>(`${BACKEND_URL}members/password/${id}`, data);
   }
-  editMember(idEditMemeber: any, value: any) {
-    return this.http.put(BACKEND_URL+'members/'+idEditMemeber,value)
-  }
-  logoutMember(idEditMemeber: any) {
-    return this.http.put(BACKEND_URL+'auth/members/logout/'+idEditMemeber,{})
-  }
-  editPassword(idEditMemeber: any, value: any) {
-    return this.http.put(BACKEND_URL+'members/password/'+idEditMemeber,value)
-  }
-  changeNotification(idEditMemeber: any, value: any) {
-    return this.http.put(BACKEND_URL+'members/notifications/'+idEditMemeber,value)
+
+  changeNotification(id: string, notification: boolean) {
+    return this.http.put<{ message: string }>(`${BACKEND_URL}members/notifications/${id}`, {
+      notification,
+    });
   }
 }

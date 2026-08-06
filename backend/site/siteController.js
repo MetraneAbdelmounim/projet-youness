@@ -1,427 +1,239 @@
-const config = require('../config/config')
-const Site = require('./site')
-const Analysis = require('../analysis/analysis')
-let path = require('path')
-let fs = require('fs')
-let axios = require('axios').default
-var excelToJson = require('convert-excel-to-json');
-const mongoose = require('mongoose')
-var intToFloat16 = require("ieee754-binary16-modbus").intToFloat16;
-const excelJS = require('exceljs');
-const ping = require('ping')
-const { pin } = require("nodemon/lib/version");
-const { log } = require('console')
-const analysis = require('../analysis/analysis')
-const Project = require('../project/project')
-const project = require('../project/project')
-const site = require('./site')
+const axios = require('axios').default;
+const config = require('../config/config');
+const Site = require('./site');
+const Reading = require('./reading');
+const settings = require('../config/setting');
+const asyncHandler = require('../middlewares/asyncHandler');
+const { accessibleProjectIds } = require('../middlewares/auth');
+const { parseSheet, importByIp, sendWorkbook } = require('../shared/spreadsheet');
+
+const PY_BASE = `http://${config.HOST_PY}:${config.PORT_PY}`;
+const CONTROL_TIMEOUT_MS = 15000;
+
+/** Fields a client may set on a station. */
+const WRITABLE = ['ip', 'nom', 'Battery_Type', 'latitude', 'longitude', 'project'];
+
+function pick(body, allowed) {
+  return Object.fromEntries(
+    Object.entries(body || {}).filter(([k]) => allowed.includes(k))
+  );
+}
+
+/** Restricts a query to the projects the caller may read. */
+function scopeToMember(filter, member) {
+  const allowed = accessibleProjectIds(member);
+  if (allowed === null) return filter; // admin
+  return { ...filter, project: { $in: allowed } };
+}
 
 module.exports = {
-    addSite: function (req, res) {
-        const id = new mongoose.Types.ObjectId()
-        const site = new Site({
-            _id: id,
-            ...req.body
-        });
-        site.save(site)
-            .then(() => {
-
-                res.status(201).json({ message: 'Un nouveau site a été ajouté avec succés !' })
-            })
-            .catch(error => {
-                res.status(400).send({ error })
-            }
-            );
-    },
-    deleteSite: function (req, res) {
-        Site.findOne({ _id: req.params.idSite })
-            .then((site) => {
-                Site.deleteOne({ _id: site._id }).then(
-                    () => {
-
-                        res.status(200).json({
-                            message: "Le site a été supprimé avec succés"
-                        });
-                    }
-                ).catch(
-                    (error) => {
-                        res.status(400).json({
-                            error: error
-                        });
-                    }
-                );
-            })
-            .catch(error => res.status(500).send(error));
-    },
-    getSitesByProject: function (req, res) {
-        Site.find({ project: req.params.idProject }).then(async sites => {
-            if (sites) {
-                res.status(200).json(sites);
-            }
-        }).catch(err => {
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    getSiteByIdWithoutDATA: function (req, res) {
-        Site.findOne({ _id: req.params.idSite })
-            .then((site) => {
-                res.status(200).json(site);
-            })
-            .catch(error => res.status(500).send(error));
-    },
-    getAllSites: function (req, res) {
-        Site.find().then(async sites => {
-            if (sites) {
-                for (let i = 0; i < sites.length; i++) {
-                    const ping_site = await ping.promise.probe(sites[i].ip, {
-                        timeout: 1,
-                    });
-                    if (ping_site.alive) {
-                        const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip);
-
-                        sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
-                        sites[i].Charge_Current = dataMppt.data.data.Charge_Current
-                        sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
-                        sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
-                        sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
-                        sites[i].Load_Current = dataMppt.data.data.Load_Current
-                        sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
-                        sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
-                        sites[i].status = ping_site.alive
-                    }
-                    else {
-                        sites[i].Battery_Voltage = 0
-                        sites[i].Charge_Current = 0
-                        sites[i].Array_Voltage = 0
-                        sites[i].Sweep_Pmax = 0
-                        sites[i].Load_Voltage = 0
-                        sites[i].Load_Voltage = 0
-                        sites[i].Temperature_Ambient = 0
-                        sites[i].Temperature_Battery = 0
-                        sites[i].status = ping_site.alive
-                    }
-                }
-
-                res.status(200).json(sites);
-            }
-        }).catch(err => {
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    getAllSites2: async function (req, res) {
-
-
-        Site.find({ project: req.query.project }).then(async sites => {
-
-
-            if (sites) {
-                for (let i = 0; i < sites.length; i++) {
-                    axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip)
-                        .then((dataMppt) => {
-
-
-                            sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
-                            sites[i].Charge_Current = dataMppt.data.data.Charge_Current
-                            sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
-                            sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
-                            sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
-                            sites[i].Load_Current = dataMppt.data.data.Load_Current
-                            sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
-                            sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
-
-                            Site.updateOne({ _id: sites[i]._id }, { $set: { ...dataMppt.data.data } })
-                                .then(() => {
-                                    //console.log("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
-
-                                })
-                                .catch(err => {
-                                    if (err) res.status(500).send('error : ' + err);
-                                });
-
-                        });
-                }
-                res.status(200).json(sites);
-            }
-        }).catch(err => {
-            console.log(err);
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-
-    },
-    getAllSitesWithoutData: function (req, res) {
-        Site.find().then(async sites => {
-            if (sites) {
-                res.status(200).json(sites);
-            }
-        }).catch(err => {
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    updateSite: function (req, res) {
-
-
-        Site.findOne({ _id: req.params.idSite })
-            .then((site) => {
-
-                Site.updateOne({ _id: site._id }, { ...req.body, _id: site._id })
-                    .then(() => {
-
-                        res.status(200).json({ message: "Le site a été modifé avec succés !" })
-                    })
-                    .catch(error => {
-
-                        res.status(400).json({ error })
-                    });
-            })
-            .catch(error => {
-
-                res.status(400).send(error)
-            });
-
-    },
-    addSiteFromFile: async function (req, res) {
-        const url = req.protocol + "://" + req.get("host");
-        const filePath = path.join('uploads', req.file.filename);
-
-        try {
-            const excelData = excelToJson({
-                sourceFile: filePath,
-                sheets: [{
-                    name: 'sites',
-                    header: { rows: 1 },
-                    columnToKey: {
-                        A: 'ip',
-                        B: 'nom',
-                        C: 'latitude',
-                        D: 'longitude',
-                        E: 'Battery_Type',
-                        F: 'project'
-                    }
-                }]
-            });
-
-            const sites = excelData.sites;
-
-            // Iterate through each site and upsert
-            for (const site of sites) {
-                Project.findOne({ nom: site.project })
-                    .then(async (project) => {
-                        site.project = project._id
-                        await Site.updateOne(
-                            { ip: site.ip },               // Filter
-                            { $set: site },                // Update
-                            { upsert: true }               // Insert if not found
-                        );
-
-                    })
-
-            }
-
-            res.status(201).json({ message: 'Les sites ont été ajoutés/modifiés avec succès' });
-        } catch (error) {
-            console.error(error);
-            res.status(400).send({ error });
-        } finally {
-            fs.unlinkSync(filePath); // Delete uploaded file
-        }
-    },
-    getStatusSite: function (req, res) {
-        const ping_site = ping.promise.probe(req.params.ip, {
-            timeout: 4,
-        }).then(ping => {
-            res.status(200).json(ping)
-        });
-    },
-    getDataBySiteFromMPPT: function (req, res) {
-
-        Site.findOne({ _id: req.params.idSite }).then(async site => {
-            if (site) {
-
-                const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + site.ip);
-
-
-                site.Battery_Voltage = dataMppt.data.data.Battery_Voltage
-                site.Charge_Current = dataMppt.data.data.Charge_Current
-                site.Array_Voltage = dataMppt.data.data.Array_Voltage
-                site.Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
-                site.Load_Voltage = dataMppt.data.data.Load_Voltage
-                site.Load_Current = dataMppt.data.data.Load_Current
-                site.Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
-                site.Temperature_Battery = dataMppt.data.data.Temperature_Battery
-
-                res.status(200).json(site);
-            }
-        }).catch(err => {
-
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    updateMpptsDATA: function (req, res) {
-
-        Site.find().then(async sites => {
-            if (sites) {
-                for (let i = 0; i < sites.length; i++) {
-                    const dataMppt = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/` + sites[i].ip);
-
-                    sites[i].Battery_Voltage = dataMppt.data.data.Battery_Voltage
-                    sites[i].Charge_Current = dataMppt.data.data.Charge_Current
-                    sites[i].Array_Voltage = dataMppt.data.data.Array_Voltage
-                    sites[i].Sweep_Pmax = dataMppt.data.data.Sweep_Pmax
-                    sites[i].Load_Voltage = dataMppt.data.data.Load_Voltage
-                    sites[i].Load_Current = dataMppt.data.data.Load_Current
-                    sites[i].Temperature_Ambient = dataMppt.data.data.Temperature_Ambient
-                    sites[i].Temperature_Battery = dataMppt.data.data.Temperature_Battery
-                }
-
-                res.status(200).json(sites);
-            }
-        }).catch(err => {
-
-            if (err) res.status(500).send('error : ' + err);
-        })
-    },
-    exportAllSites: async function (req, res) {
-
-
-        try {
-
-
-            const sites = await Site.find();
-
-
-            const workbook = new excelJS.Workbook();
-            const worksheet = workbook.addWorksheet('sites');
-
-            worksheet.columns = [
-                { header: 'ip', key: 'ip', width: 30 },
-                { header: 'nom', key: 'nom', width: 30 },
-                { header: 'latitude', key: 'latitude', width: 30 },
-                { header: 'longitude', key: 'longitude', width: 30 },
-                { header: 'Battery_Type', key: 'Battery_Type', width: 30 },
-                { header: 'project', key: 'project', width: 30 },
-            ];
-            const flattenedData = sites.map(site => ({
-                ip: site.ip,
-                nom: site.nom,
-                latitude: site.latitude,
-                longitude: site.longitude,
-                Battery_Type: site.Battery_Type,
-                project: site.project?.nom || '',
-            }));
-
-            worksheet.addRows(flattenedData);
-
-            res.setHeader(
-                'Content-Type',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            );
-            res.setHeader(
-                'Content-Disposition',
-                'attachment; filename=sites.xlsx'
-            );
-
-            await workbook.xlsx.write(res);
-            res.end();
-        } catch (error) {
-            console.log(error);
-
-            res.status(500).send('Error generating Excel file');
-        }
-    },
-    getDataAnalysisBySiteFromMPPT: function (req, res) {
-        Site.findOne({ _id: req.params.idSite }).then(async site => {
-            if (site) {
-                try {
-                    const response = await axios.get(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/analysis/${site.ip}?battery_type=${site.Battery_Type}&lat=${site.latitude}&lon=${site.longitude}`);
-                    const dataMppt = response.data;
-
-                    const analysis = new Analysis(dataMppt.analysis);
-
-                    res.status(200).json(analysis);
-                } catch (err) {
-                    res.status(500).send('Error fetching analysis: ' + err);
-                }
-            } else {
-                res.status(404).send('Site not found');
-            }
-        }).catch(err => {
-            res.status(500).send('Error: ' + err);
-        });
-    },
-    restarSite: async function (req, res) {
-
-        try {
-            const site = await Site.findOne({ _id: req.params.idSite });
-            if (!site) {
-                return res.status(404).send('Site not found');
-            }
-
-            // Call the Flask API
-            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/reload/${site.ip}`);
-
-            const data = response.data;
-
-            // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message + ' ' + site.nom });
-
-            // Optional: If your Flask returns analysis data, construct an Analysis object
-            // const analysis = new Analysis(data.analysis);
-            // res.status(200).json(analysis);
-
-        } catch (err) {
-            const site = await Site.findOne({ _id: req.params.idSite });
-            console.error('Restart error:', err.message);
-            res.status(500).send({ error: err.message, site: site.nom });
-        }
-    },
-    refreshSite: async function (req, res) {
-        try {
-            const site = await Site.findOne({ _id: req.params.idSite });
-            if (!site) {
-                return res.status(404).send('Site not found');
-            }
-
-            // Call the Flask API
-            const response = await axios.post(`http://${config.HOST_PY}:${config.PORT_PY}/mppt/refresh/${site.ip}`);
-
-            const data = response.data;
-
-            // Example: Send the whole response back
-            res.status(200).json({ status: data.status, message: data.message + ' ' + site.nom });
-
-            // Optional: If your Flask returns analysis data, construct an Analysis object
-            // const analysis = new Analysis(data.analysis);
-            // res.status(200).json(analysis);
-
-        } catch (err) {
-            console.error('Restart error:', err.message);
-            res.status(500).send('Error restarting site: ' + err.message);
-        }
-    },
-    getMidgnightReload: function (req, res) {
-
-        res.status(200).json(config.reload_midnight);
-
-
-    },
-    changeMidgnightReload: function (req, res) {
-    
-        
-        config.reload_midnight = req.body.reload_midgniht; // 🔥 On change la valeur
-        if (req.body.reload_midgniht) {
-            res.status(200).json({ message: `Le redémarrage à minuit des stations a été activé` })
-
-        }
-        else {
-            res.status(200).json({ message: `Le redémarrage à minuit des stations a été désactivé` })
-        }
-
-
-    },
-
-}
+  addSite: asyncHandler(async (req, res) => {
+    const site = await Site.create(pick(req.body, WRITABLE));
+    return res
+      .status(201)
+      .json({ message: 'Un nouveau site a été ajouté avec succès !', site });
+  }),
+
+  updateSite: asyncHandler(async (req, res) => {
+    const site = await Site.findByIdAndUpdate(
+      req.params.idSite,
+      { $set: pick(req.body, WRITABLE) },
+      { new: true, runValidators: true }
+    );
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json({ message: 'Le site a été modifié avec succès !', site });
+  }),
+
+  deleteSite: asyncHandler(async (req, res) => {
+    const result = await Site.deleteOne({ _id: req.params.idSite });
+    if (!result.deletedCount) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json({ message: 'Le site a été supprimé avec succès' });
+  }),
+
+  /**
+   * Every station of a project, with its latest reading, analysis and
+   * reachability already attached.
+   *
+   * This is the single call that backs the station list, the dashboard and the
+   * analysis page. Each of those previously rendered one child component per
+   * station that fetched its own data, which turned one page view into roughly
+   * `2 × stations` HTTP requests and as many live Modbus reads.
+   */
+  getSitesByProject: asyncHandler(async (req, res) => {
+    const sites = await Site.find({ project: req.projectId })
+      .populate('project')
+      .sort({ nom: 1 })
+      .lean();
+    return res.status(200).json(sites);
+  }),
+
+  /** Every station the caller is allowed to see. */
+  getAllSites: asyncHandler(async (req, res) => {
+    const sites = await Site.find(scopeToMember({}, req.member))
+      .populate('project')
+      .sort({ nom: 1 })
+      .lean();
+    return res.status(200).json(sites);
+  }),
+
+  getSiteById: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ _id: req.params.idSite }, req.member))
+      .populate('project')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json(site);
+  }),
+
+  /** Latest telemetry for one station, served from the store the poller writes. */
+  getDataBySite: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ _id: req.params.idSite }, req.member))
+      .select('nom ip status lastSeenAt lastReading')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json(site);
+  }),
+
+  getAnalysisBySite: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ _id: req.params.idSite }, req.member))
+      .select('nom ip lastAnalysis')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json(site.lastAnalysis || {});
+  }),
+
+  /**
+   * Historical readings for charting.
+   *
+   * This is what the time-series collection exists for — before, only the most
+   * recent value was kept, so no trend could be shown or reviewed after an
+   * incident.
+   */
+  getHistoryBySite: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ _id: req.params.idSite }, req.member))
+      .select('_id')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+
+    const hours = Math.min(Math.max(Number(req.query.hours) || 24, 1), 24 * 90);
+    const from = new Date(Date.now() - hours * 3600 * 1000);
+
+    const readings = await Reading.find({ 'meta.site': site._id, ts: { $gte: from } })
+      .sort({ ts: 1 })
+      .limit(5000)
+      .lean();
+
+    return res.status(200).json(readings);
+  }),
+
+  getStatusSite: asyncHandler(async (req, res) => {
+    const site = await Site.findOne(scopeToMember({ ip: req.params.ip }, req.member))
+      .select('ip status lastSeenAt')
+      .lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+    return res.status(200).json({ alive: site.status, lastSeenAt: site.lastSeenAt });
+  }),
+
+  addSiteFromFile: asyncHandler(async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni' });
+
+    const rows = parseSheet(req.file.buffer, 'sites', {
+      A: 'ip',
+      B: 'nom',
+      C: 'latitude',
+      D: 'longitude',
+      E: 'Battery_Type',
+      F: 'project',
+    });
+
+    const result = await importByIp(Site, rows);
+    return res.status(result.errors.length ? 207 : 201).json({
+      message: `${result.imported} site(s) ajouté(s)/modifié(s)`,
+      ...result,
+    });
+  }),
+
+  exportAllSites: asyncHandler(async (req, res) => {
+    const sites = await Site.find(scopeToMember({}, req.member)).populate('project').lean();
+    await sendWorkbook(res, {
+      sheetName: 'sites',
+      filename: 'sites.xlsx',
+      columns: [
+        { header: 'ip', key: 'ip', width: 30 },
+        { header: 'nom', key: 'nom', width: 30 },
+        { header: 'latitude', key: 'latitude', width: 30 },
+        { header: 'longitude', key: 'longitude', width: 30 },
+        { header: 'Battery_Type', key: 'Battery_Type', width: 30 },
+        { header: 'project', key: 'project', width: 30 },
+      ],
+      rows: sites.map((s) => ({
+        ip: s.ip,
+        nom: s.nom,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        Battery_Type: s.Battery_Type,
+        project: s.project?.nom || '',
+      })),
+    });
+  }),
+
+  /**
+   * Device control actions, proxied to the Python service.
+   * These are the only calls that still reach a device synchronously, because
+   * an operator is waiting on the outcome.
+   */
+  restartSite: asyncHandler(async (req, res) => {
+    const site = await Site.findById(req.params.idSite).lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+
+    try {
+      const { data } = await axios.post(
+        `${PY_BASE}/control/reload/${site.ip}`,
+        {},
+        { timeout: CONTROL_TIMEOUT_MS }
+      );
+      return res.status(200).json({ success: data.success, message: `${data.message} — ${site.nom}` });
+    } catch (err) {
+      console.error(`Restart failed for ${site.nom} (${site.ip}):`, err.message);
+      return res
+        .status(502)
+        .json({ error: `Impossible de redémarrer ${site.nom}`, site: site.nom });
+    }
+  }),
+
+  refreshSite: asyncHandler(async (req, res) => {
+    const site = await Site.findById(req.params.idSite).lean();
+    if (!site) return res.status(404).json({ error: 'Site introuvable' });
+
+    try {
+      const { data } = await axios.post(
+        `${PY_BASE}/control/refresh/${site.ip}`,
+        {},
+        { timeout: CONTROL_TIMEOUT_MS }
+      );
+      return res.status(200).json({ success: data.success, message: `${data.message} — ${site.nom}` });
+    } catch (err) {
+      console.error(`Refresh failed for ${site.nom} (${site.ip}):`, err.message);
+      return res
+        .status(502)
+        .json({ error: `Impossible de rafraîchir ${site.nom}`, site: site.nom });
+    }
+  }),
+
+  getMidnightReload: asyncHandler(async (req, res) => {
+    return res.status(200).json(await settings.get('reloadMidnight'));
+  }),
+
+  changeMidnightReload: asyncHandler(async (req, res) => {
+    // Accept the historical misspelling so an older client keeps working.
+    const raw = req.body?.reload_midnight ?? req.body?.reload_midgniht;
+    if (typeof raw !== 'boolean') {
+      return res.status(400).json({ error: 'Le champ reload_midnight (booléen) est requis' });
+    }
+
+    await settings.set('reloadMidnight', raw);
+    return res.status(200).json({
+      message: `Le redémarrage à minuit des stations a été ${raw ? 'activé' : 'désactivé'}`,
+      reload_midnight: raw,
+    });
+  }),
+};

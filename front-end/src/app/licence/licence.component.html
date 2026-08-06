@@ -1,0 +1,142 @@
+<div class="min-h-screen bg-app flex items-center justify-center p-6 relative overflow-hidden">
+
+  <!-- Ambient brand wash. Decorative only, hidden from assistive tech. -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0">
+    <div class="absolute -top-40 -right-32 h-[32rem] w-[32rem] rounded-full blur-3xl opacity-20"
+         style="background: radial-gradient(circle, var(--brand) 0%, transparent 70%)"></div>
+    <div class="absolute -bottom-40 -left-32 h-[28rem] w-[28rem] rounded-full blur-3xl opacity-15"
+         style="background: radial-gradient(circle, var(--good) 0%, transparent 70%)"></div>
+  </div>
+
+  <div class="relative w-full max-w-xl">
+    <div class="text-center mb-8">
+      <img src="assets/images/logo.png" alt="" class="h-14 mx-auto mb-5 dark:brightness-0 dark:invert" />
+      <h1 class="text-3xl font-bold tracking-tight text-ink">
+        {{ managementView ? 'Licence' : 'Activation de la plateforme' }}
+      </h1>
+      <p class="mt-2 text-sm text-ink-secondary">
+        {{ managementView
+            ? 'Consultez la licence en cours ou installez-en une nouvelle.'
+            : 'Déposez votre fichier de licence pour démarrer la supervision.' }}
+      </p>
+    </div>
+
+    <div class="card p-8">
+
+      <!-- Current licence, when one is installed and valid -->
+      <dl *ngIf="!loading && status?.valid" class="mb-6 space-y-3 rounded-xl bg-sunken p-5">
+        <div class="flex items-center justify-between gap-4">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Licencié</dt>
+          <dd class="text-sm font-semibold text-ink">{{ status?.customer }}</dd>
+        </div>
+        <div class="flex items-center justify-between gap-4">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Expire le</dt>
+          <dd class="text-sm font-semibold text-ink">{{ status?.expiresAt | date: 'longDate' }}</dd>
+        </div>
+        <div class="flex items-center justify-between gap-4">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Restant</dt>
+          <dd>
+            <app-status-chip [label]="status!.daysRemaining + ' jour(s)'"
+                             [tone]="status!.daysRemaining! <= 30 ? 'warn' : 'good'"></app-status-chip>
+          </dd>
+        </div>
+        <div class="flex items-center justify-between gap-4">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Stations autorisées</dt>
+          <dd class="text-sm font-semibold text-ink">{{ status?.maxStations ?? 'Illimité' }}</dd>
+        </div>
+        <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Identifiant</dt>
+          <dd class="font-mono text-xs text-ink-muted">{{ status?.licenceId }}</dd>
+        </div>
+      </dl>
+
+      <!-- Why the user is here -->
+      <div *ngIf="!loading && status && !status.valid" class="mb-6 flex items-start gap-3 rounded-xl p-4"
+           [class.bg-crit-soft]="status.installed"
+           [class.bg-brand-soft]="!status.installed">
+        <svg class="h-5 w-5 mt-0.5 flex-none" [class.text-crit]="status.installed"
+             [class.text-brand-ink]="!status.installed"
+             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <div class="text-sm">
+          <p class="font-semibold" [class.text-crit]="status.installed" [class.text-brand-ink]="!status.installed">
+            {{ status.installed ? 'Licence expirée' : 'Aucune licence installée' }}
+          </p>
+          <p class="mt-0.5" [class.text-crit]="status.installed" [class.text-brand-ink]="!status.installed">
+            <ng-container *ngIf="status.installed && status.expiresAt">
+              La licence de {{ status.customer }} a expiré le {{ status.expiresAt | date: 'longDate' }}.
+              Contactez {{ vendorLabel }} pour un renouvellement.
+            </ng-container>
+            <ng-container *ngIf="!status.installed">
+              Cette installation n'a jamais été activée.
+              Le fichier de licence vous est fourni par {{ vendorLabel }}.
+            </ng-container>
+          </p>
+        </div>
+      </div>
+
+      <!-- The server has no public key: uploading anything would fail. -->
+      <div *ngIf="status && status.signingKeyPresent === false"
+           class="mb-6 rounded-xl bg-crit-soft p-4 text-sm text-crit">
+        <p class="font-semibold">Configuration serveur incomplète</p>
+        <p class="mt-0.5">
+          Aucune clé publique de licence n'est installée sur le serveur.
+          Exécutez <code class="font-mono">node tools/licence-keygen.js</code> puis redémarrez.
+        </p>
+      </div>
+
+      <!-- Drop zone -->
+      <label
+        class="block cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition"
+        [class.border-brand]="dragging"
+        [class.bg-brand-soft]="dragging"
+        [class.border-line-strong]="!dragging"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave()"
+        (drop)="onDrop($event)">
+
+        <input type="file" accept=".mi8lic,application/json" class="sr-only"
+               (change)="onFileSelected($event)" [disabled]="uploading" />
+
+        <ng-container *ngIf="!uploading">
+          <svg class="mx-auto h-12 w-12 text-ink-muted" fill="none" stroke="currentColor"
+               stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+          </svg>
+          <p class="mt-4 text-sm font-semibold text-ink">
+            Glissez votre fichier <span class="font-mono text-brand-ink">.mi8lic</span> ici
+          </p>
+          <p class="mt-1 text-xs text-ink-muted">ou cliquez pour parcourir</p>
+        </ng-container>
+
+        <ng-container *ngIf="uploading">
+          <svg class="mx-auto h-12 w-12 animate-spin text-brand" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
+            <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+          <p class="mt-4 text-sm font-semibold text-ink">Vérification de la signature…</p>
+          <p class="mt-1 text-xs text-ink-muted">{{ fileName }}</p>
+        </ng-container>
+      </label>
+
+      <p *ngIf="errorDetail" class="mt-4 rounded-xl bg-crit-soft px-4 py-3 text-sm text-crit">
+        {{ errorDetail }}
+      </p>
+
+      <p class="mt-6 text-center text-xs text-ink-muted">
+        Le fichier est signé cryptographiquement. Il ne contient aucune donnée personnelle
+        et ne peut pas être modifié sans invalider la licence.
+      </p>
+    </div>
+
+    <!-- The copyright belongs to whoever publishes the software, not to the
+         organisation the licence was issued to. -->
+    <p class="mt-8 text-center text-xs text-ink-muted">
+      Plateforme de supervision MPPT
+      <ng-container *ngIf="status?.vendor">· © {{ today | date: 'yyyy' }} {{ status?.vendor }}</ng-container>
+    </p>
+  </div>
+</div>

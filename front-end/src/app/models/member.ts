@@ -1,27 +1,13 @@
-import { Project } from "./project"
+import { Project } from './project';
 
-export class Member {
-    _id : string
-    username : string
-    password:string
-    actif : Boolean
-    isAdmin : Boolean
-    notification : Boolean
-    projects:Array<Project>
-
-
-
-  
-  
-    constructor(id: string, username: string, password: string, actif: Boolean, isAdmin:Boolean,notification:Boolean,projects:Array<Project>) {
-      this._id = id;
-      this.username = username;
-      this.password = password;
-      this.actif=actif;
-      this.isAdmin=isAdmin     
-      this.notification=notification
-      this.projects=projects
-    }
-  
-  }
-  
+/** Note: the API never returns a password hash, so the model does not carry one. */
+export interface Member {
+  _id: string;
+  username: string;
+  actif: boolean;
+  isAdmin: boolean;
+  notification: boolean;
+  mustChangePassword: boolean;
+  /** Absent on legacy documents read through `.lean()`; treat as empty. */
+  projects?: Project[];
+}

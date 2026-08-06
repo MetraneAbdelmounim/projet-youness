@@ -1,64 +1,55 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import {NgForm} from "@angular/forms";
-//import { AuthService } from '../services/auth.service';
-import { ToastrService } from 'ngx-toastr';
+import { NgForm } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { LoginService } from '../services/login.service';
 
 @Component({
   selector: 'app-login',
+  standalone: false,
   templateUrl: './login.component.html',
-  standalone:false,
-  styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
-  Date : Date = new Date()
-  formData = {
-    username: '',
-    password: ''
-  };
-  showPassword = false;
-  isLoading = false;
-  images: string[] = [
-    'assets/images/bg3.jpg',
-    'assets/images/bg.jpg',
-    'assets/images/bg2.jpg'
-  ];
+export class LoginComponent implements OnInit, OnDestroy {
+  readonly today = new Date();
+  readonly images = ['assets/images/bg3.jpg', 'assets/images/bg.jpg', 'assets/images/bg2.jpg'];
+
   currentImageIndex = 0;
-  // @ts-ignore
-  private authListenerSub : Subscription;
-  memberIsAuthenticated : boolean = false;
+  showPassword = false;
+
+  private carousel?: ReturnType<typeof setInterval>;
+  private readonly subscriptions = new Subscription();
 
   constructor(
-   // private authService: AuthService,
     private router: Router,
-    private toast: ToastrService,
-    private loginService:LoginService
+    private loginService: LoginService
   ) {}
 
   ngOnInit(): void {
-    setInterval(() => {
+    // Cleared on destroy — the previous interval ran for the lifetime of the
+    // tab, long after the login screen had gone.
+    this.carousel = setInterval(() => {
       this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
-    }, 5000);
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    this.authListenerSub = this.loginService.getAuthStatusListener()
-      .subscribe((isAuthenticated)=> {
-        this.memberIsAuthenticated = isAuthenticated;
-        if(this.memberIsAuthenticated){
+    }, 6000);
 
-          this.router.navigate(['projects'])
-        }
-      });
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    if(this.memberIsAuthenticated) {
-      this.router.navigate(['projects'])
+    if (this.loginService.getAuthStatus()) {
+      void this.router.navigate(['/projects']);
+      return;
     }
+
+    this.subscriptions.add(
+      this.loginService.getAuthStatusListener().subscribe((isAuthenticated) => {
+        if (isAuthenticated) void this.router.navigate(['/projects']);
+      })
+    );
   }
 
-  onSignIn(f: NgForm) {
-    if(f.valid){
-      this.loginService.signIn(f.value['username'],f.value['password'])
-    }
+  ngOnDestroy(): void {
+    clearInterval(this.carousel);
+    this.subscriptions.unsubscribe();
+  }
+
+  onSignIn(form: NgForm): void {
+    if (!form.valid) return;
+    this.loginService.signIn(form.value.username, form.value.password);
   }
 }

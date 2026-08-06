@@ -1,23 +1,16 @@
 const mongoose = require('mongoose');
-var uniqueValidator = require('mongoose-unique-validator');
 
-var Float = require('mongoose-float').loadType(mongoose, 2);
+const panneauSchema = mongoose.Schema(
+  {
+    ip: { type: String, required: true, unique: true, trim: true },
+    nom: { type: String, required: true, trim: true },
+    project: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', index: true },
 
-const panneauSchema = mongoose.Schema({
-    _id : {type:mongoose.Schema.Types.ObjectId,unique:true},
-    ip :{type: String,required:true,unique:true},
-    nom:{type: String,required:true},
-    project:{type:mongoose.Schema.Types.ObjectId,ref: 'Project' },
-  
+    // Reachability, refreshed by the poller rather than probed per request.
+    status: { type: Boolean, default: false },
+    lastSeenAt: { type: Date, default: null },
+  },
+  { timestamps: true }
+);
 
-});
-panneauSchema.pre('find',function(next) {
-    this.populate('project');
-    next();
-})
-panneauSchema.pre('findOne',function(next) {
-    this.populate('project');
-    next();
-})
-
-module.exports = mongoose.model('Panneau', panneauSchema)
+module.exports = mongoose.model('Panneau', panneauSchema);

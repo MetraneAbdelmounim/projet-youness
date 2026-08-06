@@ -1,179 +1,112 @@
-import { Component } from '@angular/core';
-import { Project } from '../../models/project';
-import { Modal } from 'flowbite';
-import { ProjectService } from '../../services/project.service';
-import { ToastrService } from 'ngx-toastr';
+import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
+import { Project } from '../../models/project';
+import { ProjectService } from '../../services/project.service';
 
 @Component({
   selector: 'app-admin-project',
   standalone: false,
   templateUrl: './admin-project.component.html',
-  styleUrl: './admin-project.component.css'
 })
-export class AdminProjectComponent {
- itemsPerPage: number = 20;
-  page:number=1;
-  // @ts-ignore
-  type: string = "Create"
+export class AdminProjectComponent implements OnInit {
+  projects: Project[] = [];
 
-  // @ts-ignore
-  projects: Array<Project>=new Array<Project>()
-  // @ts-ignore
-  saving: boolean = false;
-  // @ts-ignore
-  editProject: Project;
-  hiddenModal: boolean = true;
-  // @ts-ignore
-  projectEdited: Project = null;
-  // @ts-ignore
-  idEditProject: string
-  // @ts-ignore
-  selectedFile: File=null;
+  itemsPerPage = 15;
+  page = 1;
+  term = '';
 
-  filename ='Importer un fichier';
-  // @ts-ignore
-  fileUploaded: boolean;
-  uploaded: boolean = false;
-  term: string = "";
-  spinnerSite: boolean=false;
-  deletedProjectId: string = "";
-  deletedModal: Modal | null = null;
-  crudModal : Modal | null = null;
+  type: 'Create' | 'Edit' = 'Create';
+  projectEdited: Project | null = null;
+  idEditProject = '';
+  deletedProjectId = '';
+  deletedProjectName = '';
 
-  ngAfterViewInit(): void {
-    const modalDEl = document.getElementById('delete-modal-project');
-    const modalCrud = document.getElementById('crud-modal-project');
-    if (modalDEl) {
-      this.deletedModal = new Modal(modalDEl);
+  crudOpen = false;
+  deleteOpen = false;
 
-    }
-    if (modalCrud) {
-      this.crudModal = new Modal(modalCrud);
+  saving = false;
+  spinnerSite = false;
 
-    }
-  }
-
-  constructor(private projectService:ProjectService,private message:ToastrService) { }
+  constructor(
+    private projectService: ProjectService,
+    private message: ToastrService
+  ) {}
 
   ngOnInit(): void {
-   
-    this.spinnerSite=true
-    this.onCloseAddModal()
-    // @ts-ignore
-
-    this.projectService.getAllProjects().subscribe((projects:Array<Project>)=>{
-      this.spinnerSite=false
-      this.projects=projects
-        // @ts-ignore
-    },err=>{
-      this.spinnerSite=false
-      this.message.error("Une erreur est survenue ! ")
-    })
+    this.load();
   }
 
-  onAddStock(f: NgForm, project: Project) {
-
-    if (f.valid) {
-
-
-      if (this.type !== "Edit") {
-        this.saving = true
-        this.projectService.addProject(f.value).subscribe((res: any) => {
-          this.saving = false
-          this.message.success(res.message)
-          this.crudModal?.hide()
-          this.ngOnInit()
-          f.resetForm()
-          
-        }, e => {
-          this.saving = false
-          this.crudModal?.hide()
-          this.message.error(e.error )
-        })
-      } else {
-        this.saving = true
-        this.projectService.editProject(this.idEditProject, f.value).subscribe((res: any) => {
-          this.saving = false
-          this.message.success(res.message)
-          this.crudModal?.hide()
-          this.ngOnInit()
-          
-        }, e => {
-          this.saving = false
-          this.crudModal?.hide()
-          this.message.error(e.error,)
-        })
-      }
-
-    }
-  }
-  onFitchSite(project:Project) {
-    this.idEditProject = project?._id
-    this.type = "Edit"
-    this.projectEdited = project
-    this.crudModal?.show()
-
+  private load(): void {
+    this.spinnerSite = true;
+    this.projectService.getAllProjects().subscribe({
+      next: (projects) => {
+        this.projects = projects;
+        this.spinnerSite = false;
+      },
+      error: () => {
+        this.spinnerSite = false;
+        this.message.error('Une erreur est survenue !');
+      },
+    });
   }
 
-
-  openAddModal() {
-    this.ngOnInit()
-    // @ts-ignore
-    this.editStock = null
-    this.type = 'Create'
-    this.hiddenModal = false
+  trackById(_index: number, project: Project): string {
+    return project._id;
   }
 
-  onCloseAddModal() {
-    this.hiddenModal = true
+  onSubmit(form: NgForm): void {
+    if (!form.valid) return;
+
+    this.saving = true;
+    const request =
+      this.type === 'Edit'
+        ? this.projectService.editProject(this.idEditProject, form.value)
+        : this.projectService.addProject(form.value);
+
+    request.subscribe({
+      next: (res) => {
+        this.saving = false;
+        this.crudOpen = false;
+        this.message.success(res.message);
+        form.resetForm();
+        this.load();
+      },
+      error: (e) => {
+        this.saving = false;
+        this.message.error(e?.error?.error ?? 'Enregistrement impossible');
+      },
+    });
   }
 
-  ShowModale(_id: string, nom: string) {
-    /*if (_id) {
-      this.modal.confirm({
-        nzTitle: 'Vous êtes sûr de supprimer ce site ?',
-        nzContent: "' " + nom + " '",
-        nzOkText: 'Yes',
-        nzOkType: 'primary',
-        nzOkDanger: true,
-        nzOnOk: () => this.deleteSite(_id),
-        nzCancelText: 'No',
-      });
-    }*/
+  onEdit(project: Project): void {
+    this.idEditProject = project._id;
+    this.type = 'Edit';
+    this.projectEdited = project;
+    this.crudOpen = true;
   }
 
-  deleteProject(_id: string) {
-    if (_id) {
-      this.projectService.deleteProject(_id).subscribe((res: any) => {
-        this.message.success(res.message)
-        this.onCloseAddModal()
-        this.ngOnInit()
-      }, e => {
-        this.message.error(e.error)
-      })
-    }
-    ;
-    
+  openCrudModal(): void {
+    this.type = 'Create';
+    this.projectEdited = null;
+    this.crudOpen = true;
   }
 
-  openDeletedModal(arg0: string) {
-    this.deletedProjectId=arg0
-    this.deletedModal?.show()
-  }
-  openCrudModal() {
-    this.type="Create"
-    this.crudModal?.show()
+  openDeletedModal(project: Project): void {
+    this.deletedProjectId = project._id;
+    this.deletedProjectName = project.nom;
+    this.deleteOpen = true;
   }
 
-  
-  private onUploadFile(file: File) {
-
-    this.fileUploaded=true;
+  remove(): void {
+    if (!this.deletedProjectId) return;
+    this.projectService.deleteProject(this.deletedProjectId).subscribe({
+      next: (res) => {
+        this.message.success(res.message);
+        this.deleteOpen = false;
+        this.load();
+      },
+      error: (e) => this.message.error(e?.error?.error ?? 'Suppression impossible'),
+    });
   }
-  onStartUpload() {
-    this.uploaded = true
-  }
-
-
 }

@@ -1,64 +1,101 @@
-<div class="min-h-screen flex">
-  <!-- Background Image Carousel -->
-  <div class="fixed inset-0 z-0">
+<div class="relative flex min-h-screen bg-app">
+
+  <!-- Imagery panel. Decorative, so it is hidden from assistive tech and
+       collapses entirely on small screens rather than stacking. -->
+  <div class="relative hidden flex-1 overflow-hidden lg:block" aria-hidden="true">
     <div *ngFor="let image of images; let i = index"
-         [ngClass]="{'opacity-100': i === currentImageIndex, 'opacity-0': i !== currentImageIndex}"
-         class="absolute inset-0 transition-all duration-1000 ease-in-out">
-      <img [src]="image" alt="MI8 Campus" class="w-full h-full object-cover" />
-      <div class="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
+         class="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
+         [class.opacity-100]="i === currentImageIndex"
+         [class.opacity-0]="i !== currentImageIndex">
+      <img [src]="image" alt="" class="h-full w-full object-cover" />
+    </div>
+
+    <div class="absolute inset-0 bg-gradient-to-tr from-[#050a14] via-[#050a14]/80 to-transparent"></div>
+
+    <div class="absolute inset-0 flex flex-col justify-between p-12 text-white">
+      <img src="assets/images/white-logo.png" alt="" class="h-10 w-auto self-start" />
+
+      <div class="max-w-lg">
+        <span class="chip chip-good mb-6">
+          <span class="chip-dot live-dot"></span>
+          Supervision en continu
+        </span>
+        <h1 class="text-5xl font-bold leading-tight tracking-tight">
+          Vos stations solaires,<br />sous contrôle.
+        </h1>
+        <p class="mt-5 text-lg font-light text-white/70">
+          Relevés MPPT, prévisions météo et alertes automatiques —
+          pour l'ensemble de votre parc, en temps réel.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-8 text-sm text-white/50">
+        <div><span class="block text-2xl font-bold text-white">MPPT</span>Modbus TCP</div>
+        <div><span class="block text-2xl font-bold text-white">24/7</span>Surveillance</div>
+        <div><span class="block text-2xl font-bold text-white">90 j</span>Historique</div>
+      </div>
     </div>
   </div>
 
-  <!-- Content -->
-  <div class="relative z-10 flex w-full">
-    <!-- Left Side -->
-    <div class="hidden lg:flex w-2/3 items-center justify-center p-12 text-white">
-      <div>
-        <h1 class="text-6xl font-black mb-6" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3)">Système de Supervision </h1>
-        <p class="text-3xl font-light" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.2)">Plateforme de surveillance en temps réel des stations mppt</p>
-      </div>
-    </div>
+  <!-- Form panel -->
+  <div class="flex w-full items-center justify-center p-6 sm:p-10 lg:w-[30rem] lg:flex-none">
+    <div class="w-full max-w-sm">
 
-    <!-- Right Side - Login Form -->
-    <div class="w-full lg:w-1/3 flex items-center justify-center p-8 opacity-90">
-      <div class="w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8">
-        <div class="text-center mb-8">
-          <img src="assets/images/logo.png" alt="MI8 Logo" class="h-16 mx-auto mb-6">
-          <h2 class="text-3xl font-bold text-gray-800 mb-2">Connexion</h2>
-          <p class="text-gray-600">Connectez-vous en tant qu'utilisateur ou administrateur</p>
+      <div class="mb-8 flex items-center justify-between">
+        <img src="assets/images/logo.png" alt="Innovation MI8"
+             class="h-10 w-auto dark:brightness-0 dark:invert" />
+        <app-theme-toggle></app-theme-toggle>
+      </div>
+
+      <h2 class="text-2xl font-bold tracking-tight text-ink">Connexion</h2>
+      <p class="mt-1.5 text-sm text-ink-secondary">
+        Accédez à votre plateforme de supervision.
+      </p>
+
+      <form (ngSubmit)="onSignIn(f)" #f="ngForm" class="mt-8 space-y-5">
+        <div>
+          <label for="username" class="label">Nom d'utilisateur</label>
+          <input id="username" name="username" ngModel required autocomplete="username"
+                 class="field" placeholder="prenom.nom" />
         </div>
 
-        <form (ngSubmit)="onSignIn(f)" #f="ngForm">
-          <!-- Username -->
-          <div class="mb-4">
-            <label for="username" class="text-sm font-medium text-gray-700 block">Nom d'utilisateur</label>
-            <input id="username" name="username" [(ngModel)]="formData.username"  required
-              class="block w-full pl-10 pr-3 py-3 text-gray-900 rounded-lg border border-gray-300"
-              />
+        <div>
+          <label for="password" class="label">Mot de passe</label>
+          <div class="relative">
+            <input id="password" name="password" ngModel required
+                   [type]="showPassword ? 'text' : 'password'" autocomplete="current-password"
+                   class="field pr-11" placeholder="••••••••" />
+            <button type="button" (click)="showPassword = !showPassword"
+                    class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-muted transition hover:text-ink"
+                    [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+              <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" stroke="currentColor"
+                   stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M2.036 12.322a1 1 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178a1 1 0 010 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg *ngIf="showPassword" class="h-4 w-4" fill="none" stroke="currentColor"
+                   stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M3.98 8.223A10.48 10.48 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.774 3.162 10.066 7.5a10.52 10.52 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243" />
+              </svg>
+            </button>
           </div>
-
-          <!-- Password -->
-          <div class="mb-4">
-            <label for="password" class="text-sm font-medium text-gray-700 block">Mot de passe</label>
-            <input [type]="showPassword ? 'text' : 'password'"  [(ngModel)]="formData.password" id="password" name="password"
-              required ngModel
-              class="block w-full pl-10 pr-3 py-3 text-gray-900 rounded-lg border border-gray-300"
-               />
-          </div>
-
-          <button type="submit"
-          [disabled]="f.invalid"
-            class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg cursor-pointer"
-            >
-            {{'Se connecter' }}
-          </button>
-        </form>
-
-        <div class="mt-6 text-center text-sm text-gray-500">
-          Copyright © <span id="get-current-year">{{Date.getFullYear()}}</span><a href="" class="text-blueGray-500 hover:text-gray-800" target="_blank"> Directed by </a>
-              <b  class="text-blueGray-500 hover:text-blueGray-800">Younès Berayeteb</b>.
         </div>
-      </div>
+
+        <button type="submit" [disabled]="f.invalid" class="btn btn-primary w-full py-3">
+          Se connecter
+        </button>
+      </form>
+
+      <!-- "Innovation MI8" here is the deployment's own branding, not a
+           copyright claim over the software — the © was moved off them, since
+           they are a customer of the platform rather than its publisher. -->
+      <p class="mt-10 text-center text-xs text-ink-muted">
+        Innovation MI8 · Supervision MPPT
+        <br />
+        Conçu par <span class="font-semibold text-ink-secondary">Younès Berayeteb</span>
+      </p>
     </div>
   </div>
 </div>

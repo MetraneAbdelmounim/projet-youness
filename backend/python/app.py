@@ -1,293 +1,108 @@
-import asyncio
-from playwright.async_api import async_playwright
-import time
-import json
+"""
+Device-facing service.
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from pymodbus.client import AsyncModbusTcpClient as ModbusClient
-import aiohttp
-import sys,os
-if sys.version_info < (3, 9):
-    from backports.zoneinfo import ZoneInfo
-else:
-    from zoneinfo import ZoneInfo
-from datetime import datetime, timezone
+Responsibilities:
+  * run the background poller that keeps MongoDB current;
+  * expose the two control actions an operator waits on (restart, refresh).
+
+Read endpoints are deliberately absent — telemetry is served by the Node API
+straight from MongoDB, so a page render no longer reaches a device at all.
+"""
+
+import asyncio
+import logging
+import sys
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+
+import browser
+import config
+import store
+from modbus_pool import get_pool
+from poller import poller
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+)
+log = logging.getLogger("mppt-service")
 
 if sys.platform.startswith("win"):
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-from mppt import mppt  # Assurez-vous que la classe mppt est définie dans mppt.py
 
-app = Flask(__name__)
-cors = CORS(app, resources={r"/mppt/*": {"origins": "*"}})
-app.config['CORS_HEADERS'] = 'Content-Type'
-
-@app.route('/mppt/<ip>', methods=['GET'])
-async def getDataMppt(ip):
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await store.connect()
+    await poller.start()
+    log.info(
+        "Poller started — sweeping every %ss with %s concurrent devices",
+        config.POLL_INTERVAL_SECONDS,
+        config.POLL_CONCURRENCY,
+    )
     try:
-      
-        c = ModbusClient(host=ip,port=502,timeout=2)
-        await c.connect()
-       
-        rr = await c.read_holding_registers(address=0,count=82,slave=1,no_response_expected=False)
+        yield
+    finally:
+        await poller.stop()
+        await browser.close()
+        await store.close()
+        log.info("Shutdown complete")
 
-        if not rr or not hasattr(rr, "registers") or len(rr.registers) < 63:
-            raise ValueError("Données Modbus invalides")
 
-        mppt_data = mppt(
-            rr.registers[24], rr.registers[28], rr.registers[27],
-            rr.registers[16], rr.registers[19], rr.registers[62],
-            rr.registers[20], rr.registers[22]
-        )
+app = FastAPI(title="MPPT polling service", version="2.0.0", lifespan=lifespan)
 
-        return jsonify({
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "db": store.is_connected(),
+        "lastSweepSeconds": poller.last_sweep_duration,
+        "stations": poller.last_sweep_sites,
+    }
+
+
+@app.post("/control/reload/{ip}")
+async def reload_controller(ip: str):
+    """
+    Pulses the restart coil on a controller.
+
+    A device commonly resets before it can acknowledge the write, so a timeout
+    after the request has gone out is reported as success — but only for
+    timeouts, rather than the previous check against an error string.
+    """
+    try:
+        await get_pool().write_coil(ip, config.MODBUS_RESET_COIL, True)
+    except (asyncio.TimeoutError, IOError, ConnectionError) as exc:
+        log.info("Restart of %s did not acknowledge (%s) — treating as sent", ip, exc)
+        return {
             "success": True,
-            "data": mppt_data.__dict__,
-        })
-
-    except Exception as e:
-        mppt_data=mppt(0,0,0,0,0,0,0,0)
-        return jsonify({"success": False, "message": str(e), "data": mppt_data.__dict__})
-
-
-
-
-
-# Analyse de la température sur la capacité de la batterie
-def battery_capacity_reduction(temp):
-    if temp <= -15:
-        return 50
-    elif temp <= -10:
-        return 30
-    elif temp <= -5:
-        return 25
-    elif temp <= 0:
-        return 20
-    return 0
-
-# Analyse de la couverture nuageuse sur la capacité de recharge
-def solar_recharge_clouds(cloud_cover):
-    if cloud_cover >= 80:
-        return 65
-    elif cloud_cover >= 40:
-        return 35
-    return 0
-
-# Analyse de la durée d’ensoleillement sur la recharge en fonction du type de batterie
-def solar_recharge_duration(sun_hours, battery_type="lithium"):
-    if battery_type.lower() == "lithium":
-        if sun_hours >= 4:
-            return 100
-        elif sun_hours >= 2:
-            return 65
-        elif sun_hours<2 and sun_hours>=1:
-            return 35
-    
-    elif battery_type.lower() == "agm":
-        if sun_hours >= 6:
-            return 100
-        elif sun_hours >= 3:
-            return 65
-        elif sun_hours<3 and sun_hours>=1:
-            return 35
-    return 0
-
-# Récupération de la météo
-from zoneinfo import ZoneInfo
-from datetime import datetime
-
-from zoneinfo import ZoneInfo
-from datetime import datetime
-
-async def get_weather_data(lat, lon):
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=cloudcover&daily=sunshine_duration,sunset&hourly=cloudcover,temperature_2m&timezone=auto"
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            data = await resp.json()
-
-            current_cloud = data["current"].get("cloudcover", 0)
-            sunshine_duration = data["daily"]["sunshine_duration"][0] / 3600.0  # sec → hours
-
-            sunset_time_str = data["daily"]["sunset"][0]
-            timezone_str = data.get("timezone", "UTC")
-            local_tz = ZoneInfo(timezone_str)
-
-            now = datetime.now(local_tz)
-            sunset_dt = datetime.fromisoformat(sunset_time_str).replace(tzinfo=local_tz)
-
-            # --- Données horaires
-            hourly_times = data["hourly"]["time"]
-            hourly_clouds = data["hourly"]["cloudcover"]
-            hourly_temps = data["hourly"]["temperature_2m"]
-
-            remaining_clouds_today = []
-            remaining_temps_today = []
-
-            for time_str, cloud_value, temp_value in zip(hourly_times, hourly_clouds, hourly_temps):
-                hour_dt = datetime.fromisoformat(time_str).replace(tzinfo=local_tz)
-
-                if now.date() == hour_dt.date() and now <= hour_dt <= sunset_dt:
-                    remaining_clouds_today.append(cloud_value)
-                    remaining_temps_today.append(temp_value)
-
-            # Moyennes
-          
-            avg_remaining_cloud = (
-                sum(remaining_clouds_today) / len(remaining_clouds_today)
-                if remaining_clouds_today else current_cloud
-            )
-
-            avg_remaining_temp = (
-                sum(remaining_temps_today) / len(remaining_temps_today)
-                if remaining_temps_today else 20.0  # fallback
-            )
-
-            remaining_sunlight = max(0, (sunset_dt - now).total_seconds() / 3600.0)
-
-            return avg_remaining_temp, avg_remaining_cloud, sunshine_duration, remaining_sunlight
-
-
-
-@app.route('/mppt/analysis/<ip>', methods=['GET']) 
-async def getAnalysisMppt(ip):
-    try:
-        
-        battery_type = request.args.get("battery_type", default="agm", type=str)
-        lat = request.args.get("lat", type=float)
-        lon = request.args.get("lon", type=float)
-        
-        if lat is None or lon is None:
-            lat = 45.58109
-            lon = -73.48695
-        c =ModbusClient(host=ip,port=502,timeout=2)
-        await c.connect()
-        rr = await c.read_holding_registers(address=0,count=82,slave=1,no_response_expected=False)
-
-        if not rr or not hasattr(rr, "registers") or len(rr.registers) < 63:
-            raise ValueError("Données Modbus invalides")
-
-        mppt_data = mppt(
-            rr.registers[24], rr.registers[28], rr.registers[27],
-            rr.registers[16], rr.registers[19], rr.registers[62],
-            rr.registers[20], rr.registers[22]
-        )
-
-        temperature, avg_remaining_cloud, total_sun_hours, remaining_sun_hours = await get_weather_data(lat, lon)
-    
-        temp_loss = battery_capacity_reduction(temperature)
-        cloud_loss = solar_recharge_clouds(avg_remaining_cloud)
-       
-        adjusted_sun_hours = min(remaining_sun_hours, total_sun_hours)
-        solar_eff = solar_recharge_duration(adjusted_sun_hours, battery_type)
-
-        # Capacité finale estimée :
-        initial_voltage = mppt_data.Battery_Voltage
-        charge_percent = (solar_eff - cloud_loss) / 100
-        capacity_loss_percent = temp_loss / 100
-        performance_value = (1 + charge_percent) * (1 - capacity_loss_percent)
-
-        performance = "DOWN"
-        if performance_value < 0.75:
-            performance = "DOWN"
-        elif 0.75 <= performance_value <= 1.25:
-            performance = "MEDIUM"
-        else:
-            performance = "UP"
-
-        predicted_voltage = initial_voltage * performance_value
-    
-     
-        analysis = {
-            "temperature_ext": temperature,
-            "avg_remaining_cloud": round(avg_remaining_cloud,2),
-            "sun_hours": total_sun_hours,
-            "remaining_sun_hours": round(remaining_sun_hours, 2),
-            "battery_type": battery_type.lower(),
-            "battery_capacity_loss": temp_loss,
-            "solar_charge_loss_clouds": cloud_loss,
-            "solar_charge_efficiency": solar_eff,
-            "predicted_end_day_voltage": round(predicted_voltage, 2),
-            "current_battery_voltage" : initial_voltage,
-            "performance": performance
+            "message": f"Commande de redémarrage envoyée à {ip}",
         }
+    except Exception as exc:
+        log.exception("Restart failed for %s", ip)
+        raise HTTPException(status_code=502, detail=str(exc))
 
-        return jsonify({
-            "success": True,
-            "data": mppt_data.__dict__,
-            "analysis": analysis
-        })
+    return {"success": True, "message": f"Commande de redémarrage envoyée à {ip}"}
 
-    except Exception as e:
-        mppt_data = mppt(0,0,0,0,0,0,0,0)
-        return jsonify({"success": False, "message": str(e), "data": mppt_data.__dict__})
-    
-    
 
-@app.route('/mppt/refresh/<ip>', methods=['POST'])
-def restart_endpoint(ip):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(run_playwright(ip))
-    return result
-async def run_playwright(ip):
+@app.post("/control/refresh/{ip}")
+async def refresh_controller(ip: str):
+    """Presses Save on the controller's network page."""
     try:
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            page.on("dialog", lambda dialog: asyncio.create_task(dialog.accept()))
-            # Use your actual URL here:
-            await page.goto(f"http://{ip}:4444/network.html")
-        
-            # Wait for JavaScript to initialize
-            await page.wait_for_timeout(1000)
+        await browser.click_save_network(ip)
+    except Exception as exc:
+        log.warning("Refresh failed for %s: %s", ip, exc)
+        raise HTTPException(status_code=502, detail=str(exc))
 
-            # Trigger Save
-            await page.evaluate("document.getElementsByName('BTNSave')[0]?.click()")
-            await page.wait_for_timeout(1000)
+    return {"success": True, "message": f"Configuration réseau enregistrée sur {ip}"}
 
-            await browser.close()
-            return jsonify({"status": "success", "message": "Save Network Button Cliked!"})
 
-    except Exception as e:
-     
-        return jsonify({"status": "error", "message": str(e)}), 500
-    
-
-@app.route('/mppt/reload/<ip>', methods=['POST'])
-def reset_mppt(ip):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    result = loop.run_until_complete(reset_mppt_async(ip))
-    return result
-
-async def reset_mppt_async(ip):
-    try:
-        client =ModbusClient(host=ip,port=502,timeout=2)
-        await client.connect()
-       
-        # Adresse du coil Reset = 256
-        address = 255
-        value = True  # 0xFF00 est interprété comme "True" dans pymodbus pour write_coil
-
-        result = await client.write_coil(address=address,value=True,slave=1)
-        print(result)
-        return jsonify({
-                "success": True,
-                "message": f"Commande de redémarrage envoyée à {ip} via coil {address}"
-            })
- 
-    except Exception as e:
-        if str(e)=="Modbus Error: [Input/Output] No response received after 3 retries, continue with next request":
-            return jsonify({
-                "success": True,
-                "message": f"Commande de redémarrage envoyée à {ip} via coil {address}"
-            })
- 
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.detail},
+    )

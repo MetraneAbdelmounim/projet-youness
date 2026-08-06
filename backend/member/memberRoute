@@ -1,14 +1,20 @@
-const memberController = require('./memberController')
-let express = require('express');
-let router = express.Router();
-const authUser = require('../middlewares/authUser')
-const authAdmin = require('../middlewares/authAdmin')
-const licenceGuard= require('../middlewares/licenceGuard')
-router.post('',licenceGuard,authAdmin,memberController.addMember)
-router.get('',licenceGuard,authUser,memberController.getAllmembers)
-router.delete('/:idMember',licenceGuard,authAdmin,memberController.deleteMember)
-router.put('/:idMember',licenceGuard,authAdmin,memberController.updateMember)
-router.put('/password/:idMember',licenceGuard,authUser,memberController.changePassword)
-router.put('/notifications/:idMember',licenceGuard,authAdmin,memberController.changeNotification)
+const express = require('express');
+const memberController = require('./memberController');
+const licenceGuard = require('../middlewares/licenceGuard');
+const { authenticate, requireAdmin, requireSelfOrAdmin } = require('../middlewares/auth');
 
-module.exports = router
+const router = express.Router();
+
+router.use(licenceGuard, authenticate);
+
+router.post('', requireAdmin, memberController.addMember);
+router.get('', requireAdmin, memberController.getAllmembers);
+router.delete('/:idMember', requireAdmin, memberController.deleteMember);
+router.put('/:idMember', requireAdmin, memberController.updateMember);
+
+// A member may only change their own password; admins may reset any.
+router.put('/password/:idMember', requireSelfOrAdmin(), memberController.changePassword);
+
+router.put('/notifications/:idMember', requireAdmin, memberController.changeNotification);
+
+module.exports = router;

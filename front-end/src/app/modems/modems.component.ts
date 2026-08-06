@@ -1,40 +1,52 @@
 import { Component, OnInit } from '@angular/core';
-
-import { ToastrService } from 'ngx-toastr';
-import { ModemService } from '../services/modem.service';
-import { Modem } from '../models/modem';
 import { ActivatedRoute } from '@angular/router';
-
+import { ToastrService } from 'ngx-toastr';
+import { Device } from '../models/device';
+import { ModemService } from '../services/modem.service';
 
 @Component({
   selector: 'app-modems',
   standalone: false,
   templateUrl: './modems.component.html',
-  styleUrl: './modems.component.css'
+  styleUrl: './modems.component.css',
 })
-export class ModemsComponent implements OnInit{
-  
+export class ModemsComponent implements OnInit {
+  modems: Device[] = [];
+  spinnerSite = true;
 
-  constructor(private modemServices:ModemService,private message:ToastrService,private route:ActivatedRoute) { }
- modems: Array<Modem>=new Array<Modem>();
-  spinnerSite: boolean=false;
+  constructor(
+    private modemService: ModemService,
+    private message: ToastrService,
+    private route: ActivatedRoute
+  ) {}
+
   ngOnInit(): void {
-
     const projectId = this.route.snapshot.paramMap.get('id');
-     // @ts-ignore
-    this.modemServices.getModemsByProject(projectId).subscribe((modems:Array<Modem>)=>{
-    
-   
-      
-      this.spinnerSite=false
-      this.modems=modems
-    },err=>{
-      this.spinnerSite=false
-      
-      console.log(err);
-      
-      this.message.error(err.error.error)
-    })
+    if (!projectId) {
+      this.spinnerSite = false;
+      return;
+    }
+
+    // Reachability arrives with each modem, so no per-row status request.
+    this.modemService.getByProject(projectId).subscribe({
+      next: (modems) => {
+        this.modems = modems;
+        this.spinnerSite = false;
+      },
+      error: () => {
+        this.spinnerSite = false;
+        this.message.error('Impossible de charger les modems');
+      },
+    });
   }
 
+  trackById(_index: number, modem: Device): string {
+    return modem._id;
+  }
+
+  get subtitle(): string {
+    if (this.spinnerSite) return 'Chargement…';
+    const online = this.modems.filter((d) => d.status).length;
+    return `${this.modems.length} modem(s) · ${online} en ligne`;
+  }
 }

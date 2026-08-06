@@ -1,38 +1,108 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { Site } from '../models/site';
 import { SiteService } from '../services/site.service';
-import { ToastrService } from 'ngx-toastr';
-import { ActivatedRoute } from '@angular/router';
+import { StatusTone } from '../ui/status-chip.component';
+
+/** Web consoles exposed by the equipment at each station. */
+const DEVICE_PORTS = [
+  { port: 9191, label: 'Modem', icon: '📡', protocol: 'http' },
+  { port: 888, label: 'Caméra', icon: '🎥', protocol: 'http' },
+  { port: 333, label: 'Web Relay', icon: '🔌', protocol: 'http' },
+  { port: 4444, label: 'EMC', icon: '📊', protocol: 'http' },
+  { port: 666, label: 'Stuttgart M64', icon: '⚙️', protocol: 'http' },
+  { port: 5000, label: 'Capteur BT', icon: '🛰️', protocol: 'https' },
+];
+
+interface DeviceLink {
+  label: string;
+  icon: string;
+  url: string;
+}
 
 @Component({
   selector: 'app-home',
   standalone: false,
   templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
 })
+export class HomeComponent implements OnInit {
+  sites: Site[] = [];
+  spinnerSite = true;
+  projectId: string | null = null;
 
-export class HomeComponent implements OnInit{
-  
+  /**
+   * Console URLs, built once per load.
+   *
+   * These must not be computed in a template binding: returning a fresh array
+   * each change-detection cycle makes *ngFor discard and rebuild every link,
+   * which keeps the page permanently re-rendering.
+   */
+  private linksBySite = new Map<string, DeviceLink[]>();
 
-  constructor(private siteServices:SiteService,private message:ToastrService,private route:ActivatedRoute) { }
-  sites: Array<Site>=new Array<Site>();
-  spinnerSite: boolean=false;
+  constructor(
+    private siteService: SiteService,
+    private message: ToastrService,
+    private route: ActivatedRoute
+  ) {}
+
   ngOnInit(): void {
-    const projectId = this.route.snapshot.paramMap.get('id');
-     // @ts-ignore
-    this.siteServices.getAllSitesByProjectWIthoutData(projectId).subscribe((sites:Array<Site>)=>{
-    
-    
-      
-      this.spinnerSite=false
-      this.sites=sites
-    },err=>{
-      this.spinnerSite=false
-      
-      console.log(err);
-      
-      this.message.error(err.error.error)
-    })
+    this.projectId = this.route.snapshot.paramMap.get('id');
+    if (!this.projectId) {
+      this.spinnerSite = false;
+      return;
+    }
+
+    // One request covers the whole page: stations, telemetry, analysis, status.
+    this.siteService.getSitesByProject(this.projectId).subscribe({
+      next: (sites) => {
+        this.sites = sites;
+        this.linksBySite = new Map(
+          sites.map((site) => [
+            site._id,
+            DEVICE_PORTS.map((device) => ({
+              label: device.label,
+              icon: device.icon,
+              url: `${device.protocol}://${site.ip}:${device.port}/`,
+            })),
+          ])
+        );
+        this.spinnerSite = false;
+      },
+      error: () => {
+        this.spinnerSite = false;
+        this.message.error('Impossible de charger les stations');
+      },
+    });
   }
 
+  trackById(_index: number, site: Site): string {
+    return site._id;
+  }
+
+  get subtitle(): string {
+    if (this.spinnerSite) return 'Chargement…';
+    const online = this.sites.filter((s) => s.status).length;
+    return `${this.sites.length} station(s) · ${online} en ligne`;
+  }
+
+  deviceLinks(site: Site): DeviceLink[] {
+    return this.linksBySite.get(site._id) ?? [];
+  }
+
+  performanceLabel(site: Site): string {
+    return (
+      { UP: 'Performance élevée', MEDIUM: 'Performance moyenne', DOWN: 'Performance faible' }[
+        site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
+      ] ?? 'Performance inconnue'
+    );
+  }
+
+  performanceTone(site: Site): StatusTone {
+    return (
+      { UP: 'good', MEDIUM: 'warn', DOWN: 'crit' }[
+        site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
+      ] ?? 'neutral'
+    ) as StatusTone;
+  }
 }

@@ -1,44 +1,43 @@
 const mongoose = require('mongoose');
-var uniqueValidator = require('mongoose-unique-validator');
 
-const Site = require('../site/site');
-const Modem = require('../modem/modem')
-const Panneau = require('../panneau/panneau')
-const User = require('../member/member')
-const projectSchema = mongoose.Schema({
-    _id : {type:mongoose.Schema.Types.ObjectId,unique:true},
-    nom:{type: String,required:true},
-    ville : {type:String,required:true},
+const projectSchema = mongoose.Schema(
+  {
+    nom: { type: String, required: true, unique: true, trim: true },
+    ville: { type: String, required: true, trim: true },
+  },
+  { timestamps: true }
+);
 
-});
-
-projectSchema.pre('deleteOne', async function (next) {
+/**
+ * Cascade on delete: drop the project's devices, its readings, and its
+ * membership references. Previously split across two hooks that each re-read
+ * the project; one pass is enough.
+ */
+projectSchema.pre('deleteOne', { document: false, query: true }, async function (next) {
   try {
-    const project = await this.model.findOne(this.getFilter());
-    if (project) {
-      await Site.deleteMany({ project: project._id });
-      await Modem.deleteMany({ project: project._id });
-      await Panneau.deleteMany({ project: project._id });
-    }
-    next();
+    const project = await this.model.findOne(this.getFilter()).lean();
+    if (!project) return next();
+
+    // Required lazily: these models reference Project, so importing at module
+    // scope would create a require cycle.
+    const Site = require('../site/site');
+    const Reading = require('../site/reading');
+    const Modem = require('../modem/modem');
+    const Panneau = require('../panneau/panneau');
+    const Member = require('../member/member');
+
+    await Promise.all([
+      Site.deleteMany({ project: project._id }),
+      Reading.deleteMany({ 'meta.project': project._id }),
+      Modem.deleteMany({ project: project._id }),
+      Panneau.deleteMany({ project: project._id }),
+      Member.updateMany({ projects: project._id }, { $pull: { projects: project._id } }),
+    ]);
+
+    return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
 
-projectSchema.pre('deleteOne', async function (next) {
-  try {
-    const project = await this.model.findOne(this.getFilter());
-    if (project) {
-      // Remove the project ID from all users
-      await User.updateMany(
-        { projects: project._id },
-        { $pull: { projects: project._id } }
-      );
-    }
-    next();
-  } catch (err) {
-    next(err);
-  }
-})
-module.exports = mongoose.model('Project', projectSchema)
+module.exports = mongoose.model('Project', projectSchema);

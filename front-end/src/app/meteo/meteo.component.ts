@@ -1,184 +1,189 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
-import { Chart, ChartConfiguration, ChartData, ChartOptions } from 'chart.js';
+import { Component, ElementRef, Input, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BaseChartDirective } from 'ng2-charts';
+import { Subscription } from 'rxjs';
+import { Chart, ChartConfiguration } from 'chart.js';
+import { ThemeService } from '../services/theme.service';
+import { baseOptions, chartTokens } from '../services/chart-theme';
+
+interface Forecast {
+  timezone: string;
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+    cloudcover: number[];
+    direct_radiation: number[];
+  };
+}
+
+const HOURS_PER_DAY = 24;
+const FORECAST_DAYS = 5;
+
+/**
+ * Five-day forecast, drawn as three stacked single-measure panels.
+ *
+ * This replaces one chart that carried temperature, cloud cover and sunlight on
+ * three separate y-axes. Multiple scales on one plot make the crossings
+ * meaningless — two lines appear to intersect only because of how the axes were
+ * scaled. Small multiples keep every comparison honest and let each panel keep
+ * its own units.
+ */
 @Component({
   selector: 'app-meteo',
   standalone: false,
   templateUrl: './meteo.component.html',
-  styleUrl: './meteo.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
-
 })
+export class MeteoComponent implements OnInit, OnDestroy {
+  @Input() lat = 0;
+  @Input() lon = 0;
 
+  selectedDayIndex = 0;
+  loading = true;
+  failed = false;
 
-export class MeteoComponent implements OnInit {
-  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
-  rawData: any;
-  @Input()
-  lat: Number = 0.0
-  @Input()
-  lon: Number = 0.0
-  selectedDayIndex: number = 0;
+  readonly days = Array.from({ length: FORECAST_DAYS }, (_, i) => i + 1);
+  readonly panels = [
+    { key: 'temp' as const, title: 'Température', unit: '°C', kind: 'bar' as const },
+    { key: 'cloud' as const, title: 'Couverture nuageuse', unit: '%', kind: 'line' as const },
+    { key: 'sun' as const, title: 'Rayonnement direct', unit: 'kW/m²', kind: 'line' as const },
+  ];
 
-  chartData: any = {
-    labels: [],
-    datasets: [
-      {
-        label: 'Température (°C)',
-        data: [],
-        backgroundColor: 'rgba(59, 130, 246, 0.3)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        yAxisID: 'y',
-        type: 'bar'
+  private forecast: Forecast | null = null;
+  private currentHour = 0;
+  private charts = new Map<string, Chart>();
+  private canvases = new Map<string, HTMLCanvasElement>();
+  private readonly subscriptions = new Subscription();
+
+  @ViewChildren('panelCanvas')
+  set panelCanvases(refs: QueryList<ElementRef<HTMLCanvasElement>> | undefined) {
+    if (!refs?.length) return;
+    refs.forEach((ref, index) => {
+      const key = this.panels[index]?.key;
+      if (key) this.canvases.set(key, ref.nativeElement);
+    });
+    if (this.forecast) this.renderDay(this.selectedDayIndex);
+  }
+
+  constructor(
+    private http: HttpClient,
+    private theme: ThemeService
+  ) {}
+
+  ngOnInit(): void {
+    this.fetchForecast();
+    this.subscriptions.add(
+      this.theme.changes().subscribe(() => this.renderDay(this.selectedDayIndex))
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.charts.forEach((chart) => chart.destroy());
+    this.subscriptions.unsubscribe();
+  }
+
+  private fetchForecast(): void {
+    const url =
+      'https://api.open-meteo.com/v1/forecast' +
+      `?latitude=${this.lat}&longitude=${this.lon}` +
+      `&hourly=temperature_2m,cloudcover,direct_radiation&forecast_days=${FORECAST_DAYS}&timezone=auto`;
+
+    this.http.get<Forecast>(url).subscribe({
+      next: (data) => {
+        this.forecast = data;
+        this.currentHour = this.localHour(data.timezone);
+        this.loading = false;
+        this.renderDay(0);
       },
-      {
-        label: 'Nuages (%)',
-        data: [],
-        backgroundColor: 'rgba(156, 163, 175, 0.3)',
-        borderColor: 'rgba(107, 114, 128, 1)',
-        yAxisID: 'y1',
-        type: 'line',
-        tension: 0.4,
-        borderWidth: 2,
-        fill: true
+      error: () => {
+        this.loading = false;
+        this.failed = true;
       },
-      {
-        label: 'Ensoleillement (h)',
-        data: [],
-        backgroundColor: 'rgba(253, 224, 71, 0.3)',
-        borderColor: 'rgba(202, 138, 4, 1)',
-        yAxisID: 'y2',
-        type: 'line',
-        tension: 0.4,
-        borderWidth: 2,
-        fill: true
-      }
-    ]
-  };
-  currentHour: Number = 0;
-  chartOptions: ChartOptions<'bar' | 'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      y: { beginAtZero: true, title: { display: true, text: 'Température (°C)' } },
-      y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Nuages (%)' } },
-      y2: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Soleil (h)' } }
-    }
-  };
+    });
+  }
 
-  constructor(private http: HttpClient) { }
+  /** Current hour in the location's own timezone, as reported by the forecast. */
+  private localHour(timezone: string): number {
+    const formatted = new Date().toLocaleString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      hour12: false,
+    });
+    return Number(formatted.split(':')[0]) || 0;
+  }
 
-  ngOnInit() {
-    const image = new Image();
-    image.src = 'assets/images/logo.png'; // Replace with the path to your logo
-    image.onload = () => {
+  updateChartForDay(dayIndex: number): void {
+    this.renderDay(dayIndex);
+  }
 
-      const backgroundLogoPlugin = {
-        id: 'backgroundLogo',
-        beforeDraw: (chart: any) => {
-          const { width, height, left, top } = chart.chartArea;
-          const ctx = chart.ctx;
+  private renderDay(dayIndex: number): void {
+    if (!this.forecast) return;
+    this.selectedDayIndex = dayIndex;
 
-          // Draw the logo at the center of the chart
-          const x = left + (width - image.width) / 2;
-          const y = top + (height - image.height) / 2;
+    const t = chartTokens();
+    const start = dayIndex * HOURS_PER_DAY;
+    const end = start + HOURS_PER_DAY;
+    const { hourly } = this.forecast;
 
-          ctx.save();
-          ctx.globalAlpha = 0.25; // Adjust transparency
-          ctx.drawImage(image, x, y, image.width, image.height);
-          ctx.restore();
+    const labels = hourly.time.slice(start, end).map((time) => new Date(time).getHours() + 'h');
+
+    const series = {
+      temp: hourly.temperature_2m.slice(start, end),
+      cloud: hourly.cloudcover.slice(start, end),
+      sun: hourly.direct_radiation
+        .slice(start, end)
+        .map((value) => parseFloat((value / 1000).toFixed(2))),
+    };
+
+    for (const panel of this.panels) {
+      const canvas = this.canvases.get(panel.key);
+      if (!canvas) continue;
+
+      this.charts.get(panel.key)?.destroy();
+
+      const data = series[panel.key];
+      // Highlight the current hour, but only on today's tab.
+      const highlight = data.map((_, hour) =>
+        dayIndex === 0 && hour === this.currentHour ? t.series2 : t.series1
+      );
+
+      const options = baseOptions(t) as ChartConfiguration['options'];
+
+      const chartConfig: ChartConfiguration = {
+        type: panel.kind,
+        data: {
+          labels,
+          datasets: [
+            {
+              label: `${panel.title} (${panel.unit})`,
+              data,
+              backgroundColor: panel.kind === 'bar' ? highlight : `color-mix(in oklab, ${t.series1} 18%, transparent)`,
+              borderColor: t.series1,
+              borderWidth: panel.kind === 'line' ? 2 : 0,
+              borderRadius: panel.kind === 'bar' ? 3 : 0,
+              maxBarThickness: 18,
+              pointRadius: 0,
+              tension: 0.35,
+              fill: panel.kind === 'line',
+            },
+          ],
+        },
+        options: {
+          ...options,
+          plugins: {
+            ...options!.plugins,
+            // A single series needs no legend box — the panel title names it.
+            legend: { display: false },
+          },
+          scales: {
+            ...options!.scales,
+            y: {
+              ...options!.scales!['y'],
+              title: { display: true, text: panel.unit, color: t.inkMuted },
+            },
+          },
         },
       };
 
-      // Register the plugin
-      Chart.register(backgroundLogoPlugin);
-
-
+      this.charts.set(panel.key, new Chart(canvas, chartConfig));
     }
-    this.fetchWeatherData(this.lat, this.lon);
-
   }
-
-  fetchWeatherData(lat: Number, lon: Number) {
-
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,cloudcover,direct_radiation&forecast_days=5&timezone=auto`;
-    console.log(url);
-
-    this.http.get(url).subscribe((data: any) => {
-      this.rawData = data;
-      this.setCurrentHour(data.timezone);
-      this.updateChartForDay(0);
-    });
-  }
-  setCurrentHour(timezone: string) {
-    const currentDate = new Date();
-
-    // Nous utilisons ici le fuseau horaire renvoyé par l'API Open-Meteo (timezone)
-    const options: Intl.DateTimeFormatOptions = {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    };
-
-    // Calcul de l'heure locale selon le fuseau horaire de la latitude/longitude
-    const timeInCurrentZone = currentDate.toLocaleString('en-US', options);
-    const currentHour = timeInCurrentZone.split(':')[0]// Extraire l'heure et ajouter "h"
-
-    // Mettre à jour la variable de l'heure actuelle
-    this.currentHour = Number(currentHour);
-    console.log(this.currentHour);
-
-  }
-
-
-  updateChartForDay(dayIndex: number) {
-    this.selectedDayIndex = dayIndex;
-
-    const startHour = dayIndex * 24;
-    const endHour = startHour + 24;
-
-    const temps = this.rawData.hourly.temperature_2m.slice(startHour, endHour);
-    const clouds = this.rawData.hourly.cloudcover.slice(startHour, endHour);
-    const sun = this.rawData.hourly.direct_radiation
-      .slice(startHour, endHour)
-      .map((r: number): number => parseFloat((r / 100).toFixed(1)));
-
-    const labels = this.rawData.hourly.time
-      .slice(startHour, endHour)
-      .map((t: string): string => new Date(t).getHours() + 'h');
-
-    this.chartData.labels = labels;
-    this.chartData.datasets[0].data = temps;
-    this.chartData.datasets[1].data = clouds;
-    this.chartData.datasets[2].data = sun;
-
-
-    if (dayIndex == 0) {
-
-
-      this.chartData.datasets[0].backgroundColor = temps.map((_: number, i: number): string =>
-        i === this.currentHour ? 'rgba(30, 64, 175, 0.9)' : 'rgba(59, 130, 246, 0.3)'
-      );
-
-
-    }
-    else {
-      this.chartData.datasets[0].backgroundColor = temps.map((_: number, i: number): string =>
-        i === this.currentHour ? 'rgba(59, 130, 246, 0.3)' : 'rgba(59, 130, 246, 0.3)'
-      )
-    }
-
-    // 🟦 Bar highlight for current hour (Température)
-
-
-
-
-    this.chart?.update();
-  }
-
-
 }

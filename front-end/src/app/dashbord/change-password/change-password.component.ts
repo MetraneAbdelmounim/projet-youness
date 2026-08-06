@@ -1,75 +1,55 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { LoginService } from '../../services/login.service';
 import { MemberService } from '../../services/member.service';
-import { Router } from '@angular/router';
-import { NgForm } from '@angular/forms';
-import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-change-password',
   standalone: false,
   templateUrl: './change-password.component.html',
-  styleUrl: './change-password.component.css'
 })
-export class ChangePasswordComponent {
+export class ChangePasswordComponent implements OnInit, OnDestroy {
+  idMember = '';
 
+  private readonly subscriptions = new Subscription();
 
-  // @ts-ignore
-  private authListenerSub : Subscription;
-  memberIsAuthenticated : boolean = false;
-  
-  memberConnected : any
-// @ts-ignore
-  idMember:string
-
-  constructor(private loginService:LoginService,private memberService: MemberService,private router:Router,private toaster:ToastrService) { }
+  constructor(
+    private loginService: LoginService,
+    private memberService: MemberService,
+    private toaster: ToastrService
+  ) {}
 
   ngOnInit(): void {
-
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    this.authListenerSub = this.loginService.getAuthStatusListener()
-      .subscribe((isAuthenticated:boolean)=> {
-        this.memberIsAuthenticated = isAuthenticated;
-        if(this.memberIsAuthenticated){
-          this.memberService.getMemberFromToken(this.loginService.getToken())
-          this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-
-            this.idMember= connectedMember.member._id
-    
-          
-          })
-
-        }
-
-
-      });
-
-    this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    if(this.memberIsAuthenticated) {
-      this.memberService.getMemberFromToken(this.loginService.getToken())
-      this.memberService.userFromTokenSubject.asObservable().subscribe((connectedMember:any)=>{
-
-      
-        this.idMember= connectedMember.member._id
-        
-
+    this.subscriptions.add(
+      this.loginService.getCurrentMember().subscribe((member) => {
+        this.idMember = member?._id ?? '';
       })
-    }
-  }
-  onChangePassword(f: NgForm,idMem: string) {
-    if(f.valid){
-      this.memberService.editPassword(idMem,f.value).subscribe((result:any)=>{
-        this.toaster.success(result.message)
-        f.resetForm()
-        this.ngOnInit()
-        this.loginService.logout()
-
-      },err=>{
-        this.toaster.error(err.error)
-
-        
-      })
-    }
+    );
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  /**
+   * The API requires the current password for a self-service change, so the
+   * form must supply `currentPass` alongside the new value.
+   */
+  onChangePassword(form: NgForm): void {
+    if (!form.valid || !this.idMember) return;
+
+    this.memberService.editPassword(this.idMember, form.value).subscribe({
+      next: (result) => {
+        this.toaster.success(result.message);
+        form.resetForm();
+        // The password changed, so the current session is retired.
+        this.loginService.logout();
+      },
+      error: (err) => {
+        this.toaster.error(err?.error?.error ?? 'Modification impossible');
+      },
+    });
+  }
 }

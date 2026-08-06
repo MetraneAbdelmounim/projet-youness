@@ -1,44 +1,76 @@
-version : '3'
 services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    restart: always
+    # No published port: only the compose network needs to reach the database.
+    # It was previously exposed on 27017 to every host on the network, unauthenticated.
+    volumes:
+      - mongo-data:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     container_name: app
     restart: always
-    build: .
-    ports:
-      - "5000:5000"
-    links:
-      - mongo
-      - flask-service
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-  mongo:
-    container_name: mongo
-    restart: always
-    image: mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-  flask-service:
+    # Context is the repo root so the image can build the Angular bundle.
     build:
-      context: .
-      dockerfile: python/Dockerfile
-    container_name: flask-container
-    ports:
-      - "8000:8000"
-    restart: always
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      MONGO_URL: mongodb://mongo:27017/mppt
+      HOST_PY: poller
+      PORT_PY: 8000
+    depends_on:
+      mongo:
+        condition: service_healthy
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  poller:
+    container_name: poller
+    restart: always
+    build:
+      context: ..
+      dockerfile: backend/python/Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      MONGO_URL: mongodb://mongo:27017/mppt
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    # Raw sockets are not used — reachability shells out to the setuid ping
+    # binary — but ICMP still needs the container to reach the device network.
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   proxy:
     restart: always
     build:
-      context: .
-      dockerfile: nginx/Dockerfile
+      context: ..
+      dockerfile: backend/nginx/Dockerfile
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     depends_on:
       - app
+
+volumes:
+  mongo-data:

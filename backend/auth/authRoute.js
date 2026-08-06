@@ -1,10 +1,23 @@
-let authController = require('./authController');
-let express = require('express');
-let router = express.Router();
-const authUser = require('../middlewares/authUser')
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const authController = require('./authController');
+const { authenticate } = require('../middlewares/auth');
 
-const licenceGuard= require('../middlewares/licenceGuard')
-router.post('/signin',authController.login);
-router.get("/members/tokens/:token",authUser,authController.getMemberFromToken)
-router.put("/members/logout/:idMember",authUser,authController.logoutMember)
+const router = express.Router();
+
+// Blunt but effective brake on credential stuffing against a small user base.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives de connexion. Réessayez dans quelques minutes.' },
+});
+
+// No licence gate here by design — signing in is how an operator reaches the
+// screen that installs a replacement licence.
+router.post('/signin', loginLimiter, authController.login);
+router.get('/me', authenticate, authController.getCurrentMember);
+router.put('/logout', authenticate, authController.logoutMember);
+
 module.exports = router;

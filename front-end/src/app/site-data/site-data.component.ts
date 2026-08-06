@@ -1,30 +1,34 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
-import { SiteService } from '../services/site.service';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { Reading } from '../models/site';
 
+/**
+ * Renders one station's telemetry.
+ *
+ * Purely presentational: the reading arrives from the parent, which already
+ * received it with the station list. This component used to fetch its own data
+ * in ngOnInit, so a list of N stations issued N requests — each one a live
+ * Modbus read — before the page settled.
+ */
 @Component({
   selector: 'app-site-data',
   standalone: false,
   templateUrl: './site-data.component.html',
-  styleUrl: './site-data.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SiteDataComponent implements OnInit {
+export class SiteDataComponent {
+  /** Undefined when the station has never been polled; null-safe throughout. */
+  @Input({ required: true }) reading!: Reading | null | undefined;
 
-  // @ts-ignore
-  site:Site
-
-  @Input()
-  idSite! : string
-
-  constructor(private siteService:SiteService,private cdr: ChangeDetectorRef) { }
-
-  ngOnInit(): void {
-    //@ts-ignore
-
-    this.siteService.getDataBySiteFromMppt(this.idSite).subscribe((site:Site)=>{
-      this.site=site
-      this.cdr.detectChanges();
-    })
+  get metrics() {
+    const r = this.reading;
+    return [
+      { label: 'Panneau', icon: '☀️', unit: 'V', value: r?.Array_Voltage },
+      { label: 'Charge', icon: '⚡', unit: 'A', value: r?.Charge_Current },
+      { label: 'Sortie', icon: '🔌', unit: 'V', value: r?.Load_Voltage },
+      { label: 'Courant sortie', icon: '📈', unit: 'A', value: r?.Load_Current },
+      { label: 'Temp. batterie', icon: '🌡️', unit: '°C', value: r?.Temperature_Battery },
+      { label: 'Temp. ambiante', icon: '🌤️', unit: '°C', value: r?.Temperature_Ambient },
+    ];
   }
 
 }

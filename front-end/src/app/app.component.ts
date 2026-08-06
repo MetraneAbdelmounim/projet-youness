@@ -1,59 +1,89 @@
-import {AfterViewInit, Component, HostListener, NgZone, OnInit} from '@angular/core';
-import {LoginService} from "./services/login.service";
-import {
-  initFlowbite,
-} from 'flowbite';
-import {Subscription} from "rxjs";
-import {NavigationEnd, Router} from "@angular/router";
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
+import { LoginService } from './services/login.service';
+import { LicenceService } from './services/licence.service';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
+  standalone: false,
   templateUrl: './app.component.html',
-  standalone:false,
-  styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit,AfterViewInit{
+export class AppComponent implements OnInit, OnDestroy {
+  memberIsAuthenticated = false;
+  isAdmin = false;
+  licenceWarning: string | null = null;
+  private currentUrl = '';
 
-  memberIsAuthenticated : boolean=false;
+  private readonly subscriptions = new Subscription();
 
-  // @ts-ignore
-  private authListenerSub:Subscription;
-  constructor(private ngZone:NgZone,private router: Router,private loginService:LoginService) {
-
-  }
+  constructor(
+    private router: Router,
+    private loginService: LoginService,
+    private licence: LicenceService,
+    // Injected for its constructor side effect: the theme must be applied
+    // before first paint, not when some component happens to ask for it.
+    public theme: ThemeService
+  ) {}
 
   ngOnInit(): void {
-  
     this.loginService.autoAuthUser();
     this.memberIsAuthenticated = this.loginService.getAuthStatus();
-    this.authListenerSub = this.loginService.getAuthStatusListener().subscribe((isAuthenticated) => {
-    
-      
-      this.memberIsAuthenticated = isAuthenticated;
-    })
-    this.router.events.subscribe(e => {
-      if (!(e instanceof NavigationEnd)) {
-        return;
-      }
-      window.scroll({
-        top: 0,
-        left: 0,
-        behavior: 'smooth',
 
-      });
+    this.subscriptions.add(
+      this.loginService.getAuthStatusListener().subscribe((isAuthenticated) => {
+        this.memberIsAuthenticated = isAuthenticated;
+      })
+    );
 
-    })
+    this.subscriptions.add(
+      this.licence.watch().subscribe((status) => {
+        this.licenceWarning =
+          status.valid && status.daysRemaining !== undefined && status.daysRemaining <= 30
+            ? `Votre licence expire dans ${status.daysRemaining} jour(s).`
+            : null;
+      })
+    );
+    this.licence.refresh().subscribe();
+
+    this.subscriptions.add(
+      this.loginService.getCurrentMember().subscribe((member) => {
+        this.isAdmin = member?.isAdmin ?? false;
+      })
+    );
+
+    this.currentUrl = this.router.url;
+    this.subscriptions.add(
+      this.router.events
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          // Tracked explicitly: reading router.url from a template getter is
+          // evaluated on every change-detection pass.
+          this.currentUrl = event.urlAfterRedirects;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        })
+    );
   }
-  ngAfterViewInit() {
-  this.router.events.subscribe(event => {
-    if (event instanceof NavigationEnd) {
-      this.ngZone.runOutsideAngular(() => {
-        setTimeout(() => {
-          initFlowbite();
-        }, 100); // or more
-      });
-    }
-  });
-}
-  
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  /** The licence screen and login own the full viewport — no app chrome. */
+  get chromeless(): boolean {
+    return this.currentUrl === '/' || this.currentUrl.startsWith('/licence');
+  }
+
+  /**
+   * Admin tabs appear across the whole /dashbord section, but not on
+   * change-password — that page is reachable by every member, admin or not.
+   */
+  get showAdminNav(): boolean {
+    return (
+      this.isAdmin &&
+      this.currentUrl.startsWith('/dashbord/') &&
+      !this.currentUrl.startsWith('/dashbord/change-password')
+    );
+  }
 }
