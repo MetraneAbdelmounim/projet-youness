@@ -6,6 +6,10 @@
 **/__pycache__
 **/.angular
 **/*.pem
+# …but the licence PUBLIC key must ship: without it the server cannot verify a
+# licence, so none can ever be installed and the API stays locked forever.
+# It is public by definition — it only verifies, it cannot sign.
+!backend/config/licence-public-key.pem
 **/*.mi8lic
 **/.env
 **/.env.*
