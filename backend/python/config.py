@@ -67,6 +67,14 @@ DEFAULT_LON = _float("DEFAULT_LON", -73.48695)
 
 # --- Device web UI ---------------------------------------------------------
 EMC_HTTP_PORT = _int("EMC_HTTP_PORT", 4444)
+
+# --- Recovery watch --------------------------------------------------------
+# After a restart the station is re-read far more often than the normal sweep,
+# so the change is visible on every screen within seconds instead of waiting up
+# to POLL_INTERVAL_SECONDS. Runs server-side, so it survives the operator
+# navigating away or closing the browser.
+RECOVERY_WATCH_SECONDS = _int("RECOVERY_WATCH_SECONDS", 240)
+RECOVERY_POLL_SECONDS = _int("RECOVERY_POLL_SECONDS", 5)
 # 30s, not 15s: these controllers serve their web UI slowly, and a station that
 # was restarted moments earlier needs time to come back before its page loads.
 REFRESH_TIMEOUT_MS = _int("REFRESH_TIMEOUT_MS", 30000)

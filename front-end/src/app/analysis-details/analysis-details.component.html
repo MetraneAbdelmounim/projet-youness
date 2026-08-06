@@ -33,7 +33,7 @@
       <!-- Forecast -->
       <section class="card p-6 lg:col-span-2">
         <h2 class="mb-4 text-lg font-semibold text-ink">Analyse prévisionnelle</h2>
-        <app-site-analysis [analysis]="station.lastAnalysis"></app-site-analysis>
+        <app-site-analysis [analysis]="station.lastAnalysis" [reachable]="station.status"></app-site-analysis>
       </section>
     </div>
 

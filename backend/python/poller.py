@@ -34,6 +34,10 @@ class Poller:
         self._stopping = asyncio.Event()
         self.last_sweep_duration: Optional[float] = None
         self.last_sweep_sites: int = 0
+        # Stations currently under a post-restart watch, so a second click does
+        # not start a second loop against the same device.
+        self._watched: set = set()
+        self._recovery_tasks: set = set()
 
     async def start(self) -> None:
         self._session = aiohttp.ClientSession()
@@ -98,6 +102,53 @@ class Poller:
 
         # return_exceptions keeps one failing device from cancelling the sweep.
         await asyncio.gather(*tasks, return_exceptions=True)
+
+    def watch_recovery(self, site: dict) -> None:
+        """
+        Re-reads a restarted station frequently until it answers again.
+
+        Runs on the server, not in the browser: the reboot outlives whichever
+        page triggered it, and the operator usually navigates straight to the
+        station list to watch. Without this, every screen keeps showing the last
+        sweep — "En ligne" with stale voltages — until the next one, which can
+        be minutes away.
+        """
+        ip = site.get("ip")
+        if not ip or ip in self._watched:
+            return
+
+        self._watched.add(ip)
+        task = asyncio.create_task(self._recovery_loop(site), name=f"recovery:{ip}")
+        # Keep a reference; a bare create_task may be garbage-collected mid-flight.
+        self._recovery_tasks.add(task)
+        task.add_done_callback(self._recovery_tasks.discard)
+
+    async def _recovery_loop(self, site: dict) -> None:
+        ip = site["ip"]
+        deadline = asyncio.get_running_loop().time() + config.RECOVERY_WATCH_SECONDS
+        went_down = False
+
+        try:
+            while asyncio.get_running_loop().time() < deadline:
+                await asyncio.sleep(config.RECOVERY_POLL_SECONDS)
+                try:
+                    await self._poll_site(site, with_analysis=False)
+                except Exception:
+                    log.exception("Recovery poll failed for %s", ip)
+                    continue
+
+                state = await store.site_status(site["_id"])
+                if not state["status"]:
+                    went_down = True
+                elif went_down:
+                    log.info("%s is back online after its restart", ip)
+                    return
+        finally:
+            self._watched.discard(ip)
+
+        log.warning(
+            "%s did not come back within %ss of its restart", ip, config.RECOVERY_WATCH_SECONDS
+        )
 
     async def poll_now(self, site: dict) -> None:
         """

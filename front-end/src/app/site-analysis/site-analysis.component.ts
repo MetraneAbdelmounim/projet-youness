@@ -20,6 +20,20 @@ export class SiteAnalysisComponent {
   /** Undefined until the poller has computed a forecast for this station. */
   @Input({ required: true }) analysis!: Analysis | null | undefined;
 
+  /**
+   * Whether the station is currently answering.
+   *
+   * A forecast is derived from a live reading, so once the station stops
+   * responding the stored one describes a state that no longer holds. Showing
+   * it — worse, showing "Performance élevée" for a station that is down — is
+   * the same mistake as reporting 0 V for an unreachable device.
+   */
+  @Input() reachable = true;
+
+  get available(): boolean {
+    return this.reachable && !!this.analysis && this.analysis.performance !== 'UNKNOWN';
+  }
+
   get metrics() {
     const a = this.analysis;
     return [

@@ -65,6 +65,23 @@ async def health():
     }
 
 
+async def _begin_reboot(ip: str) -> None:
+    """
+    Marks a station as rebooting and starts watching for it to return.
+
+    The store write happens straight away so every open screen shows the same
+    thing immediately; the watcher then corrects it the moment the station
+    answers again, without anyone having to stay on a particular page.
+    """
+    site = await store.find_site_by_ip(ip)
+    if site is None:
+        log.warning("Restarted %s but it is not in the database — no recovery watch", ip)
+        return
+
+    await store.mark_site_rebooting(site["_id"])
+    poller.watch_recovery(site)
+
+
 @app.post("/control/poll/{ip}")
 async def poll_now(ip: str):
     """
@@ -110,24 +127,12 @@ async def reload_controller(ip: str):
         raise HTTPException(status_code=502, detail=f"Station injoignable : {ip}")
     except (ModbusIOException, asyncio.TimeoutError) as exc:
         log.info("Restart of %s was not acknowledged (%s) — reset assumed", ip, exc)
-        return {
-            "success": True,
-            "message": (
-                f"Contrôleur de charge redémarré ({ip}). "
-                "Le module réseau reste actif — la station continue de répondre au ping."
-            ),
-        }
     except Exception as exc:
         log.exception("Restart failed for %s", ip)
         raise HTTPException(status_code=502, detail=str(exc))
 
-    return {
-        "success": True,
-        "message": (
-            f"Contrôleur de charge redémarré ({ip}). "
-            "Le module réseau reste actif — la station continue de répondre au ping."
-        ),
-    }
+    await _begin_reboot(ip)
+    return {"success": True, "message": f"Redémarrage de {ip} en cours"}
 
 
 @app.post("/control/refresh/{ip}")
@@ -177,9 +182,10 @@ async def refresh_controller(ip: str):
     except (ModbusIOException, asyncio.TimeoutError):
         pass  # The station reboots before acknowledging; that is the normal case.
 
+    await _begin_reboot(ip)
     return {
         "success": True,
-        "message": f"Configuration réseau enregistrée et station {ip} redémarrée",
+        "message": f"Configuration réseau enregistrée, redémarrage de {ip} en cours",
     }
 
 

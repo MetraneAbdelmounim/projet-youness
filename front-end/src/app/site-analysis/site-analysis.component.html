@@ -1,20 +1,36 @@
-<dl class="grid grid-cols-2 gap-x-4 gap-y-3">
-  <div *ngFor="let metric of metrics" class="min-w-0">
-    <dt class="flex items-center gap-1.5 text-xs text-ink-muted">
-      <span aria-hidden="true">{{ metric.icon }}</span>
-      <span class="truncate">{{ metric.label }}</span>
-    </dt>
-    <dd class="mt-0.5 text-sm font-semibold tnum text-ink">
-      {{ metric.value | measure: metric.unit }}
-    </dd>
+<ng-container *ngIf="available; else unavailable">
+  <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+    <div *ngFor="let metric of metrics" class="min-w-0">
+      <dt class="flex items-center gap-1.5 text-xs text-ink-muted">
+        <span aria-hidden="true">{{ metric.icon }}</span>
+        <span class="truncate">{{ metric.label }}</span>
+      </dt>
+      <dd class="mt-0.5 text-sm font-semibold tnum text-ink">
+        {{ metric.value | measure: metric.unit }}
+      </dd>
+    </div>
+  </dl>
+
+  <div class="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
+    <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Performance prévue</span>
+    <app-status-chip [label]="performanceLabel" [tone]="performanceTone"></app-status-chip>
   </div>
-</dl>
 
-<div class="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
-  <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Performance prévue</span>
-  <app-status-chip [label]="performanceLabel" [tone]="performanceTone"></app-status-chip>
-</div>
+  <p *ngIf="analysis?.computedAt" class="mt-2 text-xs text-ink-muted">
+    Calculé {{ analysis!.computedAt | date: 'short' }}
+  </p>
+</ng-container>
 
-<p *ngIf="analysis?.computedAt" class="mt-2 text-xs text-ink-muted">
-  Calculé {{ analysis!.computedAt | date: 'short' }}
-</p>
+<!-- No forecast is shown while the station is unreachable: the stored one was
+     derived from a reading that no longer applies. -->
+<ng-template #unavailable>
+  <div class="flex flex-col items-center justify-center rounded-xl bg-sunken px-4 py-8 text-center">
+    <span class="text-2xl" aria-hidden="true">{{ reachable ? '⏳' : '🚫' }}</span>
+    <p class="mt-2 text-sm font-medium text-ink-secondary">Analyse indisponible</p>
+    <p class="mt-0.5 text-xs text-ink-muted">
+      {{ reachable
+          ? 'En attente d\'un premier relevé de la station.'
+          : 'La station ne répond pas — la prévision sera recalculée à son retour.' }}
+    </p>
+  </div>
+</ng-template>

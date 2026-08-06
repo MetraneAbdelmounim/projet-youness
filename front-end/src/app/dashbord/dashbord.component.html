@@ -12,7 +12,11 @@
       Actualiser
     </button>
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'mppt']" class="btn btn-primary">Stations</a>
-  </app-page-header>
+      <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
+      <span class="chip-dot live-dot"></span>
+      {{ lastUpdated | date: 'HH:mm:ss' }}
+    </span>
+</app-page-header>
 
   <!-- Fleet summary -->
   <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">

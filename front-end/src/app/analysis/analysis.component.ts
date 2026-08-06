@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin } from 'rxjs';
+import { EMPTY, Subscription, forkJoin } from 'rxjs';
+import { catchError, exhaustMap } from 'rxjs/operators';
+import { refreshWhileVisible } from '../services/auto-refresh';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Site } from '../models/site';
@@ -15,10 +17,13 @@ import { ProjectService } from '../services/project.service';
   templateUrl: './analysis.component.html',
   styleUrl: './analysis.component.css',
 })
-export class AnalysisComponent implements OnInit {
+export class AnalysisComponent implements OnInit, OnDestroy {
   project: Project | null = null;
   sites: Site[] = [];
   spinnerSite = true;
+  lastUpdated: Date | null = null;
+
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private siteService: SiteService,
@@ -46,6 +51,7 @@ export class AnalysisComponent implements OnInit {
       next: ({ project, sites }) => {
         this.project = project;
         this.sites = sites;
+        this.lastUpdated = new Date();
         this.spinnerSite = false;
       },
       error: () => {
@@ -53,6 +59,25 @@ export class AnalysisComponent implements OnInit {
         this.message.error('Une erreur est survenue !');
       },
     });
+
+    // Forecasts and reachability are refreshed by the poller; keep the open
+    // page in step instead of showing whatever was true when it was opened.
+    this.subscriptions.add(
+      refreshWhileVisible()
+        .pipe(
+          exhaustMap(() =>
+            this.siteService.getSitesByProject(projectId).pipe(catchError(() => EMPTY))
+          )
+        )
+        .subscribe((sites) => {
+          this.sites = sites;
+          this.lastUpdated = new Date();
+        })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   trackById(_index: number, site: Site): string {
@@ -64,10 +89,20 @@ export class AnalysisComponent implements OnInit {
     return `${this.project?.nom ?? ''} · ${this.sites.length} station(s)`;
   }
 
-  /** Fleet-level performance split, shown as tiles above the cards. */
-  get counts(): { up: number; medium: number; down: number } {
-    const tally = { up: 0, medium: 0, down: 0 };
+  /**
+   * Fleet-level performance split, shown as tiles above the cards.
+   *
+   * Unreachable stations are counted separately rather than under their last
+   * known performance — a station that is down has no current forecast, and
+   * folding it into "élevée" would overstate the health of the fleet.
+   */
+  get counts(): { up: number; medium: number; down: number; offline: number } {
+    const tally = { up: 0, medium: 0, down: 0, offline: 0 };
     for (const site of this.sites) {
+      if (!site.status) {
+        tally.offline++;
+        continue;
+      }
       if (site.lastAnalysis?.performance === 'UP') tally.up++;
       else if (site.lastAnalysis?.performance === 'MEDIUM') tally.medium++;
       else if (site.lastAnalysis?.performance === 'DOWN') tally.down++;

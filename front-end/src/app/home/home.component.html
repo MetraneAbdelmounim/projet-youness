@@ -9,7 +9,11 @@
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'analysis']" class="btn btn-primary">
       Analyse
     </a>
-  </app-page-header>
+      <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
+      <span class="chip-dot live-dot"></span>
+      {{ lastUpdated | date: 'HH:mm:ss' }}
+    </span>
+</app-page-header>
 
   <div *ngIf="spinnerSite" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
     <div *ngFor="let placeholder of [1, 2, 3, 4, 5, 6]" class="card p-6">
@@ -42,7 +46,9 @@
               }}<span class="ml-1 text-lg font-medium text-ink-muted">V</span>
             </p>
           </div>
-          <app-status-chip *ngIf="site.lastAnalysis?.performance"
+          <!-- Hidden while the station is down: the forecast describes a
+               reading that no longer holds. -->
+          <app-status-chip *ngIf="site.status && site.lastAnalysis?.performance"
                            [label]="performanceLabel(site)"
                            [tone]="performanceTone(site)"></app-status-chip>
         </div>

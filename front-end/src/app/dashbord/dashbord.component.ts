@@ -1,8 +1,10 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription, forkJoin } from 'rxjs';
+import { EMPTY, Subscription, forkJoin } from 'rxjs';
+import { catchError, exhaustMap } from 'rxjs/operators';
 import { Chart, ChartConfiguration, ChartType } from 'chart.js';
+import { refreshWhileVisible } from '../services/auto-refresh';
 import { config } from '../../Config/config';
 import { Site } from '../models/site';
 import { Project } from '../models/project';
@@ -25,6 +27,7 @@ export class DashbordComponent implements OnInit, OnDestroy {
   itemsPerPage = 10;
   page = 1;
   term = '';
+  lastUpdated: Date | null = null;
 
   private chart?: Chart;
   private canvas?: HTMLCanvasElement;
@@ -59,6 +62,21 @@ export class DashbordComponent implements OnInit, OnDestroy {
 
     // Chart colours come from CSS tokens, so a theme change means a repaint.
     this.subscriptions.add(this.theme.changes().subscribe(() => this.createChart()));
+
+    // Keep the tiles, table and chart current without a manual refresh.
+    this.subscriptions.add(
+      refreshWhileVisible()
+        .pipe(
+          exhaustMap(() =>
+            this.siteService.getSitesByProject(this.projectId!).pipe(catchError(() => EMPTY))
+          )
+        )
+        .subscribe((sites) => {
+          this.sites = sites;
+          this.lastUpdated = new Date();
+          this.refreshChartData();
+        })
+    );
   }
 
   ngOnDestroy(): void {
@@ -76,6 +94,7 @@ export class DashbordComponent implements OnInit, OnDestroy {
       next: ({ project, sites }) => {
         this.project = project;
         this.sites = sites;
+        this.lastUpdated = new Date();
         this.spinnerSite = false;
         // The canvas is behind *ngIf; the ViewChild setter draws once it exists.
         // On a refresh the canvas already exists, so draw here too.
@@ -115,6 +134,43 @@ export class DashbordComponent implements OnInit, OnDestroy {
       const v = s.lastReading?.Battery_Voltage;
       return v != null && v < config.Battery_Max_AGM;
     }).length;
+  }
+
+  /**
+   * Pushes new values into the existing chart rather than rebuilding it.
+   *
+   * Recreating a Chart.js instance every refresh restarts its entry animation,
+   * so the plot would visibly flash every thirty seconds on a screen somebody
+   * is watching. Only a change in the station set warrants a rebuild.
+   */
+  private refreshChartData(): void {
+    if (!this.chart) {
+      this.createChart();
+      return;
+    }
+
+    const labels = this.sites.map((s) => s.nom);
+    const previous = (this.chart.data.labels ?? []) as string[];
+    if (previous.length !== labels.length || previous.some((n, i) => n !== labels[i])) {
+      this.createChart();
+      return;
+    }
+
+    const t = chartTokens();
+    const voltages = this.sites.map((s) => s.lastReading?.Battery_Voltage ?? null);
+
+    this.chart.data.datasets[0].data = voltages;
+    this.chart.data.datasets[0].backgroundColor = t.series1;
+
+    const measured = voltages.filter((v): v is number => v !== null);
+    const bounds = [...measured, config.Battery_Max_AGM, config.Battery_Max_LTH];
+    const scale = this.chart.options.scales?.['y'];
+    if (scale && bounds.length) {
+      scale.min = Math.floor(Math.min(...bounds) - 1);
+      scale.max = Math.ceil(Math.max(...bounds) + 1);
+    }
+
+    this.chart.update('none');
   }
 
   private createChart(): void {

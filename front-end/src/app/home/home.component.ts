@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { EMPTY, Subscription } from 'rxjs';
+import { catchError, exhaustMap } from 'rxjs/operators';
 import { Site } from '../models/site';
 import { SiteService } from '../services/site.service';
+import { refreshWhileVisible } from '../services/auto-refresh';
 import { StatusTone } from '../ui/status-chip.component';
 
 /** Web consoles exposed by the equipment at each station. */
@@ -26,10 +29,11 @@ interface DeviceLink {
   standalone: false,
   templateUrl: './home.component.html',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   sites: Site[] = [];
   spinnerSite = true;
   projectId: string | null = null;
+  lastUpdated: Date | null = null;
 
   /**
    * Console URLs, built once per load.
@@ -39,6 +43,7 @@ export class HomeComponent implements OnInit {
    * which keeps the page permanently re-rendering.
    */
   private linksBySite = new Map<string, DeviceLink[]>();
+  private readonly subscriptions = new Subscription();
 
   constructor(
     private siteService: SiteService,
@@ -56,17 +61,7 @@ export class HomeComponent implements OnInit {
     // One request covers the whole page: stations, telemetry, analysis, status.
     this.siteService.getSitesByProject(this.projectId).subscribe({
       next: (sites) => {
-        this.sites = sites;
-        this.linksBySite = new Map(
-          sites.map((site) => [
-            site._id,
-            DEVICE_PORTS.map((device) => ({
-              label: device.label,
-              icon: device.icon,
-              url: `${device.protocol}://${site.ip}:${device.port}/`,
-            })),
-          ])
-        );
+        this.applySites(sites);
         this.spinnerSite = false;
       },
       error: () => {
@@ -74,6 +69,39 @@ export class HomeComponent implements OnInit {
         this.message.error('Impossible de charger les stations');
       },
     });
+
+    // Keep the page current. exhaustMap, not switchMap: a slow response must
+    // not be cancelled by the next tick, or it never lands at all.
+    this.subscriptions.add(
+      refreshWhileVisible()
+        .pipe(
+          exhaustMap(() =>
+            this.siteService.getSitesByProject(this.projectId!).pipe(catchError(() => EMPTY))
+          )
+        )
+        // Refreshes are silent: a transient failure must not raise a toast on a
+        // screen somebody has left open.
+        .subscribe((sites) => this.applySites(sites))
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private applySites(sites: Site[]): void {
+    this.sites = sites;
+    this.linksBySite = new Map(
+      sites.map((site) => [
+        site._id,
+        DEVICE_PORTS.map((device) => ({
+          label: device.label,
+          icon: device.icon,
+          url: `${device.protocol}://${site.ip}:${device.port}/`,
+        })),
+      ])
+    );
+    this.lastUpdated = new Date();
   }
 
   trackById(_index: number, site: Site): string {
@@ -99,10 +127,8 @@ export class HomeComponent implements OnInit {
   }
 
   performanceTone(site: Site): StatusTone {
-    return (
-      { UP: 'good', MEDIUM: 'warn', DOWN: 'crit' }[
-        site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
-      ] ?? 'neutral'
-    ) as StatusTone;
+    return ({ UP: 'good', MEDIUM: 'warn', DOWN: 'crit' }[
+      site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
+    ] ?? 'neutral') as StatusTone;
   }
 }

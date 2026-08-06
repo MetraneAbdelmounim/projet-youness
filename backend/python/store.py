@@ -117,6 +117,21 @@ async def save_site_poll(
         )
 
 
+async def mark_site_rebooting(site_id) -> None:
+    """
+    Records that a station has just been told to reboot.
+
+    Written the moment the command goes out so every screen agrees, rather than
+    each one guessing locally: the reboot is a fact about the station, not about
+    the page the operator happened to be on when they clicked.
+    """
+    await _db.sites.update_one(
+        {"_id": site_id},
+        {"$set": {"status": False, "lastReading.reachable": False,
+                  "lastReading.error": "Redémarrage en cours"}},
+    )
+
+
 async def site_status(site_id) -> dict:
     """Reachability and last reading time, as stored after a poll."""
     doc = await _db.sites.find_one(
