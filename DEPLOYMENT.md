@@ -1,102 +1,100 @@
-# v2 upgrade — in-place, existing VPS
+# v2 upgrade — in-place, Windows VPS with Docker
 
-Upgrading the Linux VPS already running v1 in Docker. Data is preserved.
+Upgrading the **Windows** VPS already running v1 in Docker. Data is preserved.
 Access stays by IP with the self-signed certificate.
 
-**~10 min downtime** (step 8 to step 12). Build beforehand keeps it short.
+All commands are **PowerShell**, run from an **elevated** prompt in the repo.
+
+**~10 min downtime** (step 8 → 12). Building first keeps it short.
 
 ---
 
 ## ⚠️ Three ways to lose data
 
-1. **`docker compose down -v` deletes the database.** Never use `-v` on this
-   server. Plain `down` is safe. Every command below is written without it.
-2. **v1's mongo has no named volume.** The official image put the data in an
-   *anonymous* volume; v2 uses a named one. They are different volumes — that
-   is why steps 4/10 dump and restore. Skipping them gives you an empty database.
+1. **`docker compose down -v` deletes the database.** Never use `-v` here.
+   Plain `down` is safe. Nothing below uses it.
+2. **v1's mongo has no named volume.** Docker put the data in an *anonymous*
+   volume; v2 uses a named one — different volumes. That is why steps 4 and 10
+   dump and restore. Skip them and v2 starts with an empty database.
 3. **No backup, no rollback.** Step 4 is not optional.
 
 ---
 
-## 1. On your own machine — issue the licence
+## 1. On your machine — issue the licence
 
 v2 serves nothing until a signed licence is installed.
 
-```bash
+```powershell
 cd backend
-node tools/licence-keygen.js        # once ever — back up config/licence-private-key.pem
+node tools/licence-keygen.js        # once ever — back up config\licence-private-key.pem
 node tools/licence-issue.js --customer "Innovation MI8" --months 12 --stations 100
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"   # JWT secret
 ```
 
-Copy the `.mi8lic` to the VPS:
-
-```bash
-scp *.mi8lic user@VPS_IP:~/
-```
-
-Commit `backend/config/licence-public-key.pem`. Never commit the private key.
+Copy the `.mi8lic` onto the VPS (RDP clipboard, a share, or `scp` if OpenSSH is
+enabled). Commit `backend/config/licence-public-key.pem`; never the private key.
 
 ---
 
-## 2. On the VPS — check MongoDB (this can stop the upgrade)
+## 2. On the VPS — two blocking checks
 
-```bash
-docker exec mongo mongosh --quiet --eval 'db.version()' \
-  || docker exec mongo mongo --quiet --eval 'db.version()'
+```powershell
+docker version --format '{{.Server.Os}}'    # must print: linux
+docker exec mongo mongosh --quiet --eval 'db.version()'
 ```
 
-**5.0 or newer → continue. Older → stop.** v2 needs time-series collections.
-Upgrade MongoDB as a separate job first; doing both at once makes any failure
-impossible to diagnose.
+- **Docker must be in Linux-container mode.** The images are Linux. If this
+  prints `windows`, switch Docker Desktop to Linux containers first.
+- **MongoDB must be 5.0+.** v2 stores history in a time-series collection.
+  If older, upgrade MongoDB as a *separate* job — doing both at once makes any
+  failure impossible to diagnose.
 
 ---
 
 ## 3. Note the rollback point
 
-```bash
-cd /path/to/projet-youness
-git rev-parse HEAD | tee ~/v1-commit.txt
-docker compose -f backend/docker-compose.yml ps
+```powershell
+cd C:\path\to\projet-youness
+git rev-parse HEAD | Tee-Object "$HOME\v1-commit.txt"
+docker compose -f backend\docker-compose.yml ps
 ```
 
 ---
 
 ## 4. Back up
 
-```bash
-mkdir -p ~/mi8-backup
-docker exec mongo mongodump --db mppt --archive=/tmp/v1.archive --gzip
-docker cp mongo:/tmp/v1.archive ~/mi8-backup/mppt-v1-$(date +%F-%H%M).archive
-docker cp app:/usr/src/app/uploads ~/mi8-backup/uploads-v1 2>/dev/null || true
+```powershell
+New-Item -ItemType Directory -Force "$HOME\mi8-backup" | Out-Null
+$stamp = Get-Date -Format 'yyyy-MM-dd-HHmm'
 
-ls -lh ~/mi8-backup/          # must be megabytes, not bytes
-docker exec mongo mongosh mppt --quiet --eval \
-  'print("sites="+db.sites.countDocuments()+" members="+db.members.countDocuments()+" projects="+db.projects.countDocuments())'
+docker exec mongo mongodump --db mppt --archive=/tmp/v1.archive --gzip
+docker cp mongo:/tmp/v1.archive "$HOME\mi8-backup\mppt-v1-$stamp.archive"
+docker cp app:/usr/src/app/uploads "$HOME\mi8-backup\uploads-v1"
+
+Get-ChildItem "$HOME\mi8-backup"        # must be megabytes, not bytes
+docker exec mongo mongosh mppt --quiet --eval 'print("sites="+db.sites.countDocuments()+" members="+db.members.countDocuments()+" projects="+db.projects.countDocuments())'
 ```
 
-**Write those counts down.** Step 11 must match them. Copy the archive off the
-server too.
+**Write those counts down** — step 11 must match. Copy the archive off the VPS too.
 
 ---
 
 ## 5. Get v2
 
-```bash
-cd /path/to/projet-youness
+```powershell
+cd C:\path\to\projet-youness
 git fetch --all
 git checkout <v2-branch-or-tag>
 ```
 
 ---
 
-## 6. Create `backend/.env`
+## 6. Create `backend\.env`
 
-```bash
+```powershell
 cd backend
-cp .env.example .env
-nano .env
-chmod 600 .env
+Copy-Item .env.example .env
+notepad .env
 ```
 
 Minimum:
@@ -117,6 +115,12 @@ MAIL_TO=dgagnon@innovationmi8.com,yberayeteb@innovationmi8.com
 CORS_ORIGINS=
 ```
 
+Restrict it to administrators:
+
+```powershell
+icacls .env /inheritance:r /grant:r "Administrators:(R,W)" "SYSTEM:(R,W)"
+```
+
 > The v1 JWT key and SMTP password are in git history — treat them as
 > compromised and use new values. A new `JWT_SECRET` logs everyone out once.
 
@@ -124,18 +128,18 @@ CORS_ORIGINS=
 
 ## 7. Build — before any downtime
 
-```bash
+```powershell
 docker compose build
 ```
 
-Takes several minutes (Angular + Chromium). **If this fails, stop here** —
-nothing has been touched yet.
+Several minutes (Angular + Chromium). **If this fails, stop** — nothing has been
+touched yet.
 
 ---
 
 ## 8. Stop v1  ⏱ downtime starts
 
-```bash
+```powershell
 docker compose down          # no -v
 ```
 
@@ -143,9 +147,9 @@ docker compose down          # no -v
 
 ## 9. Start the new mongo (creates the named volume, empty)
 
-```bash
+```powershell
 docker compose up -d mongo
-sleep 10
+Start-Sleep -Seconds 10
 docker compose ps mongo
 ```
 
@@ -153,8 +157,14 @@ docker compose ps mongo
 
 ## 10. Restore v1 data into it
 
-```bash
-docker cp ~/mi8-backup/mppt-v1-*.archive mongo:/tmp/restore.archive
+`docker cp` does not expand wildcards, so resolve the newest archive first:
+
+```powershell
+$archive = (Get-ChildItem "$HOME\mi8-backup\mppt-v1-*.archive" |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
+$archive        # confirm it is the one you expect
+
+docker cp $archive mongo:/tmp/restore.archive
 docker exec mongo mongorestore --archive=/tmp/restore.archive --gzip
 ```
 
@@ -164,7 +174,7 @@ docker exec mongo mongorestore --archive=/tmp/restore.archive --gzip
 
 Dry run first — writes nothing:
 
-```bash
+```powershell
 docker compose run --rm --no-deps --entrypoint node app tools/migrate-v2.js
 ```
 
@@ -174,35 +184,34 @@ be created. **Resolve every ⚠️ before continuing.**
 
 Apply:
 
-```bash
+```powershell
 docker compose run --rm --no-deps --entrypoint node app tools/migrate-v2.js --apply
 ```
 
 Confirm the counts still match step 4:
 
-```bash
-docker exec mongo mongosh mppt --quiet --eval \
-  'print("sites="+db.sites.countDocuments()+" members="+db.members.countDocuments()+" projects="+db.projects.countDocuments())'
+```powershell
+docker exec mongo mongosh mppt --quiet --eval 'print("sites="+db.sites.countDocuments()+" members="+db.members.countDocuments()+" projects="+db.projects.countDocuments())'
 ```
 
 **If they do not match, stop and go to step 15.**
 
-The migration is idempotent — safe to re-run. It moves flat telemetry into
-`lastReading`, adds `status`/`lastSeenAt`, sets `mustChangePassword: false` on
-existing members, uppercases `Battery_Type`, and creates `readings` as a
-time-series collection with 90-day retention.
+Idempotent — safe to re-run. It moves flat telemetry into `lastReading`, adds
+`status`/`lastSeenAt`, sets `mustChangePassword: false` on existing members,
+uppercases `Battery_Type`, and creates `readings` as a time-series collection
+with 90-day retention.
 
 ---
 
 ## 12. Start everything  ⏱ downtime ends
 
-```bash
+```powershell
 docker compose up -d
 docker compose ps
 docker compose logs --tail=30 app
 ```
 
-Expected — the licence warning is normal at this point:
+Expected — the licence warning is normal here:
 
 ```
 Connected to the database
@@ -214,25 +223,39 @@ Connected to the database
 
 ## 13. Install the licence
 
-```bash
-curl -k -X POST -F "licence=@$HOME/<file>.mi8lic" https://VPS_IP/api/licence
-curl -sk https://VPS_IP/api/licence/status
+```powershell
+curl.exe -k -X POST -F "licence=@$HOME\licence.mi8lic" https://VPS_IP/api/licence
+curl.exe -sk https://VPS_IP/api/licence/status
 ```
 
-Expect `"valid":true`. Or just open `https://VPS_IP/` — the activation screen
-takes the file by drag-and-drop.
+Expect `"valid":true`. Or open `https://VPS_IP/` and drop the file on the
+activation screen.
+
+> Use `curl.exe`, not `curl` — in PowerShell, bare `curl` is an alias for
+> `Invoke-WebRequest`, which takes different arguments.
 
 ---
 
 ## 14. Verify
 
-```bash
-curl -sk https://VPS_IP/api/health        # {"status":"ok","db":"connected","licensed":true}
-curl -s  http://127.0.0.1:8000/health     # poller — not exposed publicly
-docker compose logs -f poller             # "Sweep finished in 8.1s (26 stations)"
+```powershell
+curl.exe -sk https://VPS_IP/api/health      # {"status":"ok","db":"connected","licensed":true}
+curl.exe -s http://127.0.0.1:8000/health    # poller — not exposed publicly
+docker compose logs -f poller               # "Sweep finished in 8.1s (26 stations)"
 ```
 
-In the browser at `https://VPS_IP/` (accept the self-signed warning):
+Confirm the poller can actually reach the device network (this is the one thing
+Windows/WSL networking can break):
+
+```powershell
+docker exec poller ping -c 2 10.8.0.251
+```
+
+If that fails but the Windows host can ping the device, the container is not
+routing to the VPN subnet — check Docker Desktop's network settings before
+assuming the app is at fault.
+
+In the browser at `https://VPS_IP/` (accept the certificate warning):
 
 - [ ] log in — v1 passwords still work
 - [ ] stations show voltages within one poll interval (5 min)
@@ -245,13 +268,19 @@ In the browser at `https://VPS_IP/` (accept the self-signed warning):
 
 ## 15. Rollback
 
-```bash
-cd /path/to/projet-youness/backend
-docker compose down                       # no -v
-cd .. && git checkout $(cat ~/v1-commit.txt)
+```powershell
+cd C:\path\to\projet-youness\backend
+docker compose down                        # no -v
+cd ..
+git checkout (Get-Content "$HOME\v1-commit.txt")
 
-cd backend && docker compose up -d mongo && sleep 10
-docker cp ~/mi8-backup/mppt-v1-*.archive mongo:/tmp/rollback.archive
+cd backend
+docker compose up -d mongo
+Start-Sleep -Seconds 10
+
+$archive = (Get-ChildItem "$HOME\mi8-backup\mppt-v1-*.archive" |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName
+docker cp $archive mongo:/tmp/rollback.archive
 docker exec mongo mongosh mppt --quiet --eval 'db.dropDatabase()'
 docker exec mongo mongorestore --archive=/tmp/rollback.archive --gzip
 docker compose up -d
@@ -263,27 +292,44 @@ v1 ignores the fields v2 added, so the pre-migration archive restores cleanly.
 
 ## After
 
-**Nightly backups** — there was no routine before:
+**Nightly backup** — there was no routine before. Create
+`C:\scripts\mi8-backup.ps1`:
 
-```bash
-echo '0 3 * * * root docker exec mongo mongodump --db mppt --archive=/var/backups/mppt-$(date +\%F).archive --gzip' \
-  | sudo tee /etc/cron.d/mi8-backup
-sudo mkdir -p /var/backups
+```powershell
+$stamp = Get-Date -Format 'yyyy-MM-dd'
+docker exec mongo mongodump --db mppt --archive=/tmp/nightly.archive --gzip
+docker cp mongo:/tmp/nightly.archive "C:\backups\mppt-$stamp.archive"
+Get-ChildItem "C:\backups\mppt-*.archive" |
+  Where-Object LastWriteTime -lt (Get-Date).AddDays(-30) | Remove-Item
 ```
 
-**Poller tuning**, in `.env` (restart `poller` after changing):
+Register it:
+
+```powershell
+New-Item -ItemType Directory -Force C:\backups | Out-Null
+schtasks /create /tn "MI8 Mongo Backup" /tr "powershell -NoProfile -File C:\scripts\mi8-backup.ps1" /sc daily /st 03:00 /ru SYSTEM
+```
+
+**Close port 27017.** v1 published MongoDB unauthenticated; v2 no longer does,
+but the firewall rule may still exist:
+
+```powershell
+Get-NetFirewallRule | Where-Object DisplayName -like '*27017*'
+Remove-NetFirewallRule -DisplayName '<the rule name>'     # if one is found
+```
+
+**Auto-start on reboot.** `restart: always` handles the containers, provided the
+Docker service itself starts automatically:
+
+```powershell
+Get-Service com.docker.service | Select-Object Name, StartType, Status
+Set-Service com.docker.service -StartupType Automatic
+```
+
+**Poller tuning** in `.env` (restart `poller` after changes):
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `POLL_INTERVAL_SECONDS` | `300` | seconds between sweeps |
 | `POLL_CONCURRENCY` | `16` | devices read in parallel |
 | `READING_RETENTION_DAYS` | `90` | history kept before expiry |
-
-**Ports.** Only 80/443 need to be open. v2 stopped publishing MongoDB's 27017 —
-v1 exposed it unauthenticated to the whole network. If your firewall still
-allows it, close it:
-
-```bash
-sudo ufw delete allow 27017 2>/dev/null || true
-sudo ufw status
-```

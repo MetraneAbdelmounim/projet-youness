@@ -7,7 +7,6 @@ services:
     # It was previously exposed on 27017 to every host on the network, unauthenticated.
     volumes:
       - mongo-data:/data/db
-      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -25,13 +24,12 @@ services:
     environment:
       NODE_ENV: production
       MONGO_URL: mongodb://mongo:27017/mppt
+      TZ: America/Toronto
       HOST_PY: poller
       PORT_PY: 8000
     depends_on:
       mongo:
         condition: service_healthy
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s
@@ -48,11 +46,10 @@ services:
     environment:
       NODE_ENV: production
       MONGO_URL: mongodb://mongo:27017/mppt
+      TZ: America/Toronto
     depends_on:
       mongo:
         condition: service_healthy
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
     # Raw sockets are not used — reachability shells out to the setuid ping
     # binary — but ICMP still needs the container to reach the device network.
     healthcheck:
