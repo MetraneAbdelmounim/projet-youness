@@ -3,6 +3,9 @@
   <app-page-header title="Stations MPPT"
                    [subtitle]="subtitle"
                    [backLink]="['/projects']" backLabel="Tous les projets">
+    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'carte']" class="btn btn-ghost">
+      Carte
+    </a>
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'dashbord']" class="btn btn-ghost">
       Tableau de bord
     </a>

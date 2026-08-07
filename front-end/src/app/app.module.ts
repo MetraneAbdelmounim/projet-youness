@@ -30,6 +30,7 @@ import { ModemsComponent } from './modems/modems.component';
 import { PanneausComponent } from './panneaus/panneaus.component';
 import { ListProjectsComponent } from './list-projects/list-projects.component';
 import { LicenceComponent } from './licence/licence.component';
+import { StationMapComponent } from './map/station-map.component';
 
 import { MeasurePipe } from './ui/measure.pipe';
 import { AdminNavComponent } from './ui/admin-nav.component';
@@ -46,6 +47,7 @@ import { AdminSiteComponent } from './dashbord/admin-site/admin-site.component';
 import { AdminModemsComponent } from './dashbord/admin-modems/admin-modems.component';
 import { AdminPanneauComponent } from './dashbord/admin-panneau/admin-panneau.component';
 import { AdminProjectComponent } from './dashbord/admin-project/admin-project.component';
+import { AdminSettingsComponent } from './dashbord/admin-settings/admin-settings.component';
 import { ChangePasswordComponent } from './dashbord/change-password/change-password.component';
 
 // The interface is entirely in French; without this every `| date` and
@@ -68,6 +70,7 @@ registerLocaleData(localeFrCa);
     PanneausComponent,
     ListProjectsComponent,
     LicenceComponent,
+    StationMapComponent,
 
     MeasurePipe,
     AdminNavComponent,
@@ -83,6 +86,7 @@ registerLocaleData(localeFrCa);
     AdminModemsComponent,
     AdminPanneauComponent,
     AdminProjectComponent,
+    AdminSettingsComponent,
     ChangePasswordComponent,
   ],
   imports: [

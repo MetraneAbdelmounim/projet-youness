@@ -1,0 +1,90 @@
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+
+  <app-page-header title="Carte des stations"
+                   [subtitle]="loading
+                      ? 'Chargement…'
+                      : (project?.nom || '') + ' · ' + sites.length + ' station(s) · ' + offlineCount + ' hors ligne'"
+                   [backLink]="['/projects']" backLabel="Tous les projets">
+    <button type="button" class="btn btn-ghost" (click)="fitToStations()" [disabled]="loading">
+      Tout afficher
+    </button>
+    <button type="button" class="btn btn-ghost" (click)="toggleTilt()" [disabled]="loading">
+      {{ tilted ? 'Vue 2D' : 'Vue 3D' }}
+    </button>
+    <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique">
+      <span class="chip-dot live-dot"></span>
+      {{ lastUpdated | date: 'HH:mm:ss' }}
+    </span>
+  </app-page-header>
+
+  <div *ngIf="loading" class="skeleton h-[70vh] w-full"></div>
+
+  <div *ngIf="!loading" class="grid gap-6 lg:grid-cols-[1fr_20rem]">
+
+    <!-- The map keeps its own height so it does not collapse inside the grid. -->
+    <section class="card overflow-hidden">
+      <div #mapContainer class="h-[70vh] w-full"></div>
+    </section>
+
+    <!-- Station list, doubling as the legend -->
+    <aside class="card flex max-h-[70vh] flex-col overflow-hidden">
+      <div class="border-b border-line p-4">
+        <h2 class="text-sm font-semibold text-ink">Stations</h2>
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span class="chip chip-good"><span class="chip-dot"></span>En ligne</span>
+          <span class="chip chip-crit"><span class="chip-dot"></span>Hors ligne</span>
+        </div>
+        <p *ngIf="unlocatedCount" class="mt-2 text-xs text-ink-muted">
+          {{ unlocatedCount }} station(s) sans coordonnées ne sont pas affichées.
+        </p>
+
+        <!-- The map is only as precise as the records behind it. -->
+        <div *ngIf="sharedPointCount > 1" class="mt-3 rounded-lg bg-brand-soft p-2.5">
+          <p class="text-xs font-semibold text-brand-ink">Coordonnées à préciser</p>
+          <p class="mt-0.5 text-xs text-brand-ink">
+            {{ sharedPointCount }} stations partagent le même point ({{ groups.length }} emplacement(s)
+            distinct(s) pour {{ sites.length }} stations). Renseignez la latitude et la longitude
+            de chaque station — via l'import Excel — pour les voir séparément.
+          </p>
+        </div>
+
+        <!-- A single placeholder coordinate stretches the fitted view across an
+             ocean, so it is excluded from framing and reported for correction. -->
+        <div *ngIf="misplaced.length" class="mt-3 rounded-lg bg-warn-soft p-2.5">
+          <p class="text-xs font-semibold text-warn">Coordonnées à vérifier</p>
+          <p class="mt-0.5 text-xs text-warn">
+            <ng-container *ngFor="let s of misplaced; let last = last">
+              {{ s.nom }} ({{ s.latitude }}, {{ s.longitude }}){{ last ? '' : ' · ' }}
+            </ng-container>
+          </p>
+          <p class="mt-1 text-xs text-warn">
+            Ces stations sont très éloignées des autres et sont exclues du cadrage.
+          </p>
+        </div>
+      </div>
+
+      <ul class="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
+        <li *ngFor="let site of sites; trackBy: trackById">
+          <button type="button" (click)="focus(site)"
+                  class="flex w-full items-center justify-between gap-3 p-3 text-left transition hover:bg-hover">
+            <span class="min-w-0">
+              <span class="block truncate text-sm font-medium text-ink">{{ site.nom }}</span>
+              <span class="block font-mono text-xs text-ink-muted">{{ site.ip }}</span>
+            </span>
+            <span class="flex flex-none items-center gap-2">
+              <span class="text-sm font-semibold tnum text-ink">
+                {{ site.lastReading?.Battery_Voltage | measure: 'V' }}
+              </span>
+              <span class="h-2 w-2 rounded-full"
+                    [style.background-color]="site.status ? 'var(--good)' : 'var(--crit)'"></span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    </aside>
+  </div>
+
+  <app-empty-state *ngIf="!loading && !sites.length" icon="🗺️" title="Aucune station"
+                   description="Aucune station n'est rattachée à ce projet.">
+  </app-empty-state>
+</div>

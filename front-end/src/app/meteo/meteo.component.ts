@@ -1,9 +1,9 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Chart, ChartConfiguration } from 'chart.js';
 import { ThemeService } from '../services/theme.service';
-import { baseOptions, chartTokens } from '../services/chart-theme';
+import { baseOptions, chartTokens, token } from '../services/chart-theme';
 
 interface Forecast {
   timezone: string;
@@ -19,13 +19,27 @@ const HOURS_PER_DAY = 24;
 const FORECAST_DAYS = 5;
 
 /**
- * Five-day forecast, drawn as three stacked single-measure panels.
+ * Fixed reference ranges used to bring three different units onto one axis.
  *
- * This replaces one chart that carried temperature, cloud cover and sunlight on
- * three separate y-axes. Multiple scales on one plot make the crossings
- * meaningless — two lines appear to intersect only because of how the axes were
- * scaled. Small multiples keep every comparison honest and let each panel keep
- * its own units.
+ * They are deliberately fixed rather than derived from the data: scaling each
+ * series to its own min/max would stretch a 3 °C overnight drift to look like
+ * the same swing as 0–100% cloud, which is exactly the distortion this chart
+ * is meant to avoid.
+ */
+const SCALES = {
+  temperature: { min: -30, max: 40, unit: '°C', digits: 1 },
+  cloud: { min: 0, max: 100, unit: '%', digits: 0 },
+  radiation: { min: 0, max: 1, unit: 'kW/m²', digits: 2 },
+};
+
+/**
+ * Five-day forecast on a single indexed chart.
+ *
+ * The original drew temperature, cloud and sunlight on three separate y-axes.
+ * Multiple scales on one plot make crossings meaningless — two lines appear to
+ * intersect only because of how their axes happened to be scaled — so this
+ * instead maps all three onto one 0–100 index against fixed reference ranges,
+ * and reports the true value with its unit in the tooltip.
  */
 @Component({
   selector: 'app-meteo',
@@ -41,26 +55,17 @@ export class MeteoComponent implements OnInit, OnDestroy {
   failed = false;
 
   readonly days = Array.from({ length: FORECAST_DAYS }, (_, i) => i + 1);
-  readonly panels = [
-    { key: 'temp' as const, title: 'Température', unit: '°C', kind: 'bar' as const },
-    { key: 'cloud' as const, title: 'Couverture nuageuse', unit: '%', kind: 'line' as const },
-    { key: 'sun' as const, title: 'Rayonnement direct', unit: 'kW/m²', kind: 'line' as const },
-  ];
 
   private forecast: Forecast | null = null;
   private currentHour = 0;
-  private charts = new Map<string, Chart>();
-  private canvases = new Map<string, HTMLCanvasElement>();
+  private chart?: Chart;
+  private canvas?: HTMLCanvasElement;
   private readonly subscriptions = new Subscription();
 
-  @ViewChildren('panelCanvas')
-  set panelCanvases(refs: QueryList<ElementRef<HTMLCanvasElement>> | undefined) {
-    if (!refs?.length) return;
-    refs.forEach((ref, index) => {
-      const key = this.panels[index]?.key;
-      if (key) this.canvases.set(key, ref.nativeElement);
-    });
-    if (this.forecast) this.renderDay(this.selectedDayIndex);
+  @ViewChild('meteoCanvas')
+  set meteoCanvas(ref: ElementRef<HTMLCanvasElement> | undefined) {
+    this.canvas = ref?.nativeElement;
+    if (this.canvas && this.forecast) this.renderDay(this.selectedDayIndex);
   }
 
   constructor(
@@ -76,7 +81,7 @@ export class MeteoComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.charts.forEach((chart) => chart.destroy());
+    this.chart?.destroy();
     this.subscriptions.unsubscribe();
   }
 
@@ -114,76 +119,93 @@ export class MeteoComponent implements OnInit, OnDestroy {
     this.renderDay(dayIndex);
   }
 
+  /** Maps a real measurement onto the shared 0–100 index. */
+  private index(value: number, scale: { min: number; max: number }): number {
+    return ((value - scale.min) / (scale.max - scale.min)) * 100;
+  }
+
   private renderDay(dayIndex: number): void {
-    if (!this.forecast) return;
+    if (!this.forecast || !this.canvas) return;
     this.selectedDayIndex = dayIndex;
 
     const t = chartTokens();
+    const series3 = token('--series-3');
     const start = dayIndex * HOURS_PER_DAY;
     const end = start + HOURS_PER_DAY;
     const { hourly } = this.forecast;
 
     const labels = hourly.time.slice(start, end).map((time) => new Date(time).getHours() + 'h');
 
-    const series = {
-      temp: hourly.temperature_2m.slice(start, end),
+    // Raw values are kept so the tooltip can report the real measurement.
+    const raw = {
+      temperature: hourly.temperature_2m.slice(start, end),
       cloud: hourly.cloudcover.slice(start, end),
-      sun: hourly.direct_radiation
-        .slice(start, end)
-        .map((value) => parseFloat((value / 1000).toFixed(2))),
+      radiation: hourly.direct_radiation.slice(start, end).map((w) => w / 1000),
     };
 
-    for (const panel of this.panels) {
-      const canvas = this.canvases.get(panel.key);
-      if (!canvas) continue;
+    // A visible marker on "now", but only on today's tab.
+    const markNow = (ctx: { dataIndex: number }) =>
+      dayIndex === 0 && ctx.dataIndex === this.currentHour ? 5 : 0;
 
-      this.charts.get(panel.key)?.destroy();
+    const series = [
+      { key: 'temperature' as const, label: 'Température', colour: t.series1, fill: false },
+      { key: 'cloud' as const, label: 'Couverture nuageuse', colour: t.series2, fill: true },
+      { key: 'radiation' as const, label: 'Rayonnement direct', colour: series3, fill: true },
+    ];
 
-      const data = series[panel.key];
-      // Highlight the current hour, but only on today's tab.
-      const highlight = data.map((_, hour) =>
-        dayIndex === 0 && hour === this.currentHour ? t.series2 : t.series1
-      );
+    this.chart?.destroy();
+    const options = baseOptions(t) as ChartConfiguration['options'];
 
-      const options = baseOptions(t) as ChartConfiguration['options'];
-
-      const chartConfig: ChartConfiguration = {
-        type: panel.kind,
-        data: {
-          labels,
-          datasets: [
-            {
-              label: `${panel.title} (${panel.unit})`,
-              data,
-              backgroundColor: panel.kind === 'bar' ? highlight : `color-mix(in oklab, ${t.series1} 18%, transparent)`,
-              borderColor: t.series1,
-              borderWidth: panel.kind === 'line' ? 2 : 0,
-              borderRadius: panel.kind === 'bar' ? 3 : 0,
-              maxBarThickness: 18,
-              pointRadius: 0,
-              tension: 0.35,
-              fill: panel.kind === 'line',
+    const config: ChartConfiguration<'line'> = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: series.map((s) => ({
+          label: `${s.label} (${SCALES[s.key].unit})`,
+          data: raw[s.key].map((v) => this.index(v, SCALES[s.key])),
+          borderColor: s.colour,
+          backgroundColor: s.fill
+            ? `color-mix(in oklab, ${s.colour} 14%, transparent)`
+            : s.colour,
+          borderWidth: 2,
+          tension: 0.35,
+          pointRadius: markNow,
+          pointHoverRadius: 5,
+          pointBackgroundColor: s.colour,
+          fill: s.fill,
+        })),
+      },
+      options: {
+        ...options,
+        plugins: {
+          ...options!.plugins,
+          tooltip: {
+            ...options!.plugins!.tooltip,
+            callbacks: {
+              // Report the measurement, never the index — the axis is only a
+              // device for putting three units on one plot.
+              label: (item) => {
+                const key = series[item.datasetIndex].key;
+                const scale = SCALES[key];
+                const value = raw[key][item.dataIndex];
+                return ` ${series[item.datasetIndex].label} : ${value.toFixed(scale.digits)} ${scale.unit}`;
+              },
             },
-          ],
-        },
-        options: {
-          ...options,
-          plugins: {
-            ...options!.plugins,
-            // A single series needs no legend box — the panel title names it.
-            legend: { display: false },
-          },
-          scales: {
-            ...options!.scales,
-            y: {
-              ...options!.scales!['y'],
-              title: { display: true, text: panel.unit, color: t.inkMuted },
-            },
           },
         },
-      };
+        scales: {
+          ...options!.scales,
+          y: {
+            ...options!.scales!['y'],
+            min: 0,
+            max: 100,
+            ticks: { ...options!.scales!['y']!.ticks, callback: (v) => `${v}` },
+            title: { display: true, text: 'Échelle relative', color: t.inkMuted },
+          },
+        },
+      } as ChartConfiguration<'line'>['options'],
+    };
 
-      this.charts.set(panel.key, new Chart(canvas, chartConfig));
-    }
+    this.chart = new Chart(this.canvas, config);
   }
 }

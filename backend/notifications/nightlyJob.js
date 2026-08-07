@@ -63,10 +63,11 @@ async function runNightlyRestart() {
     };
   });
 
-  const now = new Date().toLocaleString('fr-CA', { timeZone: config.timezone });
+  const current = await settings.all();
+  const now = new Date().toLocaleString('fr-CA', { timeZone: current['schedule.timezone'] });
 
   await mailer.send({
-    to: admins.map((a) => `${a.username}@${config.memberEmailDomain}`),
+    to: admins.map((a) => Member.emailFor(a.username, current['mail.memberDomain'])).filter(Boolean),
     subject: '[MI8 Monitoring Platform] 🌙 Station Restart Report',
     html:
       '<h3>🌙 Nightly Restart Report</h3>' +

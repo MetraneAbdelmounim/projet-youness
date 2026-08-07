@@ -26,6 +26,35 @@ SUN_EFFICIENCY = {
 }
 
 
+# Resting terminal voltage per 12 V block, at rest and around 25 °C.
+# "full" is the settled open-circuit voltage at 100% state of charge, not the
+# absorption setpoint the controller drives to while charging; "floor" is the
+# practical bottom of the usable range.
+RESTING_BOUNDS_PER_12V = {
+    # Lead-acid / AGM: 2.13 V per cell full, ~1.97 V per cell empty.
+    "AGM": (11.8, 12.8),
+    # LiFePO4, 4 cells per 12 V block: ~3.40 V full, ~3.10 V near empty.
+    "LITHIUM": (12.4, 13.6),
+}
+
+# Nominal system voltages, matched against a measured reading.
+NOMINAL_BANDS = ((9.0, 17.0, 1), (18.0, 34.0, 2), (36.0, 68.0, 4))
+
+
+def battery_bounds(voltage: float, battery_type: str) -> tuple:
+    """
+    Resting voltage range for the bank this reading came from.
+
+    The nominal system voltage is inferred from the measurement rather than
+    configured, so a 12 V or 48 V site is handled without extra setup.
+    """
+    blocks = next((b for low, high, b in NOMINAL_BANDS if low <= voltage <= high), 2)
+    floor, full = RESTING_BOUNDS_PER_12V.get(
+        (battery_type or "AGM").upper(), RESTING_BOUNDS_PER_12V["AGM"]
+    )
+    return floor * blocks, full * blocks
+
+
 def _stepwise(table, value: float) -> int:
     """Returns the first table value whose threshold `value` meets or exceeds."""
     for threshold, result in table:
@@ -50,6 +79,42 @@ def sun_recharge_efficiency(sun_hours: float, battery_type: str) -> int:
     return _stepwise(table, sun_hours)
 
 
+def predicted_resting_voltage(
+    voltage: Optional[float], charge_ratio: float, temp_loss: int, battery_type: str
+) -> Optional[float]:
+    """
+    End-of-day resting voltage, interpolated toward the bank's full or empty
+    resting level according to the net energy balance.
+
+    The previous formula multiplied the measured voltage by the charge ratio
+    (`V × (1 + ratio)`), which multiplies volts by an energy-efficiency figure —
+    the result is not a voltage and has no ceiling. It predicted 41–53 V on 24 V
+    banks whose readings have never left 25.1–26.8 V.
+
+    Interpolating instead keeps the answer inside the chemistry's real range by
+    construction, and behaves correctly at both ends: a bank sitting above its
+    resting-full level is being actively charged, so it is predicted to settle
+    *down* toward that level once the sun goes.
+
+    This is still a heuristic, not a state-of-charge model — a physical one
+    needs the bank's amp-hour capacity and the load profile, neither of which is
+    recorded. With history now accumulating, it can be fitted against measured
+    outcomes instead.
+    """
+    if voltage is None:
+        return None
+
+    floor, full = battery_bounds(voltage, battery_type)
+
+    # Net balance in -1..+1: positive means net charge over the rest of the day.
+    balance = max(-1.0, min(1.0, charge_ratio * (1 - temp_loss / 100.0)))
+
+    target = full if balance >= 0 else floor
+    predicted = voltage + abs(balance) * (target - voltage)
+
+    return round(min(max(predicted, floor), full), 2)
+
+
 def compute(reading: MpptReading, weather: Weather, battery_type: str) -> dict:
     voltage = reading.Battery_Voltage
 
@@ -66,16 +131,14 @@ def compute(reading: MpptReading, weather: Weather, battery_type: str) -> dict:
 
     if voltage is None:
         performance = "UNKNOWN"
-        predicted = None
     elif performance_value < 0.75:
         performance = "DOWN"
-        predicted = round(voltage * performance_value, 2)
     elif performance_value <= 1.25:
         performance = "MEDIUM"
-        predicted = round(voltage * performance_value, 2)
     else:
         performance = "UP"
-        predicted = round(voltage * performance_value, 2)
+
+    predicted = predicted_resting_voltage(voltage, charge_ratio, temp_loss, battery_type)
 
     return {
         "temperature_ext": round(weather.avg_temperature, 2),

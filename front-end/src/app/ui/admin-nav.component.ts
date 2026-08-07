@@ -35,5 +35,6 @@ export class AdminNavComponent {
     { label: 'Projets', icon: '🗂️', link: '/dashbord/projects' },
     { label: 'Utilisateurs', icon: '👥', link: '/dashbord/members' },
     { label: 'Licence', icon: '🔑', link: '/dashbord/licence' },
+    { label: 'Paramètres', icon: '⚙️', link: '/dashbord/settings' },
   ];
 }

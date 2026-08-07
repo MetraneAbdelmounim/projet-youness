@@ -51,6 +51,7 @@
   /* Chart series — validated on #ffffff (worst adjacent CVD ΔE 24.7) */
   --series-1: #2a78d6;
   --series-2: #eb6834;
+  --series-3: #17a06f;
   --grid: #e7edf6;
 
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px -8px rgb(16 24 40 / 0.10);
@@ -91,10 +92,14 @@
   /* Same two hues, re-stepped for the dark surface — not an automatic flip */
   --series-1: #3987e5;
   --series-2: #d95926;
+  --series-3: #199e70;
   --grid: #1b2438;
 
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.6);
   --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.7);
+
+  /* MapLibre ships its zoom/compass icons as black SVGs; invert on dark. */
+  --map-ctrl-filter: invert(1) hue-rotate(180deg);
 }
 
 @theme inline {
@@ -313,6 +318,116 @@ button {
     border-bottom-color: var(--brand);
   }
 
+  /* --- Map ---------------------------------------------------------------
+     Pins and popups are created imperatively by MapLibre, outside Angular's
+     view encapsulation, so they are styled globally from the same tokens as
+     the rest of the UI rather than with inline colours. */
+  .map-pin {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid var(--surface);
+    background-color: var(--good);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+    cursor: pointer;
+    transition: transform 140ms ease;
+  }
+  .map-pin:hover {
+    transform: scale(1.25);
+  }
+  .map-pin.is-down {
+    background-color: var(--crit);
+  }
+  /* A point holding several stations shows the count. */
+  .map-pin.is-group {
+    width: 1.85rem;
+    height: 1.85rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--surface);
+  }
+
+  .map-popup-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .map-popup-ip {
+    font-family: ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    margin-top: 0.1rem;
+  }
+  .map-popup-note {
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    margin-top: 0.15rem;
+  }
+  .map-popup-list {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    max-height: 14rem;
+    overflow-y: auto;
+  }
+  .map-popup-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0;
+    border-top: 1px solid var(--line);
+  }
+  .map-popup-item:first-child {
+    border-top: 0;
+  }
+  .map-popup-state {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    flex: none;
+    background-color: var(--good);
+  }
+  .map-popup-state.is-down {
+    background-color: var(--crit);
+  }
+  .map-popup-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+  .map-popup-name a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .map-popup-name a:hover {
+    color: var(--brand-ink);
+    text-decoration: underline;
+  }
+  .map-popup-volt {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .map-popup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.7rem;
+    border-top: 1px solid var(--line);
+    padding-top: 0.6rem;
+  }
+  .map-popup-actions a {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--brand-ink);
+    text-decoration: none;
+  }
+  .map-popup-actions a:hover {
+    text-decoration: underline;
+  }
+
   .table-row {
     border-bottom: 1px solid var(--line);
     transition: background-color 120ms ease;
@@ -337,6 +452,87 @@ button {
 @keyframes shimmer {
   0% { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
+}
+
+/*
+ * MapLibre popup chrome, themed.
+ *
+ * Deliberately outside @layer components. maplibre-gl.css is unlayered, and
+ * unlayered rules beat layered ones no matter their specificity or order — a
+ * `.maplibregl-popup-content` override inside the layer loses to the vendor's
+ * `background: #fff`, leaving light text on a white card in dark mode. The
+ * descendant selectors then win against the equally-specific vendor rules that
+ * load after this file.
+ */
+.maplibregl-popup .maplibregl-popup-content {
+  background-color: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-pop);
+  padding: 0.875rem 1rem;
+}
+
+/* The tip is a CSS triangle: only the edge facing the popup takes the fill,
+   and which edge that is depends on which side the popup was anchored. */
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--surface);
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--surface);
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--surface);
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--surface);
+}
+
+.maplibregl-popup .maplibregl-popup-close-button {
+  color: var(--ink-muted);
+  font-size: 1.1rem;
+  padding-right: 0.35rem;
+  background: transparent;
+}
+.maplibregl-popup .maplibregl-popup-close-button:hover {
+  background-color: var(--surface-hover);
+  color: var(--ink);
+}
+
+/* Map controls and the attribution bar carry the same white default. */
+.maplibregl-ctrl-group {
+  background-color: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+.maplibregl-ctrl-group button + button {
+  border-top-color: var(--line);
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  /* The control icons are black SVGs; invert them on dark surfaces. */
+  filter: var(--map-ctrl-filter, none);
+}
+/* Qualified with .maplibregl-map: the vendor rules are equally specific and
+   load after this file, so an unqualified selector still loses. The compact
+   variant needs a third class to out-rank `.maplibregl-ctrl-attrib.maplibregl-compact`. */
+.maplibregl-map .maplibregl-ctrl-attrib,
+.maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  background-color: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--ink-muted);
+}
+.maplibregl-map .maplibregl-ctrl-attrib a {
+  color: var(--ink-muted);
+}
+.maplibregl-map .maplibregl-ctrl-attrib-button {
+  filter: var(--map-ctrl-filter, none);
+}
+.maplibregl-map .maplibregl-ctrl-scale {
+  background-color: color-mix(in srgb, var(--surface) 80%, transparent);
+  border-color: var(--line-strong);
+  color: var(--ink-secondary);
 }
 
 /* A quiet pulse on the "live" indicator; suppressed for reduced-motion users. */

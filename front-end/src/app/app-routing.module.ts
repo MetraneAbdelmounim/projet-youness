@@ -9,12 +9,14 @@ import { AnalysisDetailsComponent } from './analysis-details/analysis-details.co
 import { ModemsComponent } from './modems/modems.component';
 import { PanneausComponent } from './panneaus/panneaus.component';
 import { ListProjectsComponent } from './list-projects/list-projects.component';
+import { StationMapComponent } from './map/station-map.component';
 import { LicenceComponent } from './licence/licence.component';
 import { AdminSiteComponent } from './dashbord/admin-site/admin-site.component';
 import { AdminMemberComponent } from './dashbord/admin-member/admin-member.component';
 import { AdminModemsComponent } from './dashbord/admin-modems/admin-modems.component';
 import { AdminPanneauComponent } from './dashbord/admin-panneau/admin-panneau.component';
 import { AdminProjectComponent } from './dashbord/admin-project/admin-project.component';
+import { AdminSettingsComponent } from './dashbord/admin-settings/admin-settings.component';
 import { ChangePasswordComponent } from './dashbord/change-password/change-password.component';
 
 import { authGuard, adminGuard } from './services/auth-guard.service';
@@ -28,6 +30,7 @@ const routes: Routes = [
 
   { path: 'projects', component: ListProjectsComponent, canActivate: authed },
   { path: 'project/:id/mppt', component: HomeComponent, canActivate: authed },
+  { path: 'project/:id/carte', component: StationMapComponent, canActivate: authed },
   { path: 'project/:id/analysis', component: AnalysisComponent, canActivate: authed },
   { path: 'project/:id/modems', component: ModemsComponent, canActivate: authed },
   { path: 'project/:id/panneaux', component: PanneausComponent, canActivate: authed },
@@ -49,6 +52,7 @@ const routes: Routes = [
   { path: 'dashbord/modems', component: AdminModemsComponent, canActivate: admin },
   { path: 'dashbord/panneaux', component: AdminPanneauComponent, canActivate: admin },
   { path: 'dashbord/projects', component: AdminProjectComponent, canActivate: admin },
+  { path: 'dashbord/settings', component: AdminSettingsComponent, canActivate: admin },
   { path: 'dashbord/change-password', component: ChangePasswordComponent, canActivate: authed },
 
   { path: '**', redirectTo: 'projects' },

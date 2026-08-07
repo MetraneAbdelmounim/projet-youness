@@ -11,6 +11,7 @@
       </svg>
       Actualiser
     </button>
+    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'carte']" class="btn btn-ghost">Carte</a>
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'mppt']" class="btn btn-primary">Stations</a>
       <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
       <span class="chip-dot live-dot"></span>

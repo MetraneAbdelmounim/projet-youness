@@ -18,6 +18,7 @@ const modemRoute = require('./modem/modemRoute');
 const panneauRoute = require('./panneau/panneauRoute');
 const memberRoute = require('./member/memberRoute');
 const projectRoute = require('./project/projectRoute');
+const settingsRoute = require('./settings/settingsRoute');
 
 const app = express();
 const STATIC_ROOT = path.join(__dirname, 'public/browser');
@@ -31,9 +32,19 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:'],
-        // The weather panel queries open-meteo straight from the browser.
-        connectSrc: ["'self'", 'https://api.open-meteo.com'],
+        // blob: is required by MapLibre, which decodes vector tiles into
+        // images and spawns its workers from generated blobs.
+        imgSrc: ["'self'", 'data:', 'blob:'],
+        workerSrc: ["'self'", 'blob:'],
+        childSrc: ["'self'", 'blob:'],
+        connectSrc: [
+          "'self'",
+          // The weather panel queries open-meteo straight from the browser.
+          'https://api.open-meteo.com',
+          // Map style and vector tiles. Keyless and rate-limit-free; swap the
+          // host here and in MAP_STYLES if you move to another provider.
+          'https://tiles.openfreemap.org',
+        ],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
       },
@@ -90,6 +101,7 @@ app.use('/api/members', memberRoute);
 app.use('/api/modems', modemRoute);
 app.use('/api/panneaus', panneauRoute);
 app.use('/api/projects', projectRoute);
+app.use('/api/settings', settingsRoute);
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Route introuvable' }));
 
@@ -122,7 +134,8 @@ if (require.main === module) {
         );
       }
 
-      scheduler.start();
+      // Reads the stored schedules, so it must await the database.
+      await scheduler.start();
       app.listen(config.PORT, () => {
         console.log(`Server running at http://${config.HOST}:${config.PORT}`);
       });

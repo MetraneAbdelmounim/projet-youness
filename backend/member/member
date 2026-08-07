@@ -24,8 +24,23 @@ memberSchema.set('toJSON', {
   },
 });
 
+/**
+ * The address to mail a member at.
+ *
+ * Usernames are a mix of bare handles ("demo.admin") and full addresses
+ * ("someone@axians.com"). Appending the domain unconditionally turned the
+ * latter into "someone@axians.com@innovationmi8.com", which no MTA accepts —
+ * so every alert to those members silently bounced.
+ */
+memberSchema.statics.emailFor = function (username, domain) {
+  const handle = String(username || '').trim();
+  if (!handle) return null;
+  if (handle.includes('@')) return handle;
+  return `${handle}@${domain || require('../config/config').memberEmailDomain}`;
+};
+
 memberSchema.virtual('email').get(function () {
-  return `${this.username}@${require('../config/config').memberEmailDomain}`;
+  return memberSchema.statics.emailFor(this.username);
 });
 
 module.exports = mongoose.model('Member', memberSchema);

@@ -19,24 +19,23 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="space-y-4">
-    <div *ngFor="let placeholder of [1, 2, 3]" class="skeleton h-40 w-full"></div>
-  </div>
+  <div *ngIf="loading" class="skeleton h-96 w-full"></div>
 
   <p *ngIf="failed" class="rounded-xl bg-sunken px-4 py-8 text-center text-sm text-ink-muted">
     Prévisions météo momentanément indisponibles.
   </p>
 
-  <!-- Small multiples: one measure per panel, each with its own scale. A single
-       plot with three y-axes made the crossings between them meaningless. -->
-  <div [class.hidden]="loading || failed" class="space-y-5">
-    <div *ngFor="let panel of panels" class="rounded-xl border border-line p-4">
-      <h3 class="mb-2 text-sm font-semibold text-ink">
-        {{ panel.title }} <span class="font-normal text-ink-muted">({{ panel.unit }})</span>
-      </h3>
-      <div class="relative h-40">
-        <canvas #panelCanvas></canvas>
-      </div>
+  <!-- One plot, one axis. The three measures are indexed onto a shared 0–100
+       scale; the tooltip reports each real value with its own unit. Separate
+       y-axes would make the crossings between the lines meaningless. -->
+  <div [class.hidden]="loading || failed">
+    <div class="relative h-96">
+      <canvas #meteoCanvas></canvas>
     </div>
+
+    <p class="mt-3 text-center text-xs text-ink-muted">
+      Échelle relative — survolez le graphique pour les valeurs réelles.
+      Repères : température −30…40 °C · nuages 0…100 % · rayonnement 0…1 kW/m².
+    </p>
   </div>
 </section>
