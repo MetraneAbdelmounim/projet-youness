@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Device } from '../models/device';
@@ -17,7 +18,8 @@ export class PanneausComponent implements OnInit {
   constructor(
     private panneauService: PanneauService,
     private message: ToastrService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -35,7 +37,7 @@ export class PanneausComponent implements OnInit {
       },
       error: () => {
         this.spinnerSite = false;
-        this.message.error('Impossible de charger les panneaux');
+        this.message.error(this.i18n.t('device.loadPanelsFailed'));
       },
     });
   }
@@ -45,8 +47,10 @@ export class PanneausComponent implements OnInit {
   }
 
   get subtitle(): string {
-    if (this.spinnerSite) return 'Chargement…';
-    const online = this.panneaus.filter((d) => d.status).length;
-    return `${this.panneaus.length} panneau(x) · ${online} en ligne`;
+    if (this.spinnerSite) return this.i18n.t('common.loading');
+    return this.i18n.t('device.panelSubtitle', {
+      count: this.panneaus.length,
+      online: this.panneaus.filter((d) => d.status).length,
+    });
   }
 }

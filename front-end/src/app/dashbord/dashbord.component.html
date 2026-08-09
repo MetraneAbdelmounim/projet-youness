@@ -1,19 +1,19 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Tableau de bord"
+  <app-page-header [title]="'dashboard.title' | t"
                    [subtitle]="subtitle"
-                   [backLink]="['/projects']" backLabel="Tous les projets">
+                   [backLink]="['/projects']" [backLabel]="'common.allProjects' | t">
     <button type="button" class="btn btn-ghost" (click)="onRefresh()" [disabled]="spinnerSite">
       <svg class="h-4 w-4" [class.animate-spin]="spinnerSite" fill="none" stroke="currentColor"
            stroke-width="1.8" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M16.023 9.348h4.992V4.356m-4.992 4.992l3.181-3.183a8.25 8.25 0 00-13.803 3.7M4.031 9.865v4.992m0 0h4.99m-4.99 0l3.181 3.183a8.25 8.25 0 0013.803-3.7" />
       </svg>
-      Actualiser
+      {{ 'common.refresh' | t }}
     </button>
-    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'carte']" class="btn btn-ghost">Carte</a>
-    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'mppt']" class="btn btn-primary">Stations</a>
-      <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
+    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'carte']" class="btn btn-ghost">{{ 'home.map' | t }}</a>
+    <a *ngIf="projectId" [routerLink]="['/project', projectId, 'mppt']" class="btn btn-primary">{{ 'common.stations' | t }}</a>
+      <span *ngIf="lastUpdated" class="chip chip-neutral" [title]="'common.autoRefresh' | t">
       <span class="chip-dot live-dot"></span>
       {{ lastUpdated | date: 'HH:mm:ss' }}
     </span>
@@ -21,14 +21,14 @@
 
   <!-- Fleet summary -->
   <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-    <app-stat-tile label="Stations" [value]="sites.length" icon="🔌"></app-stat-tile>
-    <app-stat-tile label="En ligne" [value]="onlineCount" tone="good" icon="📡"
-                   [hint]="onlinePercent + '% du parc'"></app-stat-tile>
-    <app-stat-tile label="Hors ligne" [value]="offlineCount"
+    <app-stat-tile [label]="'dashboard.stations' | t" [value]="sites.length" icon="🔌"></app-stat-tile>
+    <app-stat-tile [label]="'dashboard.online' | t" [value]="onlineCount" tone="good" icon="📡"
+                   [hint]="'dashboard.fleetPercent' | t: { percent: onlinePercent }"></app-stat-tile>
+    <app-stat-tile [label]="'dashboard.offline' | t" [value]="offlineCount"
                    [tone]="offlineCount ? 'crit' : 'default'" icon="🚫"></app-stat-tile>
-    <app-stat-tile label="Sous le seuil" [value]="belowThresholdCount"
+    <app-stat-tile [label]="'dashboard.belowThreshold' | t" [value]="belowThresholdCount"
                    [tone]="belowThresholdCount ? 'warn' : 'default'" icon="🪫"
-                   hint="Tension < seuil AGM"></app-stat-tile>
+                   [hint]="'dashboard.belowThresholdHint' | t"></app-stat-tile>
   </div>
 
   <!-- Voltage chart. One measure, one axis; the two reference lines carry the
@@ -36,9 +36,9 @@
   <section class="card mb-6 p-6">
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="text-lg font-semibold text-ink">Tension des batteries</h2>
+        <h2 class="text-lg font-semibold text-ink">{{ 'dashboard.voltageTitle' | t }}</h2>
         <p class="mt-0.5 text-sm text-ink-muted">
-          Dernier relevé par station, comparé aux seuils de chaque chimie.
+          {{ 'dashboard.voltageSubtitle' | t }}
         </p>
       </div>
     </div>
@@ -48,22 +48,22 @@
       <canvas #voltageCanvas></canvas>
     </div>
     <p *ngIf="!spinnerSite && !sites.length" class="py-16 text-center text-sm text-ink-muted">
-      Aucune donnée à représenter.
+      {{ 'dashboard.noData' | t }}
     </p>
   </section>
 
   <!-- Station table -->
   <section class="card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
-      <h2 class="text-lg font-semibold text-ink">Stations</h2>
+      <h2 class="text-lg font-semibold text-ink">{{ 'common.stations' | t }}</h2>
       <div class="relative">
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
              fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
         </svg>
-        <input type="text" [(ngModel)]="term" placeholder="Filtrer par IP…"
-               class="field w-full pl-9 sm:w-64" aria-label="Filtrer les stations par adresse IP" />
+        <input type="text" [(ngModel)]="term" [placeholder]="'common.filterByIp' | t"
+               class="field w-full pl-9 sm:w-64" [attr.aria-label]="'common.filterByIpAria' | t" />
       </div>
     </div>
 
@@ -77,10 +77,10 @@
         <table class="hidden w-full md:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Station</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse IP</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Tension</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">État</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.station' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.ip' | t }}</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'dashboard.voltage' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'dashboard.state' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -117,14 +117,14 @@
 
         <div class="border-t border-line p-4">
           <pagination-controls id="listing_pagination" (pageChange)="page = $event"
-                               previousLabel="Précédent" nextLabel="Suivant">
+                               [previousLabel]="'common.previous' | t" [nextLabel]="'common.next' | t">
           </pagination-controls>
         </div>
       </div>
 
       <ng-template #noSites>
-        <app-empty-state icon="🔌" title="Aucune station"
-                         description="Aucune station n'est associée à ce projet.">
+        <app-empty-state icon="🔌" [title]="'home.empty' | t"
+                         [description]="'dashboard.emptyHint' | t">
         </app-empty-state>
       </ng-template>
     </ng-container>

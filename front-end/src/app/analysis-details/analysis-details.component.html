@@ -11,7 +11,7 @@
     <app-page-header [title]="station.nom"
                      [subtitle]="station.ip + (station.project ? ' · ' + station.project.nom : '')"
                      [backLink]="station.project ? ['/project', station.project._id, 'analysis'] : ['/projects']"
-                     backLabel="Retour à l'analyse">
+                     [backLabel]="'details.backToAnalysis' | t">
       <app-site-status [isAlive]="station.status" [lastSeenAt]="station.lastSeenAt"></app-site-status>
     </app-page-header>
 
@@ -19,9 +19,9 @@
 
       <!-- Live figures -->
       <section class="card p-6 lg:col-span-1">
-        <h2 class="mb-4 text-lg font-semibold text-ink">Relevé actuel</h2>
+        <h2 class="mb-4 text-lg font-semibold text-ink">{{ 'details.currentReading' | t }}</h2>
         <div class="mb-5 rounded-xl bg-sunken px-4 py-3">
-          <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Tension batterie</p>
+          <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'reading.batteryVoltage' | t }}</p>
           <p class="mt-0.5 text-4xl font-bold tnum text-ink">
             {{ station.lastReading?.Battery_Voltage | measure
             }}<span class="ml-1 text-xl font-medium text-ink-muted">V</span>
@@ -32,7 +32,7 @@
 
       <!-- Forecast -->
       <section class="card p-6 lg:col-span-2">
-        <h2 class="mb-4 text-lg font-semibold text-ink">Analyse prévisionnelle</h2>
+        <h2 class="mb-4 text-lg font-semibold text-ink">{{ 'details.forecast' | t }}</h2>
         <app-site-analysis [analysis]="station.lastAnalysis" [reachable]="station.status"></app-site-analysis>
       </section>
     </div>
@@ -41,19 +41,19 @@
     <section class="card mt-6 p-6">
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 class="text-lg font-semibold text-ink">Historique de tension</h2>
+          <h2 class="text-lg font-semibold text-ink">{{ 'details.voltageHistory' | t }}</h2>
           <p class="mt-0.5 text-sm text-ink-muted">
-            Relevés enregistrés par le collecteur.
+            {{ 'details.voltageHistoryHint' | t }}
           </p>
         </div>
 
-        <div class="flex gap-1.5" role="group" aria-label="Période affichée">
+        <div class="flex gap-1.5" role="group" [attr.aria-label]="'details.periodShown' | t">
           <button *ngFor="let window of windows" type="button" (click)="selectWindow(window.hours)"
                   class="rounded-full px-3 py-1 text-xs font-semibold transition"
                   [ngClass]="selectedHours === window.hours
                     ? 'bg-brand text-ink-inverse'
                     : 'border border-line text-ink-secondary hover:bg-hover'">
-            {{ window.label }}
+            {{ window.label | t }}
           </button>
         </div>
       </div>
@@ -63,7 +63,7 @@
       </div>
 
       <p *ngIf="!history.length" class="py-20 text-center text-sm text-ink-muted">
-        Aucune mesure enregistrée sur cette période.
+        {{ 'details.noMeasures' | t }}
       </p>
     </section>
 

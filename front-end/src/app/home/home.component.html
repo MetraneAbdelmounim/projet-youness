@@ -1,18 +1,18 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Stations MPPT"
+  <app-page-header [title]="'home.title' | t"
                    [subtitle]="subtitle"
-                   [backLink]="['/projects']" backLabel="Tous les projets">
+                   [backLink]="['/projects']" [backLabel]="'common.allProjects' | t">
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'carte']" class="btn btn-ghost">
-      Carte
+      {{ 'home.map' | t }}
     </a>
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'dashbord']" class="btn btn-ghost">
-      Tableau de bord
+      {{ 'home.dashboard' | t }}
     </a>
     <a *ngIf="projectId" [routerLink]="['/project', projectId, 'analysis']" class="btn btn-primary">
-      Analyse
+      {{ 'home.analysis' | t }}
     </a>
-      <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
+      <span *ngIf="lastUpdated" class="chip chip-neutral" [title]="'common.autoRefresh' | t">
       <span class="chip-dot live-dot"></span>
       {{ lastUpdated | date: 'HH:mm:ss' }}
     </span>
@@ -43,7 +43,7 @@
         <!-- Headline figure. One number reads better as a figure than as a plot. -->
         <div class="mt-5 flex items-end justify-between gap-4 rounded-xl bg-sunken px-4 py-3">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Tension batterie</p>
+            <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'home.batteryVoltage' | t }}</p>
             <p class="mt-0.5 text-3xl font-bold tnum text-ink">
               {{ site.lastReading?.Battery_Voltage | measure
               }}<span class="ml-1 text-lg font-medium text-ink-muted">V</span>
@@ -60,7 +60,7 @@
 
         <!-- Device consoles on the station's own network -->
         <footer class="mt-6 border-t border-line pt-4">
-          <p class="label mb-2">Accès équipements</p>
+          <p class="label mb-2">{{ 'home.deviceAccess' | t }}</p>
           <div class="flex flex-wrap gap-1.5">
             <a *ngFor="let link of deviceLinks(site)" [href]="link.url" target="_blank" rel="noopener"
                class="chip chip-neutral transition hover:bg-brand-soft hover:text-brand-ink">
@@ -72,8 +72,8 @@
     </div>
 
     <ng-template #noSites>
-      <app-empty-state icon="🔌" title="Aucune station"
-                       description="Aucune station MPPT n'est rattachée à ce projet pour l'instant.">
+      <app-empty-state icon="🔌" [title]="'home.empty' | t"
+                       [description]="'home.emptyHint' | t">
       </app-empty-state>
     </ng-template>
   </ng-container>

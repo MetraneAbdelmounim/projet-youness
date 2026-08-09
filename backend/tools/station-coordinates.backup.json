@@ -1,0 +1,152 @@
+[
+  {
+    "ip": "10.8.0.161",
+    "nom": "26-A25S-S6",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.189",
+    "nom": "15-A25Sud Sortie 5",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.197",
+    "nom": "21-A20Est Sortie 95",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.205",
+    "nom": "24-A40Est",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.207",
+    "nom": "25-A40Ouest",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.209",
+    "nom": "19-Dickson-Souligny",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.211",
+    "nom": "22-A30Ouest",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.213",
+    "nom": "23-A30Est",
+    "latitude": 12,
+    "longitude": 12
+  },
+  {
+    "ip": "10.8.0.215",
+    "nom": "7-R132Ouest M.Victorin",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.217",
+    "nom": "8-R132Est R.Therrien",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.221",
+    "nom": "20-A20Est Entrée R132",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.225",
+    "nom": "17-A25Sud Sortie 4",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.229",
+    "nom": "18-A25Sud Sortie 3",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.231",
+    "nom": "14-A25Sud - A25Sud",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.233",
+    "nom": "13-A25 Sud Henri-Bourassa",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.237",
+    "nom": "10-A25Nord Sortie 3",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.239",
+    "nom": "9-A25Nord Sortie 1",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.241",
+    "nom": "6-A20Ouest Sortie 90",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.243",
+    "nom": "5-A20Ouest Sortie 92",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.245",
+    "nom": "4-A20Ouest Sortie 95",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.247",
+    "nom": "3-A20Ouest Entrée A30",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.249",
+    "nom": "2-A20Ouest Entrée 102",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.251",
+    "nom": "1-A20Ouest Entrée 112",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.0.57",
+    "nom": "12-Bretelle J",
+    "latitude": 45.58,
+    "longitude": -73.75
+  },
+  {
+    "ip": "10.8.1.197",
+    "nom": "11-Souligny-H.Beaugrand",
+    "latitude": 45.58,
+    "longitude": -73.75
+  }
+]

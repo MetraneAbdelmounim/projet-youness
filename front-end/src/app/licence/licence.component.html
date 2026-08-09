@@ -12,12 +12,10 @@
     <div class="text-center mb-8">
       <img src="assets/images/logo.png" alt="" class="h-14 mx-auto mb-5 dark:brightness-0 dark:invert" />
       <h1 class="text-3xl font-bold tracking-tight text-ink">
-        {{ managementView ? 'Licence' : 'Activation de la plateforme' }}
+        {{ (managementView ? 'licence.title' : 'licence.activationTitle') | t }}
       </h1>
       <p class="mt-2 text-sm text-ink-secondary">
-        {{ managementView
-            ? 'Consultez la licence en cours ou installez-en une nouvelle.'
-            : 'Déposez votre fichier de licence pour démarrer la supervision.' }}
+        {{ (managementView ? 'licence.manageSubtitle' : 'licence.activateSubtitle') | t }}
       </p>
     </div>
 
@@ -26,26 +24,26 @@
       <!-- Current licence, when one is installed and valid -->
       <dl *ngIf="!loading && status?.valid" class="mb-6 space-y-3 rounded-xl bg-sunken p-5">
         <div class="flex items-center justify-between gap-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Licencié</dt>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'licence.licensee' | t }}</dt>
           <dd class="text-sm font-semibold text-ink">{{ status?.customer }}</dd>
         </div>
         <div class="flex items-center justify-between gap-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Expire le</dt>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'licence.expiresOn' | t }}</dt>
           <dd class="text-sm font-semibold text-ink">{{ status?.expiresAt | date: 'longDate' }}</dd>
         </div>
         <div class="flex items-center justify-between gap-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Restant</dt>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'licence.remaining' | t }}</dt>
           <dd>
-            <app-status-chip [label]="status!.daysRemaining + ' jour(s)'"
+            <app-status-chip [label]="'licence.days' | t: { count: status!.daysRemaining || 0 }"
                              [tone]="status!.daysRemaining! <= 30 ? 'warn' : 'good'"></app-status-chip>
           </dd>
         </div>
         <div class="flex items-center justify-between gap-4">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Stations autorisées</dt>
-          <dd class="text-sm font-semibold text-ink">{{ status?.maxStations ?? 'Illimité' }}</dd>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'licence.maxStations' | t }}</dt>
+          <dd class="text-sm font-semibold text-ink">{{ status?.maxStations ?? ('licence.unlimited' | t) }}</dd>
         </div>
         <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Identifiant</dt>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'licence.identifier' | t }}</dt>
           <dd class="font-mono text-xs text-ink-muted">{{ status?.licenceId }}</dd>
         </div>
       </dl>
@@ -62,16 +60,14 @@
         </svg>
         <div class="text-sm">
           <p class="font-semibold" [class.text-crit]="status.installed" [class.text-brand-ink]="!status.installed">
-            {{ status.installed ? 'Licence expirée' : 'Aucune licence installée' }}
+            {{ (status.installed ? 'licence.expiredTitle' : 'licence.noneTitle') | t }}
           </p>
           <p class="mt-0.5" [class.text-crit]="status.installed" [class.text-brand-ink]="!status.installed">
             <ng-container *ngIf="status.installed && status.expiresAt">
-              La licence de {{ status.customer }} a expiré le {{ status.expiresAt | date: 'longDate' }}.
-              Contactez {{ vendorLabel }} pour un renouvellement.
+              {{ 'licence.expiredBody' | t: { customer: status.customer || '', date: (status.expiresAt | date: 'longDate') || '', vendor: vendorLabel } }}
             </ng-container>
             <ng-container *ngIf="!status.installed">
-              Cette installation n'a jamais été activée.
-              Le fichier de licence vous est fourni par {{ vendorLabel }}.
+              {{ 'licence.noneBody' | t: { vendor: vendorLabel } }}
             </ng-container>
           </p>
         </div>
@@ -80,10 +76,9 @@
       <!-- The server has no public key: uploading anything would fail. -->
       <div *ngIf="status && status.signingKeyPresent === false"
            class="mb-6 rounded-xl bg-crit-soft p-4 text-sm text-crit">
-        <p class="font-semibold">Configuration serveur incomplète</p>
+        <p class="font-semibold">{{ 'licence.serverIncomplete' | t }}</p>
         <p class="mt-0.5">
-          Aucune clé publique de licence n'est installée sur le serveur.
-          Exécutez <code class="font-mono">node tools/licence-keygen.js</code> puis redémarrez.
+          {{ 'licence.serverIncompleteBody' | t }}
         </p>
       </div>
 
@@ -107,9 +102,9 @@
                   d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
           </svg>
           <p class="mt-4 text-sm font-semibold text-ink">
-            Glissez votre fichier <span class="font-mono text-brand-ink">.mi8lic</span> ici
+            {{ 'licence.dropHere' | t }} <span class="font-mono text-brand-ink">.mi8lic</span> {{ 'licence.dropHereSuffix' | t }}
           </p>
-          <p class="mt-1 text-xs text-ink-muted">ou cliquez pour parcourir</p>
+          <p class="mt-1 text-xs text-ink-muted">{{ 'licence.orBrowse' | t }}</p>
         </ng-container>
 
         <ng-container *ngIf="uploading">
@@ -117,7 +112,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
             <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
-          <p class="mt-4 text-sm font-semibold text-ink">Vérification de la signature…</p>
+          <p class="mt-4 text-sm font-semibold text-ink">{{ 'licence.verifying' | t }}</p>
           <p class="mt-1 text-xs text-ink-muted">{{ fileName }}</p>
         </ng-container>
       </label>
@@ -127,15 +122,14 @@
       </p>
 
       <p class="mt-6 text-center text-xs text-ink-muted">
-        Le fichier est signé cryptographiquement. Il ne contient aucune donnée personnelle
-        et ne peut pas être modifié sans invalider la licence.
+        {{ 'licence.signedNote' | t }}
       </p>
     </div>
 
     <!-- The copyright belongs to whoever publishes the software, not to the
          organisation the licence was issued to. -->
     <p class="mt-8 text-center text-xs text-ink-muted">
-      Plateforme de supervision MPPT
+      {{ 'licence.platform' | t }}
       <ng-container *ngIf="status?.vendor">· © {{ today | date: 'yyyy' }} {{ status?.vendor }}</ng-container>
     </p>
   </div>

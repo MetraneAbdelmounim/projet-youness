@@ -48,6 +48,8 @@ import { AdminModemsComponent } from './dashbord/admin-modems/admin-modems.compo
 import { AdminPanneauComponent } from './dashbord/admin-panneau/admin-panneau.component';
 import { AdminProjectComponent } from './dashbord/admin-project/admin-project.component';
 import { AdminSettingsComponent } from './dashbord/admin-settings/admin-settings.component';
+import { TranslatePipe } from './i18n/translate.pipe';
+import { LanguageToggleComponent } from './i18n/language-toggle.component';
 import { ChangePasswordComponent } from './dashbord/change-password/change-password.component';
 
 // The interface is entirely in French; without this every `| date` and
@@ -87,6 +89,8 @@ registerLocaleData(localeFrCa);
     AdminPanneauComponent,
     AdminProjectComponent,
     AdminSettingsComponent,
+    TranslatePipe,
+    LanguageToggleComponent,
     ChangePasswordComponent,
   ],
   imports: [

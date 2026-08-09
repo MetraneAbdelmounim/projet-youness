@@ -1,15 +1,15 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Stations MPPT"
+  <app-page-header [title]="'home.title' | t"
                    [subtitle]="spinnerSite ? 'Chargement…' : sites.length + ' station(s) · ' + onlineCount + ' en ligne'"
-                   [backLink]="['/projects']" backLabel="Retour aux projets">
+                   [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
 
     <label class="btn btn-ghost">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
       </svg>
-      Importer
+      {{ 'common.import' | t }}
       <input type="file" class="sr-only" accept=".xlsx,.xls" (change)="detectFile($event)" />
     </label>
 
@@ -18,14 +18,14 @@
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 3v12m0 0l-3.75-3.75M12 15l3.75-3.75M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
       </svg>
-      Exporter
+      {{ 'common.export' | t }}
     </button>
 
     <button type="button" class="btn btn-primary" (click)="openCrudModal()">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      Ajouter
+      {{ 'common.add' | t }}
     </button>
   </app-page-header>
 
@@ -33,22 +33,22 @@
   <section class="card mb-6 p-5">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h2 class="text-sm font-semibold text-ink">Redémarrage automatique à minuit</h2>
+        <h2 class="text-sm font-semibold text-ink">{{ 'adminSite.autoRestart' | t }}</h2>
         <p class="mt-0.5 text-xs text-ink-muted">
-          Envoie la commande de redémarrage à toutes les stations chaque nuit à 00 h 00.
+          {{ 'adminSite.autoRestartHint' | t }}
         </p>
       </div>
 
       <div class="flex items-center gap-3">
         <button type="button" class="btn btn-ghost" (click)="reloadAllSites()" [disabled]="!sites.length">
-          Redémarrer tout
+          {{ 'adminSite.restartAll' | t }}
         </button>
 
         <button type="button" role="switch" [attr.aria-checked]="midnightReloadEnabled"
                 (click)="toggleMidnightReload(!midnightReloadEnabled)"
                 class="relative h-6 w-11 flex-none rounded-full transition"
                 [ngClass]="midnightReloadEnabled ? 'bg-brand' : 'bg-line-strong'"
-                aria-label="Activer le redémarrage à minuit">
+                [attr.aria-label]="'adminSite.autoRestartAria' | t">
           <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
                 [ngClass]="midnightReloadEnabled ? 'left-[1.375rem]' : 'left-0.5'"></span>
         </button>
@@ -59,7 +59,7 @@
   <section class="card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
       <p class="text-sm text-ink-secondary">
-        Colonnes attendues à l'import :
+        {{ 'adminSite.expectedColumns' | t }}
         <code class="font-mono text-xs">ip, nom, latitude, longitude, Battery_Type, project</code>.
       </p>
       <div class="relative">
@@ -68,8 +68,8 @@
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
         </svg>
-        <input type="text" [(ngModel)]="term" placeholder="Filtrer par IP…"
-               class="field w-full pl-9 sm:w-64" aria-label="Filtrer par adresse IP" />
+        <input type="text" [(ngModel)]="term" [placeholder]="'common.filterByIp' | t"
+               class="field w-full pl-9 sm:w-64" [attr.aria-label]="'common.filterByIpAria' | t" />
       </div>
     </div>
 
@@ -82,12 +82,12 @@
         <table class="hidden w-full lg:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Station</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse IP</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Batterie</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Projet</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">État</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.station' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.ip' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'adminSite.battery' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.project' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'dashboard.state' | t }}</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -105,7 +105,7 @@
               </td>
               <td class="px-5 py-3.5">
                 <div class="flex justify-end gap-1.5">
-                  <button type="button" (click)="reload(site)" title="Redémarrer la station"
+                  <button type="button" (click)="reload(site)" [title]="'adminSite.restartOne' | t"
                           [disabled]="restarting.has(site._id)"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-warn disabled:opacity-50">
                     <svg class="h-4 w-4" [class.animate-spin]="restarting.has(site._id)"
@@ -114,7 +114,7 @@
                             d="M16.023 9.348h4.992V4.356m-4.992 4.992l3.181-3.183a8.25 8.25 0 00-13.803 3.7M4.031 9.865v4.992m0 0h4.99m-4.99 0l3.181 3.183a8.25 8.25 0 0013.803-3.7" />
                     </svg>
                   </button>
-                  <button type="button" (click)="refresh(site)" title="Réappliquer la configuration réseau"
+                  <button type="button" (click)="refresh(site)" [title]="'adminSite.reapplyNetwork' | t"
                           [disabled]="refreshing.has(site._id)"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink disabled:opacity-50">
                     <svg class="h-4 w-4" [class.animate-spin]="refreshing.has(site._id)"
@@ -123,14 +123,14 @@
                             d="M12 4.5v15m0 0l-4-4m4 4l4-4M4.5 9.75A5.25 5.25 0 019.75 4.5h4.5a5.25 5.25 0 015.25 5.25" />
                     </svg>
                   </button>
-                  <button type="button" (click)="onEdit(site)" title="Modifier"
+                  <button type="button" (click)="onEdit(site)" [title]="'common.edit' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                     </svg>
                   </button>
-                  <button type="button" (click)="openDeletedModal(site)" title="Supprimer"
+                  <button type="button" (click)="openDeletedModal(site)" [title]="'common.delete' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:border-crit hover:text-crit">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
@@ -156,10 +156,10 @@
             <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
               <span class="chip chip-neutral">{{ site.Battery_Type }}</span>
               <div class="flex gap-1.5">
-                <button type="button" (click)="reload(site)" class="btn btn-ghost px-3 py-1 text-xs">Redémarrer</button>
-                <button type="button" (click)="refresh(site)" class="btn btn-ghost px-3 py-1 text-xs">Réseau</button>
-                <button type="button" (click)="onEdit(site)" class="btn btn-ghost px-3 py-1 text-xs">Modifier</button>
-                <button type="button" (click)="openDeletedModal(site)" class="btn btn-danger px-3 py-1 text-xs">Supprimer</button>
+                <button type="button" (click)="reload(site)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'adminSite.restartOne' | t }}</button>
+                <button type="button" (click)="refresh(site)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'adminSite.network' | t }}</button>
+                <button type="button" (click)="onEdit(site)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'common.edit' | t }}</button>
+                <button type="button" (click)="openDeletedModal(site)" class="btn btn-danger px-3 py-1 text-xs">{{ 'common.delete' | t }}</button>
               </div>
             </div>
           </div>
@@ -167,15 +167,15 @@
 
         <div class="border-t border-line p-4">
           <pagination-controls id="site_pagination" (pageChange)="page = $event"
-                               previousLabel="Précédent" nextLabel="Suivant">
+                               [previousLabel]="'common.previous' | t" [nextLabel]="'common.next' | t">
           </pagination-controls>
         </div>
       </div>
 
       <ng-template #noSites>
-        <app-empty-state icon="🔌" title="Aucune station"
-                         description="Ajoutez une station ou importez un fichier Excel.">
-          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">Ajouter une station</button>
+        <app-empty-state icon="🔌" [title]="'home.empty' | t"
+                         [description]="'adminSite.emptyHint' | t">
+          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">{{ 'adminSite.addStation' | t }}</button>
         </app-empty-state>
       </ng-template>
     </ng-container>
@@ -184,28 +184,28 @@
 
 <!-- Create / edit -->
 <app-modal [open]="crudOpen" (closed)="crudOpen = false"
-           [title]="type === 'Edit' ? 'Modifier la station' : 'Ajouter une station'" [hasFooter]="false">
+           [title]="(type === 'Edit' ? 'adminSite.editStation' : 'adminSite.addStation') | t" [hasFooter]="false">
   <form (ngSubmit)="onSubmit(f)" #f="ngForm" class="space-y-4">
     <div>
-      <label for="nom" class="label">Nom</label>
+      <label for="nom" class="label">{{ 'common.name' | t }}</label>
       <input id="nom" name="nom" class="field" required
              [ngModel]="type === 'Edit' ? siteEdited?.nom : null" />
     </div>
 
     <div>
-      <label for="ip" class="label">Adresse IP</label>
-      <input id="ip" name="ip" class="field" required placeholder="10.8.0.10"
+      <label for="ip" class="label">{{ 'common.ip' | t }}</label>
+      <input id="ip" name="ip" class="field" required [placeholder]="'adminDevice.ipPlaceholder' | t"
              [ngModel]="type === 'Edit' ? siteEdited?.ip : null" />
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label for="latitude" class="label">Latitude</label>
+        <label for="latitude" class="label">{{ 'adminSite.latitude' | t }}</label>
         <input id="latitude" name="latitude" type="number" step="any" class="field"
                [ngModel]="type === 'Edit' ? siteEdited?.latitude : null" />
       </div>
       <div>
-        <label for="longitude" class="label">Longitude</label>
+        <label for="longitude" class="label">{{ 'adminSite.longitude' | t }}</label>
         <input id="longitude" name="longitude" type="number" step="any" class="field"
                [ngModel]="type === 'Edit' ? siteEdited?.longitude : null" />
       </div>
@@ -213,7 +213,7 @@
 
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label for="Battery_Type" class="label">Type de batterie</label>
+        <label for="Battery_Type" class="label">{{ 'adminSite.batteryType' | t }}</label>
         <select id="Battery_Type" name="Battery_Type" class="field"
                 [ngModel]="type === 'Edit' ? siteEdited?.Battery_Type : 'AGM'">
           <option value="AGM">AGM</option>
@@ -221,32 +221,32 @@
         </select>
       </div>
       <div>
-        <label for="project" class="label">Projet</label>
+        <label for="project" class="label">{{ 'common.project' | t }}</label>
         <select id="project" name="project" class="field"
                 [ngModel]="type === 'Edit' ? siteEdited?.project?._id : null">
-          <option [ngValue]="null">— Aucun —</option>
+          <option [ngValue]="null">{{ 'common.noneBrackets' | t }}</option>
           <option *ngFor="let project of projects" [ngValue]="project._id">{{ project.nom }}</option>
         </select>
       </div>
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
-      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">Annuler</button>
+      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">{{ 'common.cancel' | t }}</button>
       <button type="submit" class="btn btn-primary" [disabled]="f.invalid || saving">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+        {{ (saving ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>
   </form>
 </app-modal>
 
 <!-- Delete confirmation -->
-<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" title="Confirmer la suppression" size="sm">
+<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" [title]="'common.confirmDeleteTitle' | t" size="sm">
   <p class="text-sm text-ink-secondary">
-    Voulez-vous vraiment supprimer la station <strong class="text-ink">{{ deletedSiteName }}</strong> ?
-    Son historique de mesures sera également supprimé.
+    {{ 'adminSite.confirmDeleteBody' | t }} <strong class="text-ink">{{ deletedSiteName }}</strong> ?
+    {{ 'adminSite.deleteWarning' | t }}
   </p>
   <ng-container modalFooter>
-    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">Annuler</button>
-    <button type="button" class="btn btn-danger" (click)="remove()">Supprimer</button>
+    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn btn-danger" (click)="remove()">{{ 'common.delete' | t }}</button>
   </ng-container>
 </app-modal>

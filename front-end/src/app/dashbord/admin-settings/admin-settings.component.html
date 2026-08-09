@@ -1,17 +1,17 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Paramètres"
-                   [subtitle]="loading ? 'Chargement…' : 'Configuration du serveur de messagerie et de la planification'"
-                   [backLink]="['/projects']" backLabel="Retour aux projets">
+  <app-page-header [title]="'settings.title' | t"
+                   [subtitle]="(loading ? 'common.loading' : 'settings.subtitle') | t"
+                   [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
     <button type="button" class="btn btn-ghost" (click)="resetToEnv()" [disabled]="loading || saving">
-      Valeurs du fichier .env
+      {{ 'settings.envDefaults' | t }}
     </button>
     <button type="button" class="btn btn-primary" (click)="save()" [disabled]="loading || saving">
       <svg *ngIf="saving" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
       </svg>
-      {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+      {{ (saving ? 'common.saving' : 'common.save') | t }}
     </button>
   </app-page-header>
 
@@ -25,28 +25,28 @@
     <!-- ── Serveur SMTP ─────────────────────────────────────────────────── -->
     <section class="card p-6">
       <header class="mb-5">
-        <h2 class="text-lg font-semibold text-ink">Serveur de messagerie (SMTP)</h2>
+        <h2 class="text-lg font-semibold text-ink">{{ 'settings.smtpTitle' | t }}</h2>
         <p class="mt-1 text-sm text-ink-muted">
-          Utilisé pour les alertes de stations hors ligne et le rapport de redémarrage nocturne.
+          {{ 'settings.smtpSubtitle' | t }}
         </p>
       </header>
 
       <div class="grid gap-4 sm:grid-cols-3">
         <label class="block sm:col-span-2">
-          <span class="label">Serveur</span>
+          <span class="label">{{ 'settings.server' | t }}</span>
           <input type="text" name="smtpHost" [(ngModel)]="form.smtpHost" class="field mt-1 w-full"
-                 placeholder="smtp.exemple.com" autocomplete="off" />
+                 placeholder="smtp.example.com" autocomplete="off" />
           <span class="mt-1 block text-xs text-ink-muted">
-            .env : {{ defaultOf('smtp.host') }}
-            <span *ngIf="overridden('smtp.host')" class="chip chip-neutral ml-1">modifié</span>
+            {{ 'settings.envValue' | t: { value: defaultOf('smtp.host') } }}
+            <span *ngIf="overridden('smtp.host')" class="chip chip-neutral ml-1">{{ 'settings.modified' | t }}</span>
           </span>
         </label>
 
         <label class="block">
-          <span class="label">Port</span>
+          <span class="label">{{ 'settings.port' | t }}</span>
           <input type="number" name="smtpPort" [(ngModel)]="form.smtpPort" class="field mt-1 w-full"
                  min="1" max="65535" />
-          <span class="mt-1 block text-xs text-ink-muted">.env : {{ defaultOf('smtp.port') }}</span>
+          <span class="mt-1 block text-xs text-ink-muted">{{ 'settings.envValue' | t: { value: defaultOf('smtp.port') } }}</span>
         </label>
       </div>
 
@@ -54,48 +54,47 @@
         <input type="checkbox" name="smtpSecure" [(ngModel)]="form.smtpSecure"
                class="mt-0.5 h-4 w-4 rounded border-line" />
         <span>
-          <span class="block text-sm font-medium text-ink">Connexion TLS implicite</span>
+          <span class="block text-sm font-medium text-ink">{{ 'settings.tls' | t }}</span>
           <span class="block text-xs text-ink-muted">
-            À activer pour le port 465. Les ports 25 et 587 négocient TLS avec STARTTLS
-            et doivent rester décochés.
+            {{ 'settings.tlsHint' | t }}
           </span>
         </span>
       </label>
 
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         <label class="block">
-          <span class="label">Utilisateur</span>
+          <span class="label">{{ 'settings.user' | t }}</span>
           <input type="text" name="smtpUser" [(ngModel)]="form.smtpUser" class="field mt-1 w-full"
-                 placeholder="(aucune authentification)" autocomplete="off" />
+                 [placeholder]="'settings.noAuth' | t" autocomplete="off" />
           <span class="mt-1 block text-xs text-ink-muted">
-            Laissez vide pour un relais sans authentification.
+            {{ 'settings.userHint' | t }}
           </span>
         </label>
 
         <label class="block">
-          <span class="label">Mot de passe</span>
+          <span class="label">{{ 'settings.password' | t }}</span>
           <input type="password" name="smtpPass" [(ngModel)]="form.smtpPass" class="field mt-1 w-full"
-                 [placeholder]="passwordStored ? '•••••••• (inchangé)' : '(aucun)'"
+                 [placeholder]="(passwordStored ? 'settings.passwordSet' : 'settings.passwordNone') | t"
                  autocomplete="new-password" />
           <span class="mt-1 block text-xs text-ink-muted">
-            Jamais réaffiché. Laissez vide pour conserver celui enregistré.
+            {{ 'settings.passwordHint' | t }}
           </span>
         </label>
       </div>
 
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         <label class="block">
-          <span class="label">Adresse d'expéditeur</span>
+          <span class="label">{{ 'settings.from' | t }}</span>
           <input type="text" name="mailFrom" [(ngModel)]="form.mailFrom" class="field mt-1 w-full" />
-          <span class="mt-1 block text-xs text-ink-muted">.env : {{ defaultOf('mail.from') }}</span>
+          <span class="mt-1 block text-xs text-ink-muted">{{ 'settings.envValue' | t: { value: defaultOf('mail.from') } }}</span>
         </label>
 
         <label class="block">
-          <span class="label">Domaine des membres</span>
+          <span class="label">{{ 'settings.memberDomain' | t }}</span>
           <input type="text" name="memberDomain" [(ngModel)]="form.memberDomain"
                  class="field mt-1 w-full" />
           <span class="mt-1 block text-xs text-ink-muted">
-            Ajouté aux identifiants sans « &#64; » pour former l'adresse du destinataire.
+            {{ 'settings.memberDomainHint' | t }}
           </span>
         </label>
       </div>
@@ -103,23 +102,23 @@
       <!-- Test. Uses the values on screen so a wrong server is caught before it
            is saved and silently disables every alert. -->
       <div class="mt-6 rounded-xl border border-line bg-sunken p-4">
-        <p class="text-sm font-semibold text-ink">Tester la configuration</p>
+        <p class="text-sm font-semibold text-ink">{{ 'settings.testTitle' | t }}</p>
         <p class="mt-0.5 text-xs text-ink-muted">
-          Le test utilise les valeurs affichées ci-dessus, même non enregistrées.
+          {{ 'settings.testSubtitle' | t }}
         </p>
 
         <div class="mt-3 flex flex-wrap items-end gap-3">
           <label class="min-w-0 flex-1">
-            <span class="label">Destinataire</span>
+            <span class="label">{{ 'settings.recipient' | t }}</span>
             <input type="email" name="testRecipient" [(ngModel)]="testRecipient"
-                   class="field mt-1 w-full" placeholder="(votre adresse)" autocomplete="off" />
+                   class="field mt-1 w-full" [placeholder]="'settings.yourAddress' | t" autocomplete="off" />
           </label>
           <button type="button" class="btn btn-ghost" (click)="testMail()" [disabled]="testing">
             <svg *ngIf="testing" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            {{ testing ? 'Test en cours…' : 'Envoyer un test' }}
+            {{ (testing ? 'settings.testing' : 'settings.sendTest') | t }}
           </button>
         </div>
 
@@ -128,10 +127,10 @@
              [class.bg-good-soft]="testResult.ok" [class.bg-crit-soft]="!testResult.ok">
           <p class="text-sm font-semibold" [class.text-good]="testResult.ok"
              [class.text-crit]="!testResult.ok">
-            {{ testResult.ok ? '✓ Succès' : '✕ Échec' }} — étape « {{ testResult.stage }} »
+            {{ 'settings.testStage' | t: { result: ((testResult.ok ? 'settings.testSuccess' : 'settings.testFailure') | t), stage: testResult.stage } }}
           </p>
           <p class="mt-1 text-xs" [class.text-good]="testResult.ok" [class.text-crit]="!testResult.ok">
-            <span *ngIf="testResult.ok">Message envoyé à {{ testResult.to }}. </span>
+            <span *ngIf="testResult.ok">{{ 'settings.testSentTo' | t: { to: testResult.to } }} </span>
             {{ testResult.message }}
           </p>
         </div>
@@ -141,43 +140,43 @@
     <!-- ── Planification ────────────────────────────────────────────────── -->
     <section class="card p-6">
       <header class="mb-5">
-        <h2 class="text-lg font-semibold text-ink">Planification</h2>
+        <h2 class="text-lg font-semibold text-ink">{{ 'settings.scheduleTitle' | t }}</h2>
         <p class="mt-1 text-sm text-ink-muted">
-          Les modifications prennent effet immédiatement, sans redémarrage du serveur.
+          {{ 'settings.scheduleSubtitle' | t }}
         </p>
       </header>
 
       <label class="block">
-        <span class="label">Fréquence de vérification des stations</span>
+        <span class="label">{{ 'settings.alertFrequency' | t }}</span>
         <div class="mt-1 flex flex-wrap gap-1.5">
           <button *ngFor="let preset of alertPresets" type="button" class="chip"
                   [class.chip-good]="form.alertCron === preset.value"
                   [class.chip-neutral]="form.alertCron !== preset.value"
                   (click)="form.alertCron = preset.value">
-            {{ preset.label }}
+            {{ preset.label | t }}
           </button>
         </div>
         <input type="text" name="alertCron" [(ngModel)]="form.alertCron"
                class="field mt-2 w-full font-mono text-sm" placeholder="*/15 * * * *" />
         <span class="mt-1 block text-xs text-ink-muted">
-          Expression cron. .env : <code class="font-mono">{{ defaultOf('schedule.alert') }}</code>
+          {{ 'settings.cronHint' | t: { value: defaultOf('schedule.alert') } }}
         </span>
       </label>
 
       <label class="mt-5 block">
-        <span class="label">Redémarrage nocturne des stations</span>
+        <span class="label">{{ 'settings.nightly' | t }}</span>
         <div class="mt-1 flex flex-wrap gap-1.5">
           <button *ngFor="let preset of nightlyPresets" type="button" class="chip"
                   [class.chip-good]="form.nightlyCron === preset.value"
                   [class.chip-neutral]="form.nightlyCron !== preset.value"
                   (click)="form.nightlyCron = preset.value">
-            {{ preset.label }}
+            {{ preset.label | t }}
           </button>
         </div>
         <input type="text" name="nightlyCron" [(ngModel)]="form.nightlyCron"
                class="field mt-2 w-full font-mono text-sm" placeholder="0 0 * * *" />
         <span class="mt-1 block text-xs text-ink-muted">
-          .env : <code class="font-mono">{{ defaultOf('schedule.nightly') }}</code>
+          {{ 'settings.envValue' | t: { value: defaultOf('schedule.nightly') } }}
         </span>
       </label>
 
@@ -185,42 +184,40 @@
         <input type="checkbox" name="reloadMidnight" [(ngModel)]="form.reloadMidnight"
                class="mt-0.5 h-4 w-4 rounded border-line" />
         <span>
-          <span class="block text-sm font-medium text-ink">Activer le redémarrage nocturne</span>
+          <span class="block text-sm font-medium text-ink">{{ 'settings.enableNightly' | t }}</span>
           <span class="block text-xs text-ink-muted">
-            Sans cette case, la tâche ci-dessus s'exécute mais ne redémarre aucune station.
+            {{ 'settings.enableNightlyHint' | t }}
           </span>
         </span>
       </label>
 
       <div class="mt-5 grid gap-4 sm:grid-cols-2">
         <label class="block">
-          <span class="label">Fuseau horaire</span>
+          <span class="label">{{ 'settings.timezone' | t }}</span>
           <input type="text" name="timezone" [(ngModel)]="form.timezone" class="field mt-1 w-full"
                  placeholder="America/Montreal" />
-          <span class="mt-1 block text-xs text-ink-muted">.env : {{ defaultOf('schedule.timezone') }}</span>
+          <span class="mt-1 block text-xs text-ink-muted">{{ 'settings.envValue' | t: { value: defaultOf('schedule.timezone') } }}</span>
         </label>
 
         <label class="block">
-          <span class="label">Rappel d'une alerte non résolue</span>
+          <span class="label">{{ 'settings.reminder' | t }}</span>
           <div class="mt-1 flex items-center gap-2">
             <input type="number" name="reminderHours" [(ngModel)]="form.reminderHours"
                    class="field w-full" min="1" max="720" />
-            <span class="flex-none text-sm text-ink-muted">heures</span>
+            <span class="flex-none text-sm text-ink-muted">{{ 'settings.hours' | t }}</span>
           </div>
           <span class="mt-1 block text-xs text-ink-muted">
-            Délai avant de renvoyer une alerte toujours active. .env :
-            {{ defaultOf('alert.reminderIntervalMs') }}
+            {{ 'settings.reminderHint' | t }}
+            {{ 'settings.envValue' | t: { value: defaultOf('alert.reminderIntervalMs') } }}
           </span>
         </label>
       </div>
 
       <div class="mt-6 rounded-xl bg-brand-soft p-4">
-        <p class="text-xs font-semibold text-brand-ink">Qui reçoit les alertes ?</p>
+        <p class="text-xs font-semibold text-brand-ink">{{ 'settings.recipientsTitle' | t }}</p>
         <p class="mt-1 text-xs text-brand-ink">
-          Les membres dont la notification est activée. Les administrateurs les reçoivent pour
-          tous les projets ; les autres membres, uniquement pour les projets qui leur sont
-          assignés. Vérifiez-le dans
-          <a routerLink="/dashbord/members" class="font-semibold underline">Utilisateurs</a>.
+          {{ 'settings.recipientsBody' | t }}
+          <a routerLink="/dashbord/members" class="font-semibold underline">{{ 'settings.recipientsLink' | t }}</a>.
         </p>
       </div>
     </section>

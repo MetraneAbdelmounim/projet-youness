@@ -6,7 +6,7 @@
     <button type="button" (click)="home()" class="flex items-center gap-3">
       <img src="assets/images/logo.png" alt="" class="h-8 w-auto dark:brightness-0 dark:invert" />
       <span class="hidden text-sm font-semibold tracking-tight text-ink sm:block">
-        Supervision MPPT
+        {{ 'nav.brand' | t }}
       </span>
     </button>
 
@@ -14,16 +14,17 @@
     <nav class="flex items-center gap-1">
       <a routerLink="/projects" routerLinkActive="bg-brand-soft text-brand-ink"
          class="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-secondary transition hover:bg-hover hover:text-ink">
-        Projets
+        {{ 'nav.projects' | t }}
       </a>
       <a *ngIf="isAdmin" routerLink="/dashbord/sites" routerLinkActive="bg-brand-soft text-brand-ink"
          class="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-secondary transition hover:bg-hover hover:text-ink">
-        Administration
+        {{ 'nav.administration' | t }}
       </a>
     </nav>
 
     <!-- Right cluster -->
     <div class="flex items-center gap-2">
+      <app-language-toggle></app-language-toggle>
       <app-theme-toggle></app-theme-toggle>
 
       <!-- Account menu. Built natively rather than with Flowbite's data-attribute
@@ -47,20 +48,20 @@
              style="box-shadow: var(--shadow-pop)">
           <div class="border-b border-line px-4 py-3">
             <p class="truncate text-sm font-semibold text-ink">{{ username }}</p>
-            <p class="mt-0.5 text-xs text-ink-muted">{{ role }}</p>
+            <p class="mt-0.5 text-xs text-ink-muted">{{ roleKey | t }}</p>
           </div>
           <div class="p-1.5">
             <a routerLink="/dashbord/change-password" role="menuitem" (click)="menuOpen = false"
                class="block rounded-lg px-3 py-2 text-sm text-ink-secondary transition hover:bg-hover hover:text-ink">
-              Changer le mot de passe
+              {{ 'nav.changePassword' | t }}
             </a>
             <a *ngIf="isAdmin" routerLink="/dashbord/licence" role="menuitem" (click)="menuOpen = false"
                class="block rounded-lg px-3 py-2 text-sm text-ink-secondary transition hover:bg-hover hover:text-ink">
-              Licence
+              {{ 'nav.licence' | t }}
             </a>
             <button type="button" role="menuitem" (click)="onLogout()"
                     class="block w-full rounded-lg px-3 py-2 text-left text-sm text-crit transition hover:bg-crit-soft">
-              Se déconnecter
+              {{ 'nav.logout' | t }}
             </button>
           </div>
         </div>

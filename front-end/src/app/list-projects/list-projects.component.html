@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Vos projets"
-                   subtitle="Sélectionnez un projet pour accéder à sa supervision.">
+  <app-page-header [title]="'projects.pageTitle' | t"
+                   [subtitle]="'projects.pageSubtitle' | t">
   </app-page-header>
 
   <!-- Skeletons mirror the real card geometry, so the layout does not jump. -->
@@ -43,8 +43,8 @@
     </div>
 
     <ng-template #noProjects>
-      <app-empty-state icon="🗂️" title="Aucun projet"
-                       description="Aucun projet ne vous est assigné pour le moment. Contactez votre administrateur.">
+      <app-empty-state icon="🗂️" [title]="'projects.empty' | t"
+                       [description]="'projects.emptyDesc' | t">
       </app-empty-state>
     </ng-template>
   </ng-container>

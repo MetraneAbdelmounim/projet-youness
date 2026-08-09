@@ -18,21 +18,20 @@
       <div class="max-w-lg">
         <span class="chip chip-good mb-6">
           <span class="chip-dot live-dot"></span>
-          Supervision en continu
+          {{ 'login.badge' | t }}
         </span>
         <h1 class="text-5xl font-bold leading-tight tracking-tight">
-          Vos stations solaires,<br />sous contrôle.
+          {{ 'login.heroLine1' | t }}<br />{{ 'login.heroLine2' | t }}
         </h1>
         <p class="mt-5 text-lg font-light text-white/70">
-          Relevés MPPT, prévisions météo et alertes automatiques —
-          pour l'ensemble de votre parc, en temps réel.
+          {{ 'login.heroBody' | t }}
         </p>
       </div>
 
       <div class="flex items-center gap-8 text-sm text-white/50">
         <div><span class="block text-2xl font-bold text-white">MPPT</span>Modbus TCP</div>
-        <div><span class="block text-2xl font-bold text-white">24/7</span>Surveillance</div>
-        <div><span class="block text-2xl font-bold text-white">90 j</span>Historique</div>
+        <div><span class="block text-2xl font-bold text-white">24/7</span>{{ 'login.statMonitoring' | t }}</div>
+        <div><span class="block text-2xl font-bold text-white">{{ 'login.days90' | t }}</span>{{ 'login.statHistory' | t }}</div>
       </div>
     </div>
   </div>
@@ -44,30 +43,33 @@
       <div class="mb-8 flex items-center justify-between">
         <img src="assets/images/logo.png" alt="Innovation MI8"
              class="h-10 w-auto dark:brightness-0 dark:invert" />
-        <app-theme-toggle></app-theme-toggle>
+        <div class="flex items-center gap-2">
+          <app-language-toggle></app-language-toggle>
+          <app-theme-toggle></app-theme-toggle>
+        </div>
       </div>
 
-      <h2 class="text-2xl font-bold tracking-tight text-ink">Connexion</h2>
+      <h2 class="text-2xl font-bold tracking-tight text-ink">{{ 'login.title' | t }}</h2>
       <p class="mt-1.5 text-sm text-ink-secondary">
-        Accédez à votre plateforme de supervision.
+        {{ 'login.subtitle' | t }}
       </p>
 
       <form (ngSubmit)="onSignIn(f)" #f="ngForm" class="mt-8 space-y-5">
         <div>
-          <label for="username" class="label">Nom d'utilisateur</label>
+          <label for="username" class="label">{{ 'login.username' | t }}</label>
           <input id="username" name="username" ngModel required autocomplete="username"
-                 class="field" placeholder="prenom.nom" />
+                 class="field" [placeholder]="'login.usernamePlaceholder' | t" />
         </div>
 
         <div>
-          <label for="password" class="label">Mot de passe</label>
+          <label for="password" class="label">{{ 'login.password' | t }}</label>
           <div class="relative">
             <input id="password" name="password" ngModel required
                    [type]="showPassword ? 'text' : 'password'" autocomplete="current-password"
                    class="field pr-11" placeholder="••••••••" />
             <button type="button" (click)="showPassword = !showPassword"
                     class="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ink-muted transition hover:text-ink"
-                    [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+                    [attr.aria-label]="(showPassword ? 'login.hidePassword' : 'login.showPassword') | t">
               <svg *ngIf="!showPassword" class="h-4 w-4" fill="none" stroke="currentColor"
                    stroke-width="1.8" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -84,7 +86,7 @@
         </div>
 
         <button type="submit" [disabled]="f.invalid" class="btn btn-primary w-full py-3">
-          Se connecter
+          {{ 'login.submit' | t }}
         </button>
       </form>
 
@@ -94,7 +96,7 @@
       <p class="mt-10 text-center text-xs text-ink-muted">
         Innovation MI8 · Supervision MPPT
         <br />
-        Conçu par <span class="font-semibold text-ink-secondary">Younès Berayeteb</span>
+        {{ 'login.designedBy' | t }} <span class="font-semibold text-ink-secondary">Younès Berayeteb</span>
       </p>
     </div>
   </div>

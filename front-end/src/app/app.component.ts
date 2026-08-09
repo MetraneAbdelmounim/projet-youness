@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { I18nService } from './i18n/i18n.service';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { LoginService } from './services/login.service';
@@ -24,7 +25,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private licence: LicenceService,
     // Injected for its constructor side effect: the theme must be applied
     // before first paint, not when some component happens to ask for it.
-    public theme: ThemeService
+    public theme: ThemeService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -41,7 +43,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.licence.watch().subscribe((status) => {
         this.licenceWarning =
           status.valid && status.daysRemaining !== undefined && status.daysRemaining <= 30
-            ? `Votre licence expire dans ${status.daysRemaining} jour(s).`
+            ? this.i18n.t('licence.expiresIn', { days: status.daysRemaining })
             : null;
       })
     );

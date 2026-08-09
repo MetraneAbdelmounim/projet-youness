@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { I18nService } from '../../i18n/i18n.service';
 import { forkJoin } from 'rxjs';
 import { Member } from '../../models/member';
 import { Project } from '../../models/project';
@@ -39,7 +40,8 @@ export class AdminMemberComponent implements OnInit {
   constructor(
     private memberService: MemberService,
     private projectService: ProjectService,
-    private message: ToastrService
+    private message: ToastrService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -130,8 +132,8 @@ export class AdminMemberComponent implements OnInit {
     if (!this.createdCredentials) return;
     void navigator.clipboard
       .writeText(this.createdCredentials.password)
-      .then(() => this.message.success('Mot de passe copié'))
-      .catch(() => this.message.error('Copie impossible'));
+      .then(() => this.message.success(this.i18n.t('adminMember.passwordCopied')))
+      .catch(() => this.message.error(this.i18n.t('adminMember.copyFailed')));
   }
 
   onEdit(member: Member): void {

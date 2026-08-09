@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { EMPTY, Subscription, forkJoin } from 'rxjs';
 import { catchError, exhaustMap } from 'rxjs/operators';
 import { refreshWhileVisible } from '../services/auto-refresh';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { buildAnalysisReport } from './analysis-report';
 import { Site } from '../models/site';
 import { Project } from '../models/project';
 import { SiteService } from '../services/site.service';
@@ -30,7 +30,8 @@ export class AnalysisComponent implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private message: ToastrService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +57,7 @@ export class AnalysisComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.spinnerSite = false;
-        this.message.error('Une erreur est survenue !');
+        this.message.error(this.i18n.t('common.genericError'));
       },
     });
 
@@ -85,8 +86,11 @@ export class AnalysisComponent implements OnInit, OnDestroy {
   }
 
   get subtitle(): string {
-    if (this.spinnerSite) return 'Chargement…';
-    return `${this.project?.nom ?? ''} · ${this.sites.length} station(s)`;
+    if (this.spinnerSite) return this.i18n.t('common.loading');
+    return this.i18n.t('home.subtitle', {
+      project: this.project?.nom ?? '',
+      count: this.sites.length,
+    });
   }
 
   /**
@@ -116,58 +120,15 @@ export class AnalysisComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/project', idProject, 'analysis', idSite]);
   }
 
+  exporting = false;
+
+  /** Renders the printed report; layout lives in analysis-report.ts. */
   generatePDF(projectName: string): void {
-    const doc = new jsPDF();
+    if (this.exporting) return;
 
-    doc.addImage('assets/images/logo.png', 'PNG', 10, 10, 30, 20);
-    doc.setFontSize(16);
-    doc.setTextColor(40);
-    doc.text(`Projet : ${projectName}`, 50, 10);
-    doc.text("Rapport d'analyse des stations MPPT/Météo", 50, 20);
-    doc.setFontSize(10);
-    doc.text('Généré le : ' + new Date().toLocaleString(), 50, 27);
-
-    const body = this.sites.map((site) => {
-      const analysis = site.lastAnalysis;
-      return [
-        site.nom,
-        site.ip,
-        analysis?.avg_remaining_cloud ?? 'N/A',
-        analysis?.remaining_sun_hours ?? 'N/A',
-        analysis?.battery_type ?? 'N/A',
-        analysis?.battery_capacity_loss ?? 'N/A',
-        analysis?.solar_charge_loss_clouds ?? 'N/A',
-        analysis?.solar_charge_efficiency ?? 'N/A',
-        analysis?.current_battery_voltage ?? 'N/A',
-        analysis?.performance ?? 'N/A',
-      ];
-    });
-
-    autoTable(doc, {
-      head: [
-        [
-          'Nom', 'IP', 'Cloud (%)', 'Sun Hours', 'Type Batterie',
-          'Perte Batt.', 'Perte Nuages', 'Efficacité', 'Voltage', 'Performance',
-        ],
-      ],
-      body,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [41, 128, 185] },
-      margin: { top: 35 },
-      didParseCell: (data) => {
-        if (data.section !== 'body' || data.column.index !== 9) return;
-
-        const colours: Record<string, [number, number, number]> = {
-          UP: [0, 128, 0],
-          DOWN: [220, 20, 60],
-          MEDIUM: [30, 144, 255],
-        };
-        const performance = (data.row.raw as string[])[9];
-        const colour = colours[performance];
-        if (colour) data.cell.styles.textColor = colour;
-      },
-    });
-
-    doc.save(`[${projectName}]Rapport_sites.pdf`);
+    this.exporting = true;
+    buildAnalysisReport(projectName, this.sites, this.counts, this.i18n)
+      .catch(() => this.message.error(this.i18n.t('analysis.reportFailed')))
+      .finally(() => (this.exporting = false));
   }
 }

@@ -1,5 +1,6 @@
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
+import { initialLanguage } from './app/i18n/i18n.service';
 
 /**
  * Applies the stored theme before Angular boots.
@@ -14,6 +15,10 @@ import { AppModule } from './app/app.module';
     stored === 'dark' ||
     (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark', dark);
+
+  // Assistive technology and the browser's translation prompt both read this on
+  // first paint, so it has to be right before Angular renders anything.
+  document.documentElement.lang = initialLanguage();
 })();
 
 platformBrowserDynamic()

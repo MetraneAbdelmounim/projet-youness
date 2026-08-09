@@ -10,8 +10,10 @@ import { ProjectService } from '../../services/project.service';
   templateUrl: '../admin-device.component.html',
 })
 export class AdminModemsComponent extends AdminDeviceBase {
-  readonly resourceLabel = 'modem';
-  readonly resourceLabelPlural = 'Modems';
+  readonly titleKey = 'adminDevice.modemsPlural' as const;
+  readonly emptyKey = 'adminDevice.emptyModem' as const;
+  readonly editKey = 'adminDevice.editModem' as const;
+  readonly addKey = 'adminDevice.addModem' as const;
   readonly sheetName = 'modems';
 
   constructor(modemService: ModemService, projectService: ProjectService, message: ToastrService) {

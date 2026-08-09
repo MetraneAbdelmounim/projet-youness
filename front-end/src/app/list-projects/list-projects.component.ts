@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { I18nService } from '../i18n/i18n.service';
 import { Project } from '../models/project';
 import { ProjectService } from '../services/project.service';
 
@@ -20,7 +21,8 @@ export class ListProjectsComponent implements OnInit, OnDestroy {
   constructor(
     private projectService: ProjectService,
     private router: Router,
-    private message: ToastrService
+    private message: ToastrService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -34,7 +36,7 @@ export class ListProjectsComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.spinnerSite = false;
-          this.message.error('Impossible de charger les projets');
+          this.message.error(this.i18n.t('projects.loadFailed'));
         },
       })
     );

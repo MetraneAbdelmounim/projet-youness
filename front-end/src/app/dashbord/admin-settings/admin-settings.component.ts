@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
+import { I18nService } from '../../i18n/i18n.service';
+import { TranslationKey } from '../../i18n/fr';
 import {
   AppSettings,
   MailTestResult,
@@ -9,18 +11,18 @@ import {
 const HOUR_MS = 60 * 60 * 1000;
 
 /** Common cron expressions, so the cadence is not a guessing game. */
-const ALERT_PRESETS = [
-  { label: 'Toutes les 5 minutes', value: '*/5 * * * *' },
-  { label: 'Toutes les 15 minutes', value: '*/15 * * * *' },
-  { label: 'Toutes les 30 minutes', value: '*/30 * * * *' },
-  { label: 'Toutes les heures', value: '0 * * * *' },
+const ALERT_PRESETS: { label: TranslationKey; value: string }[] = [
+  { label: 'settings.every5', value: '*/5 * * * *' },
+  { label: 'settings.every15', value: '*/15 * * * *' },
+  { label: 'settings.every30', value: '*/30 * * * *' },
+  { label: 'settings.hourly', value: '0 * * * *' },
 ];
 
-const NIGHTLY_PRESETS = [
-  { label: 'Minuit', value: '0 0 * * *' },
-  { label: '1 h du matin', value: '0 1 * * *' },
-  { label: '3 h du matin', value: '0 3 * * *' },
-  { label: 'Dimanche à minuit', value: '0 0 * * 0' },
+const NIGHTLY_PRESETS: { label: TranslationKey; value: string }[] = [
+  { label: 'settings.midnight', value: '0 0 * * *' },
+  { label: 'settings.at1am', value: '0 1 * * *' },
+  { label: 'settings.at3am', value: '0 3 * * *' },
+  { label: 'settings.sundayMidnight', value: '0 0 * * 0' },
 ];
 
 /**
@@ -70,7 +72,8 @@ export class AdminSettingsComponent implements OnInit {
 
   constructor(
     private settings: SettingsService,
-    private message: ToastrService
+    private message: ToastrService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -124,7 +127,7 @@ export class AdminSettingsComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        this.message.error('Impossible de charger les paramètres');
+        this.message.error(this.i18n.t('settings.loadFailed'));
       },
     });
   }
@@ -140,8 +143,8 @@ export class AdminSettingsComponent implements OnInit {
     if (!this.defaults) return '';
     const value = this.defaults[key];
     if (key === 'alert.reminderIntervalMs') return `${Math.round(Number(value) / HOUR_MS)} h`;
-    if (typeof value === 'boolean') return value ? 'activé' : 'désactivé';
-    return value === '' ? '(vide)' : String(value);
+    if (typeof value === 'boolean') return this.i18n.t(value ? 'common.yes' : 'common.no');
+    return value === '' ? this.i18n.t('settings.emptyValue') : String(value);
   }
 
   save(): void {
@@ -172,11 +175,11 @@ export class AdminSettingsComponent implements OnInit {
         this.passwordStored = values['smtp.pass.isSet'];
         this.form = this.toForm(values);
         this.saving = false;
-        this.message.success('Paramètres enregistrés — la planification a été rechargée');
+        this.message.success(this.i18n.t('settings.saved'));
       },
       error: (err) => {
         this.saving = false;
-        this.message.error(err?.error?.error || 'Enregistrement impossible');
+        this.message.error(err?.error?.error || this.i18n.t('settings.saveFailed'));
       },
     });
   }
@@ -199,11 +202,11 @@ export class AdminSettingsComponent implements OnInit {
         this.passwordStored = values['smtp.pass.isSet'];
         this.form = this.toForm(values);
         this.saving = false;
-        this.message.success('Paramètres réinitialisés aux valeurs du fichier .env');
+        this.message.success(this.i18n.t('settings.reset'));
       },
       error: () => {
         this.saving = false;
-        this.message.error('Réinitialisation impossible');
+        this.message.error(this.i18n.t('settings.resetFailed'));
       },
     });
   }
@@ -237,7 +240,7 @@ export class AdminSettingsComponent implements OnInit {
         },
         error: (err) => {
           this.testing = false;
-          this.message.error(err?.error?.error || 'Test impossible');
+          this.message.error(err?.error?.error || this.i18n.t('settings.testFailed'));
         },
       });
   }

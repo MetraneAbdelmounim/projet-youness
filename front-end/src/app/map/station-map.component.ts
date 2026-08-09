@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { EMPTY, Subscription, forkJoin } from 'rxjs';
@@ -9,6 +9,7 @@ import { Project } from '../models/project';
 import { SiteService } from '../services/site.service';
 import { ProjectService } from '../services/project.service';
 import { ThemeService } from '../services/theme.service';
+import { I18nService } from '../i18n/i18n.service';
 import { refreshWhileVisible } from '../services/auto-refresh';
 import { token } from '../services/chart-theme';
 
@@ -79,8 +80,18 @@ export class StationMapComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private message: ToastrService,
-    private theme: ThemeService
-  ) {}
+    private theme: ThemeService,
+    private i18n: I18nService
+  ) {
+    // Marker titles and popups are built as HTML strings rather than by the
+    // template, so nothing re-renders them on its own. Reading the language
+    // signal here rebuilds them the moment it changes, instead of leaving the
+    // previous language on screen until the next 15-second refresh.
+    effect(() => {
+      this.i18n.lang();
+      this.syncMarkers();
+    });
+  }
 
   ngOnInit(): void {
     this.projectId = this.route.snapshot.paramMap.get('id');
@@ -103,7 +114,7 @@ export class StationMapComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loading = false;
-        this.message.error('Impossible de charger la carte');
+        this.message.error(this.i18n.t('map.loadFailed'));
       },
     });
 
@@ -338,7 +349,7 @@ export class StationMapComponent implements OnInit, OnDestroy {
     element.title =
       sites.length === 1
         ? `${sites[0].nom} (${sites[0].ip})`
-        : `${sites.length} stations ici · ${down} hors ligne`;
+        : this.i18n.t('map.stationsHere', { count: sites.length, down });
     element.setAttribute('aria-label', element.title);
   }
 
@@ -378,17 +389,17 @@ export class StationMapComponent implements OnInit, OnDestroy {
     const header =
       sites.length === 1
         ? `<p class="map-popup-title">${this.escape(sites[0].nom)}</p>`
-        : `<p class="map-popup-title">${sites.length} stations à ce point</p>
-           <p class="map-popup-note">Coordonnées identiques — précisez-les par station pour les séparer.</p>`;
+        : `<p class="map-popup-title">${this.escape(this.i18n.t('map.popupMulti', { count: sites.length }))}</p>
+           <p class="map-popup-note">${this.escape(this.i18n.t('map.popupNote'))}</p>`;
 
     return `
       <div class="map-popup">
         ${header}
         <ul class="map-popup-list">${sites.map(row).join('')}</ul>
         <div class="map-popup-actions">
-          <a href="${streetView}" target="_blank" rel="noopener">Street View</a>
+          <a href="${streetView}" target="_blank" rel="noopener">${this.escape(this.i18n.t('map.streetView'))}</a>
           ${sites.length === 1
-            ? `<a href="http://${this.escape(sites[0].ip)}:888/" target="_blank" rel="noopener">Caméra</a>`
+            ? `<a href="http://${this.escape(sites[0].ip)}:888/" target="_blank" rel="noopener">${this.escape(this.i18n.t('map.camera'))}</a>`
             : ''}
         </div>
       </div>`;
@@ -432,7 +443,7 @@ export class StationMapComponent implements OnInit, OnDestroy {
   focus(site: Site): void {
     if (!this.map) return;
     if (!Number.isFinite(site.latitude) || !Number.isFinite(site.longitude)) {
-      this.message.info(`${site.nom} n'a pas de coordonnées`);
+      this.message.info(this.i18n.t('map.noCoordinates', { name: site.nom }));
       return;
     }
 

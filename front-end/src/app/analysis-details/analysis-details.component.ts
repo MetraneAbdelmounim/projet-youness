@@ -1,6 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { TranslationKey } from '../i18n/fr';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { I18nService } from '../i18n/i18n.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { Chart, ChartConfiguration } from 'chart.js';
 import { HistoryPoint, Site } from '../models/site';
@@ -8,10 +10,10 @@ import { SiteService } from '../services/site.service';
 import { ThemeService } from '../services/theme.service';
 import { baseOptions, chartTokens } from '../services/chart-theme';
 
-const HISTORY_WINDOWS = [
-  { label: '24 h', hours: 24 },
-  { label: '7 jours', hours: 24 * 7 },
-  { label: '30 jours', hours: 24 * 30 },
+const HISTORY_WINDOWS: { label: TranslationKey; hours: number }[] = [
+  { label: 'details.range24h', hours: 24 },
+  { label: 'details.range7d', hours: 24 * 7 },
+  { label: 'details.range30d', hours: 24 * 30 },
 ];
 
 @Component({
@@ -50,7 +52,8 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
     private siteService: SiteService,
     private route: ActivatedRoute,
     private message: ToastrService,
-    private theme: ThemeService
+    private theme: ThemeService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -93,7 +96,7 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
         this.history = history;
         this.renderChart();
       },
-      error: () => this.message.error("Impossible de charger l'historique"),
+      error: () => this.message.error(this.i18n.t('details.historyFailed')),
     });
   }
 

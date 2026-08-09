@@ -1,6 +1,6 @@
 <app-status-chip
-  [label]="isAlive ? 'En ligne' : 'Hors ligne'"
+  [label]="(isAlive ? 'status.online' : 'status.offline') | t"
   [tone]="isAlive ? 'good' : 'crit'"
   [pulse]="isAlive"
-  [title]="lastSeenAt ? 'Vu pour la dernière fois : ' + (lastSeenAt | date: 'short') : ''">
+  [title]="lastSeenAt ? ('status.lastSeen' | t: { time: (lastSeenAt | date: 'short') || '' }) : ''">
 </app-status-chip>

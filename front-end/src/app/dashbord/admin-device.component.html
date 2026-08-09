@@ -4,16 +4,16 @@
 -->
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header [title]="resourceLabelPlural"
-                   [subtitle]="spinnerSite ? 'Chargement…' : devices.length + ' enregistré(s) · ' + onlineCount + ' en ligne'"
-                   [backLink]="['/projects']" backLabel="Retour aux projets">
+  <app-page-header [title]="titleKey | t"
+                   [subtitle]="spinnerSite ? ('common.loading' | t) : ('adminDevice.subtitle' | t: { count: devices.length, online: onlineCount })"
+                   [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
 
     <label class="btn btn-ghost">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
       </svg>
-      Importer
+      {{ 'common.import' | t }}
       <input type="file" class="sr-only" accept=".xlsx,.xls" (change)="detectFile($event)" />
     </label>
 
@@ -22,21 +22,21 @@
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 3v12m0 0l-3.75-3.75M12 15l3.75-3.75M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
       </svg>
-      Exporter
+      {{ 'common.export' | t }}
     </button>
 
     <button type="button" class="btn btn-primary" (click)="openCrudModal()">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      Ajouter
+      {{ 'common.add' | t }}
     </button>
   </app-page-header>
 
   <section class="card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
       <p class="text-sm text-ink-secondary">
-        Importez un fichier Excel avec les colonnes <code class="font-mono text-xs">ip</code>,
+        {{ 'adminDevice.excelColumns' | t }} <code class="font-mono text-xs">ip</code>,
         <code class="font-mono text-xs">nom</code>, <code class="font-mono text-xs">project</code>.
       </p>
       <div class="relative">
@@ -45,8 +45,8 @@
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
         </svg>
-        <input type="text" [(ngModel)]="term" placeholder="Filtrer par IP…"
-               class="field w-full pl-9 sm:w-64" aria-label="Filtrer par adresse IP" />
+        <input type="text" [(ngModel)]="term" [placeholder]="'common.filterByIp' | t"
+               class="field w-full pl-9 sm:w-64" [attr.aria-label]="'common.filterByIpAria' | t" />
       </div>
     </div>
 
@@ -59,11 +59,11 @@
         <table class="hidden w-full md:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Nom</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Adresse IP</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Projet</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">État</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.name' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.ip' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.project' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'dashboard.state' | t }}</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -80,14 +80,14 @@
               </td>
               <td class="px-5 py-3.5">
                 <div class="flex justify-end gap-1.5">
-                  <button type="button" (click)="onEdit(device)" title="Modifier"
+                  <button type="button" (click)="onEdit(device)" [title]="'common.edit' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                     </svg>
                   </button>
-                  <button type="button" (click)="openDeletedModal(device)" title="Supprimer"
+                  <button type="button" (click)="openDeletedModal(device)" [title]="'common.delete' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:border-crit hover:text-crit">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
@@ -114,8 +114,8 @@
             <div class="mt-3 flex items-center justify-between gap-2">
               <span *ngIf="device.project?.nom" class="chip chip-brand">{{ device.project?.nom }}</span>
               <div class="flex gap-1.5">
-                <button type="button" (click)="onEdit(device)" class="btn btn-ghost px-3 py-1 text-xs">Modifier</button>
-                <button type="button" (click)="openDeletedModal(device)" class="btn btn-danger px-3 py-1 text-xs">Supprimer</button>
+                <button type="button" (click)="onEdit(device)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'common.edit' | t }}</button>
+                <button type="button" (click)="openDeletedModal(device)" class="btn btn-danger px-3 py-1 text-xs">{{ 'common.delete' | t }}</button>
               </div>
             </div>
           </div>
@@ -123,15 +123,15 @@
 
         <div class="border-t border-line p-4">
           <pagination-controls id="device_pagination" (pageChange)="page = $event"
-                               previousLabel="Précédent" nextLabel="Suivant">
+                               [previousLabel]="'common.previous' | t" [nextLabel]="'common.next' | t">
           </pagination-controls>
         </div>
       </div>
 
       <ng-template #noDevices>
-        <app-empty-state icon="📭" [title]="'Aucun ' + resourceLabel"
-                         description="Ajoutez-en un ou importez un fichier Excel pour démarrer.">
-          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">Ajouter</button>
+        <app-empty-state icon="📭" [title]="emptyKey | t"
+                         [description]="'adminDevice.emptyHint' | t">
+          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">{{ 'common.add' | t }}</button>
         </app-empty-state>
       </ng-template>
     </ng-container>
@@ -140,47 +140,47 @@
 
 <!-- Create / edit -->
 <app-modal [open]="crudOpen" (closed)="crudOpen = false"
-           [title]="(type === 'Edit' ? 'Modifier le ' : 'Ajouter un ') + resourceLabel"
+           [title]="(type === 'Edit' ? editKey : addKey) | t"
            [hasFooter]="false">
   <form (ngSubmit)="onSubmit(f)" #f="ngForm" class="space-y-4">
     <div>
-      <label for="nom" class="label">Nom</label>
+      <label for="nom" class="label">{{ 'common.name' | t }}</label>
       <input id="nom" name="nom" class="field" required
              [ngModel]="type === 'Edit' ? deviceEdited?.nom : null" />
     </div>
 
     <div>
-      <label for="ip" class="label">Adresse IP</label>
-      <input id="ip" name="ip" class="field" required placeholder="10.8.0.10"
+      <label for="ip" class="label">{{ 'common.ip' | t }}</label>
+      <input id="ip" name="ip" class="field" required [placeholder]="'adminDevice.ipPlaceholder' | t"
              [ngModel]="type === 'Edit' ? deviceEdited?.ip : null" />
     </div>
 
     <div>
-      <label for="project" class="label">Projet</label>
+      <label for="project" class="label">{{ 'common.project' | t }}</label>
       <select id="project" name="project" class="field"
               [ngModel]="type === 'Edit' ? deviceEdited?.project?._id : null">
-        <option [ngValue]="null">— Aucun —</option>
+        <option [ngValue]="null">{{ 'common.noneBrackets' | t }}</option>
         <option *ngFor="let project of projects" [ngValue]="project._id">{{ project.nom }}</option>
       </select>
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
-      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">Annuler</button>
+      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">{{ 'common.cancel' | t }}</button>
       <button type="submit" class="btn btn-primary" [disabled]="f.invalid || saving">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+        {{ (saving ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>
   </form>
 </app-modal>
 
 <!-- Delete confirmation -->
-<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" title="Confirmer la suppression" size="sm">
+<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" [title]="'common.confirmDeleteTitle' | t" size="sm">
   <p class="text-sm text-ink-secondary">
-    Voulez-vous vraiment supprimer <strong class="text-ink">{{ deletedDeviceName }}</strong> ?
-    Cette action est irréversible.
+    {{ 'common.reallyDelete' | t }} <strong class="text-ink">{{ deletedDeviceName }}</strong> ?
+    {{ 'common.irreversible' | t }}
   </p>
   <ng-container modalFooter>
-    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">Annuler</button>
-    <button type="button" class="btn btn-danger" (click)="remove()">Supprimer</button>
+    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn btn-danger" (click)="remove()">{{ 'common.delete' | t }}</button>
   </ng-container>
 </app-modal>

@@ -1,20 +1,20 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Utilisateurs"
+  <app-page-header [title]="'adminMember.title' | t"
                    [subtitle]="spinnerMember ? 'Chargement…' : members.length + ' compte(s) · ' + adminCount + ' administrateur(s)'"
-                   [backLink]="['/projects']" backLabel="Retour aux projets">
+                   [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
     <button type="button" class="btn btn-primary" (click)="openCrudModal()">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      Nouvel utilisateur
+      {{ 'adminMember.new' | t }}
     </button>
   </app-page-header>
 
   <section class="card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
       <p class="text-sm text-ink-secondary">
-        Les notifications par courriel sont envoyées aux comptes qui les ont activées.
+        {{ 'adminMember.notifyHint' | t }}
       </p>
       <div class="relative">
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
@@ -22,8 +22,8 @@
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
         </svg>
-        <input type="text" [(ngModel)]="term" placeholder="Filtrer par nom…"
-               class="field w-full pl-9 sm:w-64" aria-label="Filtrer par nom d'utilisateur" />
+        <input type="text" [(ngModel)]="term" [placeholder]="'adminMember.filterByName' | t"
+               class="field w-full pl-9 sm:w-64" [attr.aria-label]="'adminMember.filterByNameAria' | t" />
       </div>
     </div>
 
@@ -36,11 +36,11 @@
         <table class="hidden w-full md:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Utilisateur</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Rôle</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Projets</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Notifications</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'adminMember.user' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'adminMember.role' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.projects' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'adminMember.notifications' | t }}</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,7 +54,7 @@
                   <div class="min-w-0">
                     <p class="truncate text-sm font-medium text-ink">{{ member.username }}</p>
                     <p *ngIf="member.mustChangePassword" class="text-xs text-warn">
-                      Mot de passe à changer
+                      {{ 'adminMember.mustChangePassword' | t }}
                     </p>
                   </div>
                 </div>
@@ -65,7 +65,7 @@
                 </span>
               </td>
               <td class="px-5 py-3.5">
-                <span class="text-sm text-ink-secondary">{{ member.projects?.length || 0 }} projet(s)</span>
+                <span class="text-sm text-ink-secondary">{{ 'adminMember.projectCount' | t: { count: member.projects?.length || 0 } }}</span>
               </td>
               <td class="px-5 py-3.5">
                 <button type="button" role="switch" [attr.aria-checked]="member.notification"
@@ -79,14 +79,14 @@
               </td>
               <td class="px-5 py-3.5">
                 <div class="flex justify-end gap-1.5">
-                  <button type="button" (click)="onEdit(member)" title="Modifier"
+                  <button type="button" (click)="onEdit(member)" [title]="'common.edit' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                     </svg>
                   </button>
-                  <button type="button" (click)="openDeletedModal(member)" title="Supprimer"
+                  <button type="button" (click)="openDeletedModal(member)" [title]="'common.delete' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:border-crit hover:text-crit">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
@@ -118,23 +118,23 @@
               </button>
             </div>
             <div class="mt-3 flex gap-1.5">
-              <button type="button" (click)="onEdit(member)" class="btn btn-ghost px-3 py-1 text-xs">Modifier</button>
-              <button type="button" (click)="openDeletedModal(member)" class="btn btn-danger px-3 py-1 text-xs">Supprimer</button>
+              <button type="button" (click)="onEdit(member)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'common.edit' | t }}</button>
+              <button type="button" (click)="openDeletedModal(member)" class="btn btn-danger px-3 py-1 text-xs">{{ 'common.delete' | t }}</button>
             </div>
           </div>
         </div>
 
         <div class="border-t border-line p-4">
           <pagination-controls id="member_pagination" (pageChange)="page = $event"
-                               previousLabel="Précédent" nextLabel="Suivant">
+                               [previousLabel]="'common.previous' | t" [nextLabel]="'common.next' | t">
           </pagination-controls>
         </div>
       </div>
 
       <ng-template #noMembers>
-        <app-empty-state icon="👥" title="Aucun utilisateur"
-                         description="Créez le premier compte utilisateur de la plateforme.">
-          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">Nouvel utilisateur</button>
+        <app-empty-state icon="👥" [title]="'adminMember.empty' | t"
+                         [description]="'adminMember.emptyHint' | t">
+          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">{{ 'adminMember.new' | t }}</button>
         </app-empty-state>
       </ng-template>
     </ng-container>
@@ -143,26 +143,26 @@
 
 <!-- Create / edit -->
 <app-modal [open]="crudOpen" (closed)="crudOpen = false"
-           [title]="type === 'Edit' ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'" [hasFooter]="false">
+           [title]="(type === 'Edit' ? 'adminMember.editUser' : 'adminMember.new') | t" [hasFooter]="false">
   <form (ngSubmit)="onSubmit(f)" #f="ngForm" class="space-y-4">
     <div>
-      <label for="username" class="label">Nom d'utilisateur</label>
+      <label for="username" class="label">{{ 'adminMember.username' | t }}</label>
       <input id="username" name="username" class="field" required
              [ngModel]="type === 'Edit' ? memberEdited?.username : null"
              [readonly]="type === 'Edit'" />
       <p *ngIf="type === 'Create'" class="mt-1.5 text-xs text-ink-muted">
-        Un mot de passe temporaire aléatoire sera généré et affiché une seule fois.
+        {{ 'adminMember.tempPasswordHint' | t }}
       </p>
     </div>
 
     <label class="flex items-center gap-3">
       <input type="checkbox" name="isAdmin" class="h-4 w-4 rounded border-line"
              [ngModel]="type === 'Edit' ? memberEdited?.isAdmin : false" />
-      <span class="text-sm text-ink">Administrateur</span>
+      <span class="text-sm text-ink">{{ 'nav.admin' | t }}</span>
     </label>
 
     <div>
-      <span class="label">Projets accessibles</span>
+      <span class="label">{{ 'adminMember.accessibleProjects' | t }}</span>
       <div class="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line p-2">
         <label *ngFor="let project of projects"
                class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 transition hover:bg-hover">
@@ -172,14 +172,14 @@
           <span class="text-sm text-ink">{{ project.nom }}</span>
           <span class="ml-auto text-xs text-ink-muted">{{ project.ville }}</span>
         </label>
-        <p *ngIf="!projects.length" class="px-2 py-3 text-sm text-ink-muted">Aucun projet disponible.</p>
+        <p *ngIf="!projects.length" class="px-2 py-3 text-sm text-ink-muted">{{ 'adminMember.noProjectsAvailable' | t }}</p>
       </div>
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
-      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">Annuler</button>
+      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">{{ 'common.cancel' | t }}</button>
       <button type="submit" class="btn btn-primary" [disabled]="f.invalid || saving">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+        {{ (saving ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>
   </form>
@@ -187,28 +187,28 @@
 
 <!-- One-time credentials -->
 <app-modal [open]="!!createdCredentials" (closed)="createdCredentials = null"
-           title="Compte créé" size="sm">
+           [title]="'adminMember.accountCreated' | t" size="sm">
   <p class="text-sm text-ink-secondary">
-    Transmettez ces identifiants à <strong class="text-ink">{{ createdCredentials?.username }}</strong>.
-    Le mot de passe ne sera plus jamais affiché.
+    {{ 'adminMember.handOver' | t }} <strong class="text-ink">{{ createdCredentials?.username }}</strong>.
+    {{ 'adminMember.passwordOnce' | t }}
   </p>
   <div class="mt-4 rounded-xl bg-sunken p-4">
-    <p class="label mb-1">Mot de passe temporaire</p>
+    <p class="label mb-1">{{ 'adminMember.tempPassword' | t }}</p>
     <p class="break-all font-mono text-sm font-semibold text-ink">{{ createdCredentials?.password }}</p>
   </div>
   <ng-container modalFooter>
-    <button type="button" class="btn btn-ghost" (click)="copyPassword()">Copier</button>
-    <button type="button" class="btn btn-primary" (click)="createdCredentials = null">J'ai noté</button>
+    <button type="button" class="btn btn-ghost" (click)="copyPassword()">{{ 'adminMember.copy' | t }}</button>
+    <button type="button" class="btn btn-primary" (click)="createdCredentials = null">{{ 'adminMember.acknowledged' | t }}</button>
   </ng-container>
 </app-modal>
 
 <!-- Delete confirmation -->
-<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" title="Confirmer la suppression" size="sm">
+<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" [title]="'common.confirmDeleteTitle' | t" size="sm">
   <p class="text-sm text-ink-secondary">
-    Voulez-vous vraiment supprimer le compte <strong class="text-ink">{{ deletedMemberName }}</strong> ?
+    {{ 'adminMember.confirmDeleteBody' | t }} <strong class="text-ink">{{ deletedMemberName }}</strong> ?
   </p>
   <ng-container modalFooter>
-    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">Annuler</button>
-    <button type="button" class="btn btn-danger" (click)="remove()">Supprimer</button>
+    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn btn-danger" (click)="remove()">{{ 'common.delete' | t }}</button>
   </ng-container>
 </app-modal>

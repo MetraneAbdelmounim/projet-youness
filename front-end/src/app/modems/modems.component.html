@@ -1,7 +1,7 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Modems" [subtitle]="subtitle"
-                   [backLink]="['/projects']" backLabel="Tous les projets">
+  <app-page-header [title]="'adminDevice.modemsTitle' | t" [subtitle]="subtitle"
+                   [backLink]="['/projects']" [backLabel]="'common.allProjects' | t">
   </app-page-header>
 
   <div *ngIf="spinnerSite" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -26,19 +26,19 @@
 
         <p class="mt-4">
           <span *ngIf="modem.project?.nom" class="chip chip-brand">{{ modem.project?.nom }}</span>
-          <span *ngIf="!modem.project?.nom" class="text-xs italic text-ink-muted">Pas de projet</span>
+          <span *ngIf="!modem.project?.nom" class="text-xs italic text-ink-muted">{{ 'device.noProject' | t }}</span>
         </p>
 
         <a [href]="'http://' + modem.ip + '/'" target="_blank" rel="noopener"
            class="btn btn-ghost mt-5 w-full">
-          📡 Ouvrir la console
+          📡 {{ 'device.openConsole' | t }}
         </a>
       </article>
     </div>
 
     <ng-template #noModems>
-      <app-empty-state icon="📡" title="Aucun modem"
-                       description="Aucun modem n'est rattaché à ce projet.">
+      <app-empty-state icon="📡" [title]="'device.noModem' | t"
+                       [description]="'device.noModemHint' | t">
       </app-empty-state>
     </ng-template>
   </ng-container>

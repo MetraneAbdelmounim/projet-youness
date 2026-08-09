@@ -1,4 +1,5 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { Chart, ChartConfiguration } from 'chart.js';
@@ -70,7 +71,8 @@ export class MeteoComponent implements OnInit, OnDestroy {
 
   constructor(
     private http: HttpClient,
-    private theme: ThemeService
+    private theme: ThemeService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -148,9 +150,9 @@ export class MeteoComponent implements OnInit, OnDestroy {
       dayIndex === 0 && ctx.dataIndex === this.currentHour ? 5 : 0;
 
     const series = [
-      { key: 'temperature' as const, label: 'Température', colour: t.series1, fill: false },
-      { key: 'cloud' as const, label: 'Couverture nuageuse', colour: t.series2, fill: true },
-      { key: 'radiation' as const, label: 'Rayonnement direct', colour: series3, fill: true },
+      { key: 'temperature' as const, label: this.i18n.t('weather.seriesTemperature'), colour: t.series1, fill: false },
+      { key: 'cloud' as const, label: this.i18n.t('weather.seriesClouds'), colour: t.series2, fill: true },
+      { key: 'radiation' as const, label: this.i18n.t('weather.seriesRadiation'), colour: series3, fill: true },
     ];
 
     this.chart?.destroy();
@@ -200,7 +202,7 @@ export class MeteoComponent implements OnInit, OnDestroy {
             min: 0,
             max: 100,
             ticks: { ...options!.scales!['y']!.ticks, callback: (v) => `${v}` },
-            title: { display: true, text: 'Échelle relative', color: t.inkMuted },
+            title: { display: true, text: this.i18n.t('weather.relativeScale'), color: t.inkMuted },
           },
         },
       } as ChartConfiguration<'line'>['options'],

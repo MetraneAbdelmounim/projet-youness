@@ -10,8 +10,10 @@ import { ProjectService } from '../../services/project.service';
   templateUrl: '../admin-device.component.html',
 })
 export class AdminPanneauComponent extends AdminDeviceBase {
-  readonly resourceLabel = 'panneau';
-  readonly resourceLabelPlural = 'Panneaux de parcours';
+  readonly titleKey = 'adminDevice.panelsPlural' as const;
+  readonly emptyKey = 'adminDevice.emptyPanel' as const;
+  readonly editKey = 'adminDevice.editPanel' as const;
+  readonly addKey = 'adminDevice.addPanel' as const;
   readonly sheetName = 'panneaux';
 
   constructor(

@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { EMPTY, Subscription, forkJoin } from 'rxjs';
@@ -48,7 +49,8 @@ export class DashbordComponent implements OnInit, OnDestroy {
     private projectService: ProjectService,
     private message: ToastrService,
     private route: ActivatedRoute,
-    private theme: ThemeService
+    private theme: ThemeService,
+    public i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -112,8 +114,11 @@ export class DashbordComponent implements OnInit, OnDestroy {
   }
 
   get subtitle(): string {
-    if (this.spinnerSite) return 'Chargement…';
-    return `${this.project?.nom ?? ''} · ${this.project?.ville ?? ''}`;
+    if (this.spinnerSite) return this.i18n.t('common.loading');
+    return this.i18n.t('dashboard.subtitle', {
+      project: this.project?.nom ?? '',
+      city: this.project?.ville ?? '',
+    });
   }
 
   get onlineCount(): number {
@@ -196,7 +201,7 @@ export class DashbordComponent implements OnInit, OnDestroy {
         labels: this.sites.map((s) => s.nom),
         datasets: [
           {
-            label: 'Tension batterie',
+            label: this.i18n.t('dashboard.seriesVoltage'),
             data: voltages,
             backgroundColor: t.series1,
             borderRadius: 4,
@@ -205,7 +210,7 @@ export class DashbordComponent implements OnInit, OnDestroy {
             order: 3,
           },
           {
-            label: `Seuil lithium (${config.Battery_Max_LTH} V)`,
+            label: this.i18n.t('dashboard.thresholdLithium', { value: config.Battery_Max_LTH }),
             type: 'line' as ChartType,
             data: this.sites.map(() => config.Battery_Max_LTH),
             borderColor: t.series2,
@@ -216,7 +221,7 @@ export class DashbordComponent implements OnInit, OnDestroy {
             order: 1,
           },
           {
-            label: `Seuil AGM (${config.Battery_Max_AGM} V)`,
+            label: this.i18n.t('dashboard.thresholdAgm', { value: config.Battery_Max_AGM }),
             type: 'line' as ChartType,
             data: this.sites.map(() => config.Battery_Max_AGM),
             borderColor: t.inkMuted,

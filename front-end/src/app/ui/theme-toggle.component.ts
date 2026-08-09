@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ThemeService } from '../services/theme.service';
+import { I18nService } from '../i18n/i18n.service';
 
 /** Cycles light → dark → system. The current mode is announced, not implied. */
 @Component({
@@ -33,13 +34,24 @@ import { ThemeService } from '../services/theme.service';
   `,
 })
 export class ThemeToggleComponent {
-  constructor(public theme: ThemeService) {}
+  constructor(
+    public theme: ThemeService,
+    private i18n: I18nService
+  ) {}
 
   get title(): string {
-    return {
-      light: 'Thème clair — cliquez pour le thème sombre',
-      dark: 'Thème sombre — cliquez pour suivre le système',
-      system: `Thème système (${this.theme.resolved() === 'dark' ? 'sombre' : 'clair'}) — cliquez pour le thème clair`,
-    }[this.theme.mode()];
+    const key = (
+      {
+        light: 'theme.light',
+        dark: 'theme.dark',
+        system: 'theme.system',
+      } as const
+    )[this.theme.mode()];
+
+    return this.i18n.t(key, {
+      resolved: this.i18n.t(
+        this.theme.resolved() === 'dark' ? 'theme.resolvedDark' : 'theme.resolvedLight'
+      ),
+    });
   }
 }

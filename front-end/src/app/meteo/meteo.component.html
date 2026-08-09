@@ -1,20 +1,20 @@
 <section>
   <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h2 class="text-lg font-semibold text-ink">Prévisions météo</h2>
+      <h2 class="text-lg font-semibold text-ink">{{ 'weather.title' | t }}</h2>
       <p class="mt-0.5 text-sm text-ink-muted">
-        Conditions horaires influençant la recharge solaire.
+        {{ 'weather.subtitle' | t }}
       </p>
     </div>
 
-    <div class="flex flex-wrap gap-1.5" role="group" aria-label="Choisir le jour">
+    <div class="flex flex-wrap gap-1.5" role="group" [attr.aria-label]="'weather.chooseDay' | t">
       <button *ngFor="let day of days; let i = index" type="button"
               (click)="updateChartForDay(i)"
               class="rounded-full px-3 py-1 text-xs font-semibold transition"
               [ngClass]="selectedDayIndex === i
                 ? 'bg-brand text-ink-inverse'
                 : 'border border-line text-ink-secondary hover:bg-hover'">
-        {{ day === 1 ? "Aujourd'hui" : 'J+' + (day - 1) }}
+        {{ day === 1 ? ('weather.today' | t) : ('weather.dayOffset' | t: { n: day - 1 }) }}
       </button>
     </div>
   </div>
@@ -22,7 +22,7 @@
   <div *ngIf="loading" class="skeleton h-96 w-full"></div>
 
   <p *ngIf="failed" class="rounded-xl bg-sunken px-4 py-8 text-center text-sm text-ink-muted">
-    Prévisions météo momentanément indisponibles.
+    {{ 'weather.momentarilyUnavailable' | t }}
   </p>
 
   <!-- One plot, one axis. The three measures are indexed onto a shared 0–100
@@ -34,8 +34,7 @@
     </div>
 
     <p class="mt-3 text-center text-xs text-ink-muted">
-      Échelle relative — survolez le graphique pour les valeurs réelles.
-      Repères : température −30…40 °C · nuages 0…100 % · rayonnement 0…1 kW/m².
+      {{ 'weather.scaleNote' | t }}
     </p>
   </div>
 </section>

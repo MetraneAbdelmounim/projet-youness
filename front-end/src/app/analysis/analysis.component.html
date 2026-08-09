@@ -1,17 +1,23 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Analyse prévisionnelle"
+  <app-page-header [title]="'analysis.title' | t"
                    [subtitle]="subtitle"
-                   [backLink]="['/projects']" backLabel="Tous les projets">
-    <button type="button" class="btn btn-primary" [disabled]="!project || !sites.length"
+                   [backLink]="['/projects']" [backLabel]="'common.allProjects' | t">
+    <button type="button" class="btn btn-primary"
+            [disabled]="!project || !sites.length || exporting"
             (click)="generatePDF(project!.nom)">
-      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+      <svg *ngIf="!exporting" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8"
+           viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M12 3v12m0 0l-3.75-3.75M12 15l3.75-3.75M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5" />
       </svg>
-      Rapport PDF
+      <svg *ngIf="exporting" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      {{ (exporting ? 'analysis.generating' : 'analysis.report') | t }}
     </button>
-      <span *ngIf="lastUpdated" class="chip chip-neutral" title="Actualisation automatique toutes les 30 s">
+      <span *ngIf="lastUpdated" class="chip chip-neutral" [title]="'common.autoRefresh' | t">
       <span class="chip-dot live-dot"></span>
       {{ lastUpdated | date: 'HH:mm:ss' }}
     </span>
@@ -19,13 +25,13 @@
 
   <!-- Fleet summary. Counts belong in tiles, not in a chart. -->
   <div *ngIf="!spinnerSite && sites.length" class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-5">
-    <app-stat-tile label="Stations" [value]="sites.length" icon="🔌"></app-stat-tile>
-    <app-stat-tile label="Performance élevée" [value]="counts.up" tone="good" icon="📈"></app-stat-tile>
-    <app-stat-tile label="Performance moyenne" [value]="counts.medium" tone="warn" icon="➖"></app-stat-tile>
-    <app-stat-tile label="Performance faible" [value]="counts.down" tone="crit" icon="📉"></app-stat-tile>
-    <app-stat-tile label="Sans prévision" [value]="counts.offline"
+    <app-stat-tile [label]="'dashboard.stations' | t" [value]="sites.length" icon="🔌"></app-stat-tile>
+    <app-stat-tile [label]="'analysis.high' | t" [value]="counts.up" tone="good" icon="📈"></app-stat-tile>
+    <app-stat-tile [label]="'analysis.medium' | t" [value]="counts.medium" tone="warn" icon="➖"></app-stat-tile>
+    <app-stat-tile [label]="'analysis.low' | t" [value]="counts.down" tone="crit" icon="📉"></app-stat-tile>
+    <app-stat-tile [label]="'analysis.noForecast' | t" [value]="counts.offline"
                    [tone]="counts.offline ? 'neutral' : 'default'" icon="🚫"
-                   hint="Stations hors ligne"></app-stat-tile>
+                   [hint]="'analysis.offlineStations' | t"></app-stat-tile>
   </div>
 
   <div *ngIf="spinnerSite" class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -47,7 +53,7 @@
           </div>
           <div class="flex flex-none items-center gap-2">
             <app-site-status [isAlive]="site.status" [lastSeenAt]="site.lastSeenAt"></app-site-status>
-            <button *ngIf="site.project" type="button" title="Voir le détail"
+            <button *ngIf="site.project" type="button" [title]="'analysis.viewDetail' | t"
                     (click)="analysisDetail(site._id, site.project!._id)"
                     class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -63,8 +69,8 @@
     </div>
 
     <ng-template #noSites>
-      <app-empty-state icon="🔌" title="Aucune station"
-                       description="Aucune station MPPT n'est rattachée à ce projet.">
+      <app-empty-state icon="🔌" [title]="'home.empty' | t"
+                       [description]="'home.emptyHint' | t">
       </app-empty-state>
     </ng-template>
   </ng-container>

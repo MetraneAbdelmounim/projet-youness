@@ -3,7 +3,7 @@
     <div *ngFor="let metric of metrics" class="min-w-0">
       <dt class="flex items-center gap-1.5 text-xs text-ink-muted">
         <span aria-hidden="true">{{ metric.icon }}</span>
-        <span class="truncate">{{ metric.label }}</span>
+        <span class="truncate">{{ metric.label | t }}</span>
       </dt>
       <dd class="mt-0.5 text-sm font-semibold tnum text-ink">
         {{ metric.value | measure: metric.unit }}
@@ -12,12 +12,12 @@
   </dl>
 
   <div class="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
-    <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Performance prévue</span>
-    <app-status-chip [label]="performanceLabel" [tone]="performanceTone"></app-status-chip>
+    <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'analysis.expectedPerformance' | t }}</span>
+    <app-status-chip [label]="performanceLabelKey | t" [tone]="performanceTone"></app-status-chip>
   </div>
 
   <p *ngIf="analysis?.computedAt" class="mt-2 text-xs text-ink-muted">
-    Calculé {{ analysis!.computedAt | date: 'short' }}
+    {{ 'analysis.computedAt' | t: { time: (analysis!.computedAt | date: 'short') || '' } }}
   </p>
 </ng-container>
 
@@ -26,11 +26,9 @@
 <ng-template #unavailable>
   <div class="flex flex-col items-center justify-center rounded-xl bg-sunken px-4 py-8 text-center">
     <span class="text-2xl" aria-hidden="true">{{ reachable ? '⏳' : '🚫' }}</span>
-    <p class="mt-2 text-sm font-medium text-ink-secondary">Analyse indisponible</p>
+    <p class="mt-2 text-sm font-medium text-ink-secondary">{{ 'analysis.unavailableTitle' | t }}</p>
     <p class="mt-0.5 text-xs text-ink-muted">
-      {{ reachable
-          ? 'En attente d\'un premier relevé de la station.'
-          : 'La station ne répond pas — la prévision sera recalculée à son retour.' }}
+      {{ (reachable ? 'analysis.waitingFirstReading' : 'analysis.offlineRecompute') | t }}
     </p>
   </div>
 </ng-template>

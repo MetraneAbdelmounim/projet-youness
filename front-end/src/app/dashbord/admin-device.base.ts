@@ -1,4 +1,5 @@
 import { Directive, OnInit } from '@angular/core';
+import { TranslationKey } from '../i18n/fr';
 import { NgForm } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin } from 'rxjs';
@@ -17,6 +18,18 @@ import { ProjectService } from '../services/project.service';
  */
 @Directive()
 export abstract class AdminDeviceBase implements OnInit {
+  /**
+   * Wording for this resource, as translation keys rather than words.
+   *
+   * The shared template previously interpolated French nouns ("Modifier le " +
+   * resourceLabel), which cannot be translated — word order and articles differ
+   * between languages. Each screen now names a complete phrase per key.
+   */
+  abstract readonly titleKey: TranslationKey;
+  abstract readonly emptyKey: TranslationKey;
+  abstract readonly editKey: TranslationKey;
+  abstract readonly addKey: TranslationKey;
+
   itemsPerPage = 15;
   page = 1;
   term = '';

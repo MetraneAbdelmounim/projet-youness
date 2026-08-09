@@ -11,8 +11,12 @@ import { LoginService } from '../services/login.service';
 export class HeaderComponent implements OnInit, OnDestroy {
   memberIsAuthenticated = false;
   username = '';
-  role = '';
   isAdmin = false;
+
+  /** Resolved in the template so it follows a language change. */
+  get roleKey(): 'nav.admin' | 'nav.member' {
+    return this.isAdmin ? 'nav.admin' : 'nav.member';
+  }
   menuOpen = false;
 
   private readonly subscriptions = new Subscription();
@@ -34,7 +38,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.loginService.getCurrentMember().subscribe((member) => {
         this.username = member?.username ?? '';
         this.isAdmin = member?.isAdmin ?? false;
-        this.role = this.isAdmin ? 'Administrateur' : 'Utilisateur';
       })
     );
   }

@@ -1,20 +1,20 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
-  <app-page-header title="Projets"
-                   [subtitle]="spinnerSite ? 'Chargement…' : projects.length + ' projet(s)'"
-                   [backLink]="['/projects']" backLabel="Retour aux projets">
+  <app-page-header [title]="'adminProject.title' | t"
+                   [subtitle]="spinnerSite ? ('common.loading' | t) : ('adminProject.subtitle' | t: { count: projects.length })"
+                   [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
     <button type="button" class="btn btn-primary" (click)="openCrudModal()">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      Nouveau projet
+      {{ 'adminProject.new' | t }}
     </button>
   </app-page-header>
 
   <section class="card overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5">
       <p class="text-sm text-ink-secondary">
-        Supprimer un projet supprime aussi ses stations, modems, panneaux et leur historique.
+        {{ 'adminProject.deleteWarning' | t }}
       </p>
       <div class="relative">
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
@@ -22,8 +22,8 @@
           <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
         </svg>
-        <input type="text" [(ngModel)]="term" placeholder="Filtrer par nom…"
-               class="field w-full pl-9 sm:w-64" aria-label="Filtrer par nom de projet" />
+        <input type="text" [(ngModel)]="term" [placeholder]="'adminProject.filterByName' | t"
+               class="field w-full pl-9 sm:w-64" [attr.aria-label]="'adminProject.filterByNameAria' | t" />
       </div>
     </div>
 
@@ -36,9 +36,9 @@
         <table class="hidden w-full md:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Nom</th>
-              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">Ville</th>
-              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">Actions</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.name' | t }}</th>
+              <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.city' | t }}</th>
+              <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ 'common.actions' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -48,14 +48,14 @@
               <td class="px-5 py-3.5 text-sm text-ink-secondary">{{ project.ville }}</td>
               <td class="px-5 py-3.5">
                 <div class="flex justify-end gap-1.5">
-                  <button type="button" (click)="onEdit(project)" title="Modifier"
+                  <button type="button" (click)="onEdit(project)" [title]="'common.edit' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:bg-hover hover:text-brand-ink">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                     </svg>
                   </button>
-                  <button type="button" (click)="openDeletedModal(project)" title="Supprimer"
+                  <button type="button" (click)="openDeletedModal(project)" [title]="'common.delete' | t"
                           class="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted transition hover:border-crit hover:text-crit">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round"
@@ -76,23 +76,23 @@
               <p class="mt-0.5 text-xs text-ink-muted">{{ project.ville }}</p>
             </div>
             <div class="flex flex-none gap-1.5">
-              <button type="button" (click)="onEdit(project)" class="btn btn-ghost px-3 py-1 text-xs">Modifier</button>
-              <button type="button" (click)="openDeletedModal(project)" class="btn btn-danger px-3 py-1 text-xs">Supprimer</button>
+              <button type="button" (click)="onEdit(project)" class="btn btn-ghost px-3 py-1 text-xs">{{ 'common.edit' | t }}</button>
+              <button type="button" (click)="openDeletedModal(project)" class="btn btn-danger px-3 py-1 text-xs">{{ 'common.delete' | t }}</button>
             </div>
           </div>
         </div>
 
         <div class="border-t border-line p-4">
           <pagination-controls id="project_pagination" (pageChange)="page = $event"
-                               previousLabel="Précédent" nextLabel="Suivant">
+                               [previousLabel]="'common.previous' | t" [nextLabel]="'common.next' | t">
           </pagination-controls>
         </div>
       </div>
 
       <ng-template #noProjects>
-        <app-empty-state icon="🗂️" title="Aucun projet"
-                         description="Créez un projet pour y rattacher vos stations.">
-          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">Nouveau projet</button>
+        <app-empty-state icon="🗂️" [title]="'adminProject.empty' | t"
+                         [description]="'adminProject.emptyHint' | t">
+          <button type="button" class="btn btn-primary mt-5" (click)="openCrudModal()">{{ 'adminProject.new' | t }}</button>
         </app-empty-state>
       </ng-template>
     </ng-container>
@@ -101,36 +101,36 @@
 
 <!-- Create / edit -->
 <app-modal [open]="crudOpen" (closed)="crudOpen = false"
-           [title]="type === 'Edit' ? 'Modifier le projet' : 'Nouveau projet'" [hasFooter]="false">
+           [title]="(type === 'Edit' ? 'adminProject.editTitle' : 'adminProject.new') | t" [hasFooter]="false">
   <form (ngSubmit)="onSubmit(f)" #f="ngForm" class="space-y-4">
     <div>
-      <label for="nom" class="label">Nom du projet</label>
+      <label for="nom" class="label">{{ 'adminProject.name' | t }}</label>
       <input id="nom" name="nom" class="field" required
              [ngModel]="type === 'Edit' ? projectEdited?.nom : null" />
     </div>
     <div>
-      <label for="ville" class="label">Ville</label>
+      <label for="ville" class="label">{{ 'common.city' | t }}</label>
       <input id="ville" name="ville" class="field" required
              [ngModel]="type === 'Edit' ? projectEdited?.ville : null" />
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
-      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">Annuler</button>
+      <button type="button" class="btn btn-ghost" (click)="crudOpen = false">{{ 'common.cancel' | t }}</button>
       <button type="submit" class="btn btn-primary" [disabled]="f.invalid || saving">
-        {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+        {{ (saving ? 'common.saving' : 'common.save') | t }}
       </button>
     </div>
   </form>
 </app-modal>
 
 <!-- Delete confirmation -->
-<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" title="Confirmer la suppression" size="sm">
+<app-modal [open]="deleteOpen" (closed)="deleteOpen = false" [title]="'common.confirmDeleteTitle' | t" size="sm">
   <p class="text-sm text-ink-secondary">
-    Supprimer <strong class="text-ink">{{ deletedProjectName }}</strong> supprimera également
-    toutes ses stations, modems, panneaux et l'historique de mesures associé.
+    {{ 'common.reallyDelete' | t }} <strong class="text-ink">{{ deletedProjectName }}</strong> —
+    {{ 'adminProject.deleteBody' | t }}
   </p>
   <ng-container modalFooter>
-    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">Annuler</button>
-    <button type="button" class="btn btn-danger" (click)="remove()">Supprimer définitivement</button>
+    <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">{{ 'common.cancel' | t }}</button>
+    <button type="button" class="btn btn-danger" (click)="remove()">{{ 'common.deletePermanently' | t }}</button>
   </ng-container>
 </app-modal>

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { TranslationKey } from '../i18n/fr';
 import { Analysis } from '../models/site';
 import { StatusTone } from '../ui/status-chip.component';
 
@@ -34,25 +35,27 @@ export class SiteAnalysisComponent {
     return this.reachable && !!this.analysis && this.analysis.performance !== 'UNKNOWN';
   }
 
-  get metrics() {
+  get metrics(): { label: TranslationKey; icon: string; unit: string; value?: number | null }[] {
     const a = this.analysis;
     return [
-      { label: 'Couverture nuageuse', icon: '☁️', unit: '%', value: a?.avg_remaining_cloud },
-      { label: 'Ensoleillement restant', icon: '🌞', unit: 'h', value: a?.remaining_sun_hours },
-      { label: 'Perte batterie (froid)', icon: '❄️', unit: '%', value: a?.battery_capacity_loss },
-      { label: 'Perte recharge (nuages)', icon: '🌥️', unit: '%', value: a?.solar_charge_loss_clouds },
-      { label: 'Efficacité de charge', icon: '⚡', unit: '%', value: a?.solar_charge_efficiency },
-      { label: 'Tension prévue', icon: '🔋', unit: 'V', value: a?.predicted_end_day_voltage },
+      { label: 'analysis.cloudCover', icon: '☁️', unit: '%', value: a?.avg_remaining_cloud },
+      { label: 'analysis.remainingSun', icon: '🌞', unit: 'h', value: a?.remaining_sun_hours },
+      { label: 'analysis.coldLoss', icon: '❄️', unit: '%', value: a?.battery_capacity_loss },
+      { label: 'analysis.cloudLoss', icon: '🌥️', unit: '%', value: a?.solar_charge_loss_clouds },
+      { label: 'analysis.chargeEfficiency', icon: '⚡', unit: '%', value: a?.solar_charge_efficiency },
+      { label: 'analysis.predictedVoltage', icon: '🔋', unit: 'V', value: a?.predicted_end_day_voltage },
     ];
   }
 
 
-  get performanceLabel(): string {
+  get performanceLabelKey(): TranslationKey {
     return (
-      { UP: 'Élevée', MEDIUM: 'Moyenne', DOWN: 'Faible' }[
-        this.analysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
-      ] ?? 'Inconnue'
-    );
+      {
+        UP: 'analysis.perfHigh',
+        MEDIUM: 'analysis.perfMedium',
+        DOWN: 'analysis.perfLow',
+      } as const
+    )[this.analysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'] ?? 'analysis.perfUnknown';
   }
 
   get performanceTone(): StatusTone {

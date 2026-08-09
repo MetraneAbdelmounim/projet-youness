@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { I18nService } from '../i18n/i18n.service';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { EMPTY, Subscription } from 'rxjs';
@@ -48,7 +49,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   constructor(
     private siteService: SiteService,
     private message: ToastrService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    public i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -109,9 +111,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   get subtitle(): string {
-    if (this.spinnerSite) return 'Chargement…';
-    const online = this.sites.filter((s) => s.status).length;
-    return `${this.sites.length} station(s) · ${online} en ligne`;
+    if (this.spinnerSite) return this.i18n.t('common.loading');
+    return this.i18n.t('home.subtitleCounts', {
+      count: this.sites.length,
+      online: this.sites.filter((s) => s.status).length,
+    });
   }
 
   deviceLinks(site: Site): DeviceLink[] {
@@ -119,11 +123,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   performanceLabel(site: Site): string {
-    return (
-      { UP: 'Performance élevée', MEDIUM: 'Performance moyenne', DOWN: 'Performance faible' }[
-        site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'
-      ] ?? 'Performance inconnue'
-    );
+    const key = (
+      { UP: 'analysis.high', MEDIUM: 'analysis.medium', DOWN: 'analysis.low' } as const
+    )[site.lastAnalysis?.performance as 'UP' | 'MEDIUM' | 'DOWN'];
+    return this.i18n.t(key ?? 'analysis.unknown');
   }
 
   performanceTone(site: Site): StatusTone {

@@ -6,7 +6,7 @@
   <div *ngIf="licenceWarning && !chromeless"
        class="border-b border-line bg-warn-soft px-4 py-2.5 text-center text-sm font-medium text-warn">
     {{ licenceWarning }}
-    <a routerLink="/dashbord/licence" class="ml-1 underline underline-offset-2">Renouveler</a>
+    <a routerLink="/dashbord/licence" class="ml-1 underline underline-offset-2">{{ 'licence.renew' | t }}</a>
   </div>
 
   <main [class.pt-2]="!chromeless">
