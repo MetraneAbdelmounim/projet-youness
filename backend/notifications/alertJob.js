@@ -1,3 +1,4 @@
+const config = require('../config/config');
 const settings = require('../config/setting');
 const Site = require('../site/site');
 const Panneau = require('../panneau/panneau');
@@ -92,7 +93,7 @@ async function runAlertSweep() {
   ]);
 
   // Consider telemetry stale if the poller has not refreshed it in three cycles.
-  const staleBefore = Date.now() - 3 * (Number(process.env.POLL_INTERVAL_SECONDS) || 300) * 1000;
+  const staleBefore = Date.now() - 3 * config.pollIntervalSeconds * 1000;
 
   // Detection is kept separate from delivery so the two failure modes stay
   // distinguishable: "nothing is wrong" and "something is wrong but nobody was

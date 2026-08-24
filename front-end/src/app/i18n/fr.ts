@@ -198,6 +198,7 @@ export const fr = {
   'details.voltageHistoryHint': 'Relevés enregistrés par le collecteur.',
   'details.periodShown': 'Période affichée',
   'details.noMeasures': 'Aucune mesure enregistrée sur cette période.',
+  'details.noDataSince': 'Aucune donnée depuis {time} — la station ne répond plus.',
   'device.noProject': 'Pas de projet',
   'device.openConsole': 'Ouvrir la console',
   'device.noModem': 'Aucun modem',

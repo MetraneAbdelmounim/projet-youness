@@ -65,6 +65,18 @@
       <p *ngIf="!history.length" class="py-20 text-center text-sm text-ink-muted">
         {{ 'details.noMeasures' | t }}
       </p>
+
+      <!-- An outage still in progress has no data after it, so it cannot show
+           as a break in the line — the line just stops. Say so plainly. -->
+      <p *ngIf="history.length && staleSince"
+         class="mt-3 flex items-center justify-center gap-2 rounded-lg bg-crit-soft px-3 py-2 text-xs text-crit">
+        <svg class="h-3.5 w-3.5 flex-none" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        {{ 'details.noDataSince' | t: { time: staleSince } }}
+      </p>
     </section>
 
     <!-- Weather -->

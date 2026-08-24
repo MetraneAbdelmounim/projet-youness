@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { HistoryPoint, Site } from '../models/site';
+import { HistoryResponse, Site } from '../models/site';
 
 const BACKEND_URL = environment.apiUri;
 
@@ -32,8 +32,8 @@ export class SiteService {
   }
 
   /** Historical readings for charting, from the time-series collection. */
-  getHistory(id: string, hours = 24): Observable<HistoryPoint[]> {
-    return this.http.get<HistoryPoint[]>(`${BACKEND_URL}stations/history/${id}?hours=${hours}`);
+  getHistory(id: string, hours = 24): Observable<HistoryResponse> {
+    return this.http.get<HistoryResponse>(`${BACKEND_URL}stations/history/${id}?hours=${hours}`);
   }
 
   addSite(data: Partial<Site>) {

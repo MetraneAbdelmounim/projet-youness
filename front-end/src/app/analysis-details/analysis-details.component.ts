@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { I18nService } from '../i18n/i18n.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { Chart, ChartConfiguration } from 'chart.js';
-import { HistoryPoint, Site } from '../models/site';
+import { HistoryPoint, HistoryResponse, Site } from '../models/site';
 import { SiteService } from '../services/site.service';
 import { ThemeService } from '../services/theme.service';
 import { baseOptions, chartTokens } from '../services/chart-theme';
@@ -37,6 +37,14 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
   site: Site | null = null;
   history: HistoryPoint[] = [];
   loading = true;
+
+  /**
+   * The poller's cadence, as reported by the API.
+   *
+   * Seeded with the shipped default so the first render before the response
+   * arrives is still sane; the real value replaces it immediately.
+   */
+  private pollIntervalMs = 300_000;
 
   readonly windows = HISTORY_WINDOWS;
   selectedHours = 24;
@@ -81,12 +89,12 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: ({ site, history }) => {
         this.site = site;
-        this.history = history;
+        this.applyHistory(history);
         this.loading = false;
       },
       error: () => {
         this.loading = false;
-        this.message.error('Impossible de charger la station');
+        this.message.error(this.i18n.t('common.genericError'));
       },
     });
 
@@ -105,7 +113,7 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
 
     this.siteService.getHistory(this.site._id, hours).subscribe({
       next: (history) => {
-        this.history = history;
+        this.applyHistory(history);
         this.renderChart();
       },
       error: () => this.message.error(this.i18n.t('details.historyFailed')),
@@ -113,24 +121,47 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * When the newest reading is older than a gap, the station is silent *now*.
+   *
+   * An ongoing outage has no data after it, so it cannot render as a break —
+   * the line simply ends, which is easy to read as "that is all there is".
+   * Saying it in words removes the ambiguity.
+   */
+  get staleSince(): string | null {
+    const last = this.history[this.history.length - 1];
+    if (!last) return null;
+
+    const age = Date.now() - +new Date(last.ts);
+    if (age <= this.gapThreshold()) return null;
+
+    return new Date(last.ts).toLocaleString(this.i18n.locale, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  private applyHistory(response: HistoryResponse): void {
+    this.history = response.readings ?? [];
+    if (response.intervalSeconds > 0) this.pollIntervalMs = response.intervalSeconds * 1000;
+  }
+
+  /**
    * The longest hole that still counts as normal sampling.
    *
-   * Derived from the data rather than hard-coded, so changing the poll cadence
-   * in Administration → Paramètres does not silently turn every interval into
-   * an apparent outage. The median is used because it ignores the outages
-   * themselves, which a mean would be dragged upwards by.
+   * Taken from the poller's own cadence, which the API sends with the data.
+   *
+   * An earlier version inferred it from the median spacing of the samples, and
+   * that was wrong in exactly the case this chart exists for: a station that
+   * has been down leaves only a handful of samples, so the outage itself
+   * becomes the median and can never exceed a threshold derived from it. A
+   * 38-minute disconnection went undrawn because of it. The shortest spacing is
+   * no better — the recovery watcher re-polls every few seconds after a
+   * restart, and those writes land in the same collection.
    */
   private gapThreshold(): number {
-    const deltas: number[] = [];
-    for (let i = 1; i < this.history.length; i++) {
-      const delta = +new Date(this.history[i].ts) - +new Date(this.history[i - 1].ts);
-      if (delta > 0) deltas.push(delta);
-    }
-    if (!deltas.length) return MIN_GAP_MS;
-
-    deltas.sort((a, b) => a - b);
-    const median = deltas[Math.floor(deltas.length / 2)];
-    return Math.max(median * GAP_FACTOR, MIN_GAP_MS);
+    return Math.max(this.pollIntervalMs * GAP_FACTOR, MIN_GAP_MS);
   }
 
   /**

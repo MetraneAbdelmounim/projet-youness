@@ -96,6 +96,17 @@ module.exports = {
   nightlySchedule: process.env.NIGHTLY_SCHEDULE || '0 0 * * *',
   timezone: process.env.TZ || 'America/Montreal',
 
+  /**
+   * How often the Python poller contacts every station.
+   *
+   * Owned by the poller (backend/python/config.py reads the same variable), but
+   * needed here too: the alert sweep decides what counts as stale telemetry
+   * from it, and the history chart needs it to tell an outage apart from one
+   * ordinary interval. Inferring it from the data does not work — a station
+   * that has been down has too few samples to infer anything from.
+   */
+  pollIntervalSeconds: Number(process.env.POLL_INTERVAL_SECONDS) || 300,
+
   // Repeat an unresolved alert at most this often.
   reminderIntervalMs: Number(process.env.REMINDER_INTERVAL_MS) || 12 * 60 * 60 * 1000,
 

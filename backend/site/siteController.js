@@ -127,7 +127,14 @@ module.exports = {
       .limit(5000)
       .lean();
 
-    return res.status(200).json(readings);
+    // The sampling cadence travels with the data. A chart cannot tell an
+    // outage from one ordinary interval without knowing what "ordinary" is,
+    // and it cannot infer it: a station that has been down leaves too few
+    // samples, and the recovery watcher's rapid re-polls skew the short end.
+    return res.status(200).json({
+      intervalSeconds: config.pollIntervalSeconds,
+      readings,
+    });
   }),
 
   getStatusSite: asyncHandler(async (req, res) => {

@@ -59,6 +59,18 @@ export interface Site {
   lastSeenAt: string | null;
 }
 
+/**
+ * The history endpoint's payload.
+ *
+ * `intervalSeconds` is the poller's cadence, sent alongside the samples so the
+ * chart can tell a genuine outage from one late poll rather than guessing at it
+ * from the sample spacing.
+ */
+export interface HistoryResponse {
+  intervalSeconds: number;
+  readings: HistoryPoint[];
+}
+
 /** A point from the time-series history endpoint. */
 export interface HistoryPoint {
   ts: string;

@@ -196,6 +196,7 @@ export const en: Dictionary = {
   'details.voltageHistoryHint': 'Readings recorded by the collector.',
   'details.periodShown': 'Period shown',
   'details.noMeasures': 'No measurement recorded for this period.',
+  'details.noDataSince': 'No data since {time} — the station has stopped responding.',
   'device.noProject': 'No project',
   'device.openConsole': 'Open the console',
   'device.noModem': 'No modems',
