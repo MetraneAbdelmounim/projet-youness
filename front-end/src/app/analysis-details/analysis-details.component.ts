@@ -228,13 +228,35 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
     const battery = this.toSeries((p) => p.Battery_Voltage);
     const array = this.toSeries((p) => p.Array_Voltage);
 
-    // Long windows only need the date; a day's worth needs the time of day.
     const spanHours = this.selectedHours;
-    const formatX = (value: number) =>
+
+    /**
+     * Axis labels: compact enough that eight of them fit without overlapping.
+     *
+     * Over a month the ticks sit days apart, so a time of day there is noise;
+     * up to a week they land hours apart and the hour is worth having.
+     */
+    const formatTick = (value: number) =>
       new Date(value).toLocaleString(this.i18n.locale, {
         month: 'short',
         day: 'numeric',
-        ...(spanHours <= 48 ? { hour: '2-digit', minute: '2-digit' } : {}),
+        ...(spanHours <= 24 * 7 ? { hour: '2-digit', minute: '2-digit' } : {}),
+      });
+
+    /**
+     * Tooltips: always to the minute, whatever the window.
+     *
+     * This is the instrument for reading an outage off the chart — "which day
+     * did it drop" is rarely the question, "at what time" always is. The axis
+     * can stay coarse because this is exact.
+     */
+    const formatFull = (value: number) =>
+      new Date(value).toLocaleString(this.i18n.locale, {
+        year: spanHours > 24 * 7 ? 'numeric' : undefined,
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
       });
 
     const config: ChartConfiguration<'line'> = {
@@ -275,7 +297,7 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
             ...options!.plugins?.tooltip,
             callbacks: {
               ...options!.plugins?.tooltip?.callbacks,
-              title: (items) => formatX(Number(items[0]?.parsed?.x)),
+              title: (items) => formatFull(Number(items[0]?.parsed?.x)),
             },
           },
         },
@@ -305,7 +327,7 @@ export class AnalysisDetailsComponent implements OnInit, OnDestroy {
             ticks: {
               ...options!.scales!['x']!.ticks,
               maxTicksLimit: 8,
-              callback: (value) => formatX(Number(value)),
+              callback: (value) => formatTick(Number(value)),
             },
           },
         },

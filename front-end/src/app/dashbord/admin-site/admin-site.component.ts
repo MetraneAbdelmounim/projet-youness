@@ -7,6 +7,7 @@ import { Site } from '../../models/site';
 import { Project } from '../../models/project';
 import { SiteService } from '../../services/site.service';
 import { ProjectService } from '../../services/project.service';
+import { I18nService } from '../../i18n/i18n.service';
 
 /**
  * How long, and how often, to re-check a station after a restart.
@@ -28,6 +29,18 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
   itemsPerPage = 15;
   page = 1;
   term = '';
+
+  /**
+   * Project the table is scoped to; empty means every project.
+   *
+   * Restarting is deliberately driven by this rather than by the rows the
+   * search box happens to be showing: a stray filter must not silently change
+   * which field equipment gets power-cycled.
+   */
+  projectFilter = '';
+
+  /** Set while the operator confirms a project-wide restart. */
+  restartAllOpen = false;
 
   type: 'Create' | 'Edit' = 'Create';
   siteEdited: Site | null = null;
@@ -53,7 +66,8 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
   constructor(
     private siteService: SiteService,
     private projectService: ProjectService,
-    private message: ToastrService
+    private message: ToastrService,
+    private i18n: I18nService
   ) {}
 
   ngOnInit(): void {
@@ -87,7 +101,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.spinnerSite = false;
-        this.message.error('Une erreur est survenue !');
+        this.message.error(this.i18n.t('common.genericError'));
       },
     });
   }
@@ -119,7 +133,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
       },
       error: (e) => {
         this.saving = false;
-        this.message.error(e?.error?.error ?? 'Enregistrement impossible');
+        this.message.error(e?.error?.error ?? this.i18n.t('common.saveFailed'));
       },
     });
   }
@@ -151,7 +165,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
         this.deleteOpen = false;
         this.load();
       },
-      error: (e) => this.message.error(e?.error?.error ?? 'Suppression impossible'),
+      error: (e) => this.message.error(e?.error?.error ?? this.i18n.t('common.deleteFailed')),
     });
   }
 
@@ -170,7 +184,9 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
       },
       error: (e) => {
         this.restarting.delete(site._id);
-        this.message.error(e?.error?.error ?? `Redémarrage impossible — ${site.nom}`);
+        this.message.error(
+          e?.error?.error ?? this.i18n.t('adminSite.restartFailed', { name: site.nom })
+        );
       },
     });
   }
@@ -205,7 +221,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
 
           // Stop once it has come back up — the restart cycle is complete.
           if (!row.status && fresh.status) {
-            this.message.success(`${site.nom} est de nouveau en ligne`);
+            this.message.success(this.i18n.t('adminSite.backOnline', { name: site.nom }));
             this.watching.delete(site._id);
             subscription.unsubscribe();
           }
@@ -233,7 +249,9 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
       },
       error: (e) => {
         this.refreshing.delete(site._id);
-        this.message.error(e?.error?.error ?? `Rafraîchissement impossible — ${site.nom}`);
+        this.message.error(
+          e?.error?.error ?? this.i18n.t('adminSite.refreshFailed', { name: site.nom })
+        );
       },
     });
   }
@@ -244,10 +262,58 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
    * Issued directly against the service. The previous implementation reached
    * into the DOM for each row's button and synthesised a click on its icon.
    */
-  reloadAllSites(): void {
-    if (!this.sites.length) return;
-    this.message.info(`Redémarrage de ${this.sites.length} station(s)…`);
-    this.sites.forEach((site) => this.reload(site));
+  /** Rows for the table, scoped to the selected project. */
+  get visibleSites(): Site[] {
+    if (!this.projectFilter) return this.sites;
+    return this.sites.filter((site) => site.project?._id === this.projectFilter);
+  }
+
+  /**
+   * Stations a project-wide restart would actually power-cycle.
+   *
+   * Empty until a project is chosen. Restarting every station the platform
+   * knows about is not something an operator should be able to trigger with one
+   * click: the fleet spans several projects, and a client is only responsible
+   * for their own.
+   */
+  get restartTargets(): Site[] {
+    if (!this.projectFilter) return [];
+    return this.sites.filter((site) => site.project?._id === this.projectFilter);
+  }
+
+  get selectedProjectName(): string {
+    return this.projects.find((p) => p._id === this.projectFilter)?.nom ?? '';
+  }
+
+  onProjectFilterChange(): void {
+    // A narrower list can leave the current page beyond the end of it.
+    this.page = 1;
+  }
+
+  askRestartAll(): void {
+    if (!this.restartTargets.length) return;
+    this.restartAllOpen = true;
+  }
+
+  /**
+   * Restarts every station in the selected project.
+   *
+   * Confirmed first — this power-cycles real roadside equipment and takes each
+   * station offline for about a minute. The previous version fired immediately
+   * and covered every project at once.
+   */
+  confirmRestartAll(): void {
+    const targets = this.restartTargets;
+    this.restartAllOpen = false;
+    if (!targets.length) return;
+
+    this.message.info(
+      this.i18n.t('adminSite.restartStarted', {
+        count: targets.length,
+        project: this.selectedProjectName,
+      })
+    );
+    targets.forEach((site) => this.reload(site));
   }
 
   detectFile(event: Event): void {
@@ -269,7 +335,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
       error: (e) => {
         this.spinnerSite = false;
         input.value = '';
-        this.message.error(e?.error?.error ?? 'Import impossible');
+        this.message.error(e?.error?.error ?? this.i18n.t('common.importFailed'));
       },
     });
   }
@@ -284,7 +350,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
         link.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => this.message.error('Export impossible'),
+      error: () => this.message.error(this.i18n.t('common.exportFailed')),
     });
   }
 
@@ -295,7 +361,7 @@ export class AdminSiteComponent implements OnInit, OnDestroy {
         this.midnightReloadEnabled = enabled;
       },
       error: () => {
-        this.message.error('Une erreur est survenue lors de la modification');
+        this.message.error(this.i18n.t('common.genericError'));
         this.load();
       },
     });

@@ -1,7 +1,9 @@
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 
   <app-page-header [title]="'home.title' | t"
-                   [subtitle]="spinnerSite ? 'Chargement…' : sites.length + ' station(s) · ' + onlineCount + ' en ligne'"
+                   [subtitle]="spinnerSite
+                      ? ('common.loading' | t)
+                      : ('adminSite.subtitle' | t: { count: sites.length, online: onlineCount })"
                    [backLink]="['/projects']" [backLabel]="'common.backToProjects' | t">
 
     <label class="btn btn-ghost">
@@ -39,9 +41,25 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
-        <button type="button" class="btn btn-ghost" (click)="reloadAllSites()" [disabled]="!sites.length">
-          {{ 'adminSite.restartAll' | t }}
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Restarting is scoped to one project: the fleet spans several, and a
+             client is only responsible for their own. -->
+        <label class="flex items-center gap-2">
+          <span class="label">{{ 'adminSite.filterByProject' | t }}</span>
+          <select [(ngModel)]="projectFilter" (ngModelChange)="onProjectFilterChange()"
+                  class="field w-48" [attr.aria-label]="'adminSite.filterByProject' | t">
+            <option value="">{{ 'common.allProjects' | t }}</option>
+            <option *ngFor="let project of projects" [value]="project._id">{{ project.nom }}</option>
+          </select>
+        </label>
+
+        <button type="button" class="btn btn-ghost" (click)="askRestartAll()"
+                [disabled]="!restartTargets.length"
+                [title]="projectFilter ? '' : ('adminSite.chooseProject' | t)">
+          {{ 'adminSite.restartAllInProject' | t }}
+          <span *ngIf="restartTargets.length" class="chip chip-neutral ml-1">
+            {{ restartTargets.length }}
+          </span>
         </button>
 
         <button type="button" role="switch" [attr.aria-checked]="midnightReloadEnabled"
@@ -78,7 +96,7 @@
     </div>
 
     <ng-container *ngIf="!spinnerSite">
-      <div *ngIf="sites.length; else noSites">
+      <div *ngIf="visibleSites.length; else noSites">
         <table class="hidden w-full lg:table">
           <thead>
             <tr class="border-b border-line bg-sunken">
@@ -92,7 +110,7 @@
           </thead>
           <tbody>
             <tr class="table-row"
-                *ngFor="let site of sites | filterBy: ['ip']: term | paginate: { id: 'site_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
+                *ngFor="let site of visibleSites | filterBy: ['ip']: term | paginate: { id: 'site_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
               <td class="px-5 py-3.5 text-sm font-medium text-ink">{{ site.nom }}</td>
               <td class="px-5 py-3.5 font-mono text-sm text-ink-secondary">{{ site.ip }}</td>
               <td class="px-5 py-3.5"><span class="chip chip-neutral">{{ site.Battery_Type }}</span></td>
@@ -145,7 +163,7 @@
 
         <div class="divide-y divide-line lg:hidden">
           <div class="p-4"
-               *ngFor="let site of sites | filterBy: ['ip']: term | paginate: { id: 'site_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
+               *ngFor="let site of visibleSites | filterBy: ['ip']: term | paginate: { id: 'site_pagination', itemsPerPage: itemsPerPage, currentPage: page }; trackBy: trackById">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <p class="truncate text-sm font-semibold text-ink">{{ site.nom }}</p>
@@ -248,5 +266,26 @@
   <ng-container modalFooter>
     <button type="button" class="btn btn-ghost" (click)="deleteOpen = false">{{ 'common.cancel' | t }}</button>
     <button type="button" class="btn btn-danger" (click)="remove()">{{ 'common.delete' | t }}</button>
+  </ng-container>
+</app-modal>
+
+<!-- Restart confirmation. This power-cycles real roadside equipment, so it is
+     never a single unguarded click, and it names the project and the count so
+     the scope is unambiguous before it happens. -->
+<app-modal [open]="restartAllOpen" (closed)="restartAllOpen = false"
+           [title]="'adminSite.confirmRestartTitle' | t" size="sm">
+  <p class="text-sm text-ink-secondary">
+    {{ 'adminSite.confirmRestartBody' | t: { count: restartTargets.length, project: selectedProjectName } }}
+  </p>
+  <p class="mt-2 rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn">
+    {{ 'adminSite.confirmRestartWarning' | t }}
+  </p>
+  <ng-container modalFooter>
+    <button type="button" class="btn btn-ghost" (click)="restartAllOpen = false">
+      {{ 'common.cancel' | t }}
+    </button>
+    <button type="button" class="btn btn-danger" (click)="confirmRestartAll()">
+      {{ 'adminSite.restart' | t }}
+    </button>
   </ng-container>
 </app-modal>
