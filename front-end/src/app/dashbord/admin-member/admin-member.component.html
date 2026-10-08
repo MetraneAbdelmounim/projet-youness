@@ -53,6 +53,9 @@
                   </span>
                   <div class="min-w-0">
                     <p class="truncate text-sm font-medium text-ink">{{ member.username }}</p>
+                    <p class="truncate text-xs text-ink-muted">
+                      {{ member.email || ('adminMember.noEmail' | t) }}
+                    </p>
                     <p *ngIf="member.mustChangePassword" class="text-xs text-warn">
                       {{ 'adminMember.mustChangePassword' | t }}
                     </p>
@@ -150,6 +153,14 @@
       <input id="username" name="username" class="field" required
              [ngModel]="type === 'Edit' ? memberEdited?.username : null"
              [readonly]="type === 'Edit'" />
+    </div>
+
+    <div>
+      <label for="email" class="label">{{ 'adminMember.email' | t }}</label>
+      <input id="email" name="email" type="email" class="field"
+             [ngModel]="type === 'Edit' ? memberEdited?.email : null"
+             [placeholder]="'adminMember.emailPlaceholder' | t" autocomplete="off" />
+      <p class="mt-1.5 text-xs text-ink-muted">{{ 'adminMember.emailHint' | t }}</p>
       <p *ngIf="type === 'Create'" class="mt-1.5 text-xs text-ink-muted">
         {{ 'adminMember.tempPasswordHint' | t }}
       </p>

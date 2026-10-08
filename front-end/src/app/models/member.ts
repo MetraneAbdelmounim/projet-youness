@@ -7,6 +7,8 @@ export interface Member {
   actif: boolean;
   isAdmin: boolean;
   notification: boolean;
+  /** Where alerts are sent. Empty means this member receives none. */
+  email: string;
   mustChangePassword: boolean;
   /** Absent on legacy documents read through `.lean()`; treat as empty. */
   projects?: Project[];

@@ -68,9 +68,8 @@ exports.testMail = asyncHandler(async (req, res) => {
   // A blank password with a username means "reuse the stored one".
   const pass = body.pass ? body.pass : stored['smtp.pass'];
 
-  const to =
-    body.to ||
-    Member.emailFor(req.member?.username, stored['mail.memberDomain']);
+  // Defaults to the signed-in admin's own address, when they have one.
+  const to = body.to || req.member?.email || '';
 
   if (!to) {
     return res.status(400).json({ error: 'Aucun destinataire pour le test.' });

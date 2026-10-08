@@ -38,8 +38,8 @@ async function runNightlyRestart() {
 
   console.log('🌙 [MIDNIGHT] Starting restart for all stations...');
 
-  const admins = await Member.find({ isAdmin: true, notification: true })
-    .select('username')
+  const admins = await Member.find({ isAdmin: true, notification: true, email: { $ne: '' } })
+    .select('email')
     .lean();
   if (!admins.length) {
     console.log('ℹ️  No admins to notify.');
@@ -67,7 +67,7 @@ async function runNightlyRestart() {
   const now = new Date().toLocaleString('fr-CA', { timeZone: current['schedule.timezone'] });
 
   await mailer.send({
-    to: admins.map((a) => Member.emailFor(a.username, current['mail.memberDomain'])).filter(Boolean),
+    to: admins.map((a) => a.email),
     subject: '[MI8 Monitoring Platform] 🌙 Station Restart Report',
     html:
       '<h3>🌙 Nightly Restart Report</h3>' +

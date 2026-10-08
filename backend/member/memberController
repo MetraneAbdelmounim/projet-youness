@@ -7,8 +7,22 @@ const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 12;
 
 /** Fields a client is allowed to set. Everything else in the body is ignored. */
-const CREATABLE = ['username', 'isAdmin', 'notification', 'projects'];
-const UPDATABLE = ['isAdmin', 'notification', 'projects'];
+const CREATABLE = ['username', 'isAdmin', 'notification', 'projects', 'email'];
+const UPDATABLE = ['isAdmin', 'notification', 'projects', 'email'];
+
+/**
+ * Notifications are only meaningful with somewhere to send them.
+ *
+ * Without this check an admin can tick "notification" on an account with no
+ * address, and the alert sweep silently skips it — the member believes they
+ * are covered and hears nothing when a station goes down.
+ */
+function validateNotificationPrefs(data) {
+  if (data.notification && !data.email) {
+    return "Une adresse courriel est requise pour activer les notifications";
+  }
+  return null;
+}
 
 function pick(body, allowed) {
   return Object.fromEntries(
@@ -29,6 +43,9 @@ module.exports = {
     if (!data.username) {
       return res.status(400).json({ error: 'Le nom d\'utilisateur est requis' });
     }
+
+    const prefsError = validateNotificationPrefs(data);
+    if (prefsError) return res.status(400).json({ error: prefsError });
 
     const existing = await Member.findOne({ username: data.username });
     if (existing) {
@@ -70,9 +87,23 @@ module.exports = {
   }),
 
   updateMember: asyncHandler(async (req, res) => {
+    const data = pick(req.body, UPDATABLE);
+
+    // Merged with what is already stored: a request that only flips the
+    // notification switch must still be judged against the saved address.
+    const current = await Member.findById(req.params.idMember).select('email notification').lean();
+    if (!current) return res.status(404).json({ error: 'Utilisateur introuvable' });
+
+    const prefsError = validateNotificationPrefs({
+      email: current.email,
+      notification: current.notification,
+      ...data,
+    });
+    if (prefsError) return res.status(400).json({ error: prefsError });
+
     const member = await Member.findByIdAndUpdate(
       req.params.idMember,
-      { $set: pick(req.body, UPDATABLE) },
+      { $set: data },
       { new: true, runValidators: true }
     );
     if (!member) return res.status(404).json({ error: 'Utilisateur introuvable' });

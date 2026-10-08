@@ -309,6 +309,11 @@ export const fr = {
   'adminMember.username': "Nom d'utilisateur",
   'adminMember.role': 'Rôle',
   'adminMember.notifications': 'Notifications',
+  'adminMember.email': 'Adresse courriel',
+  'adminMember.emailPlaceholder': 'prenom.nom@exemple.com',
+  'adminMember.emailHint':
+    "Destination des alertes. Obligatoire pour activer les notifications.",
+  'adminMember.noEmail': 'aucune adresse',
   'adminMember.active': 'Actif',
   'adminMember.assignedProjects': 'Projets assignés',
   'adminMember.resetPassword': 'Réinitialiser le mot de passe',
@@ -437,9 +442,6 @@ export const fr = {
   'settings.passwordSet': '•••••••• (inchangé)',
   'settings.passwordNone': '(aucun)',
   'settings.from': "Adresse d'expéditeur",
-  'settings.memberDomain': 'Domaine des membres',
-  'settings.memberDomainHint':
-    "Ajouté aux identifiants sans « @ » pour former l'adresse du destinataire.",
   'settings.testTitle': 'Tester la configuration',
   'settings.testSubtitle': 'Le test utilise les valeurs affichées ci-dessus, même non enregistrées.',
   'settings.recipient': 'Destinataire',

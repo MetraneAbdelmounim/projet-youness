@@ -306,6 +306,11 @@ export const en: Dictionary = {
   'adminMember.username': 'Username',
   'adminMember.role': 'Role',
   'adminMember.notifications': 'Notifications',
+  'adminMember.email': 'Email address',
+  'adminMember.emailPlaceholder': 'first.last@example.com',
+  'adminMember.emailHint':
+    'Where alerts are sent. Required to enable notifications.',
+  'adminMember.noEmail': 'no address',
   'adminMember.active': 'Active',
   'adminMember.assignedProjects': 'Assigned projects',
   'adminMember.resetPassword': 'Reset password',
@@ -433,9 +438,6 @@ export const en: Dictionary = {
   'settings.passwordSet': '•••••••• (unchanged)',
   'settings.passwordNone': '(none)',
   'settings.from': 'Sender address',
-  'settings.memberDomain': 'Member domain',
-  'settings.memberDomainHint':
-    'Appended to usernames without an “@” to build the recipient address.',
   'settings.testTitle': 'Test the configuration',
   'settings.testSubtitle': 'The test uses the values shown above, even unsaved ones.',
   'settings.recipient': 'Recipient',

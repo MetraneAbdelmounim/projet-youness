@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>InfraPulse — Fiche Technique</title>
+<style>
+  :root{
+    --navy:#14385F; --navy-d:#0e2843; --accent:#D97706;
+    --ink:#222; --muted:#5b6470; --line:#d7dce3; --rowalt:#eef1f5;
+  }
+  *{box-sizing:border-box;}
+  @page{ size:A4; margin:8mm 10mm 8mm 10mm; }
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Segoe UI",Arial,Helvetica,sans-serif;
+    color:var(--ink); font-size:8.25px; line-height:1.35;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+
+  /* Header */
+  .top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .eyebrow{ font-size:9px; color:var(--muted); }
+  .eyebrow b{ color:var(--ink); }
+  .brand{ display:flex; align-items:center; gap:7px; }
+  .mark{ height:30px; width:auto; }
+  .brand .name{ font-size:18px; font-weight:800; letter-spacing:.2px; color:var(--navy); }
+  .brand .name span{ color:var(--accent); }
+  .brand .name{ font-size:19px; font-weight:800; letter-spacing:.3px; color:var(--navy); }
+  .brand .name span{ color:var(--accent); }
+
+  h1.title{ font-size:21px; font-weight:800; color:var(--ink); margin:5px 0 0; letter-spacing:.2px; }
+  .subtitle{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+
+  .stripe{ height:5px; margin:6px 0 8px; border-radius:2px;
+    background:linear-gradient(90deg,#14385F 0%,#1f5fa8 18%,#2aa39a 34%,#3aa856 50%,#c9a227 66%,#D97706 82%,#B3262B 100%); }
+
+  /* Hero */
+  .hero{ display:grid; grid-template-columns:1.15fr .85fr; gap:14px; margin-bottom:2px; }
+  .lead p{ margin:0 0 5px; }
+  .badges{ display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .badge{ display:flex; align-items:center; gap:6px; border:1px solid var(--line);
+    border-radius:6px; padding:5px 8px; font-size:8.4px; font-weight:600; color:var(--navy); }
+  .badge svg{ flex:0 0 auto; }
+
+  .highlights{ background:var(--navy); color:#fff; border-radius:8px; padding:9px 11px; }
+  .highlights h3{ margin:0 0 6px; font-size:9.5px; font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; color:#cfe0ff; }
+  .highlights ul{ margin:0; padding:0; list-style:none; }
+  .highlights li{ position:relative; padding-left:15px; margin-bottom:3px; font-size:8.2px; }
+  .highlights li::before{ content:"\25B8"; position:absolute; left:0; color:var(--accent); font-weight:800; }
+
+  /* Sections */
+  .sections{ column-count:2; column-gap:13px; margin-top:7px; }
+  .block{ break-inside:avoid; margin-bottom:4px; }
+  .secbar{ background:var(--navy); color:#fff; font-size:9px; font-weight:700;
+    letter-spacing:.4px; padding:2px 9px; border-radius:3px; margin-bottom:4px; }
+  .secbar.hl{ background:var(--accent); }
+  h4{ font-size:9px; font-weight:700; color:var(--navy-d); margin:6px 0 2px; }
+  .block p{ margin:0 0 4px; }
+  ul.feat{ margin:0 0 3px; padding-left:14px; }
+  ul.feat li{ margin-bottom:1px; }
+
+  /* Tables */
+  table{ width:100%; border-collapse:collapse; font-size:8.4px; }
+  table.kv td{ padding:3px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.kv tr:nth-child(odd) td{ background:var(--rowalt); }
+  table.kv td.k{ width:42%; color:var(--muted); font-weight:600; }
+  table.kv td.v{ color:var(--ink); }
+
+  table.sizing{ font-size:8.4px; }
+  table.sizing th, table.sizing td{ border:1px solid var(--line); padding:4px 6px; text-align:center; }
+  table.sizing th{ background:var(--navy); color:#fff; font-weight:700; }
+  table.sizing td.profile{ font-weight:700; color:var(--navy-d); background:var(--rowalt); }
+
+  .note{ font-size:8px; color:var(--muted); font-style:italic; margin-top:4px; }
+  .arch{ font-family:"Consolas","Courier New",monospace; font-size:6.6px; line-height:1.3;
+    background:#f4f6f9; border:1px solid var(--line); border-radius:6px; padding:5px 8px; white-space:pre; color:#2b3b52; }
+
+  .callout{ border:1px solid var(--accent); background:#fff7ed; border-radius:6px; padding:6px 8px; }
+  .callout b{ color:#9a5209; }
+
+  /* Footer */
+  .footer{ margin-top:5px; border-top:2px solid var(--navy); padding-top:4px;
+    font-size:7.6px; color:var(--muted); display:flex; justify-content:space-between; }
+  .footer b{ color:var(--navy); }
+</style>
+</head>
+<body>
+
+  <div class="top">
+    <div class="eyebrow">Énergie &amp; contrôle · Transport intelligent — <b>Fiche Technique</b></div>
+    <div class="brand">
+      <img class="mark" src="data:image/png;base64,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" alt=""/>
+      <div class="name">Infra<span>Pulse</span></div>
+    </div>
+  </div>
+
+  <h1 class="title">InfraPulse</h1>
+  <div class="subtitle">Supervision des équipements routiers et des installations solaires autonomes — <b>multi-équipement</b></div>
+  <div class="stripe"></div>
+
+  <div class="hero">
+    <div class="lead">
+      <p><b>InfraPulse</b> est une plateforme de surveillance, de diagnostic et d'aide à la décision
+      pour les équipements d'infrastructure routière et les installations solaires autonomes :
+      contrôleurs d'intersection, abris routiers, sites isolés alimentés hors réseau. Elle relève en
+      continu leur état depuis une interface web unique.</p>
+      <p>Chaque station est suivie individuellement : joignabilité, mesures électriques, températures,
+      et <b>prévision de tension en fin de journée</b> calculée à partir des conditions
+      météorologiques locales. L'exploitant sait quel site va manquer d'énergie <b>avant</b> la
+      panne, plutôt que d'être alerté une fois l'équipement éteint.</p>
+      <div class="badges">
+        <div class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14385F" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>Multi-équipement</div>
+        <div class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14385F" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>Prévision solaire</div>
+        <div class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14385F" stroke-width="2"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/></svg>Suivi batteries</div>
+        <div class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#14385F" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 12l2 2 4-4"/></svg>Hébergement client</div>
+      </div>
+    </div>
+    <div class="highlights">
+      <h3>Points clés</h3>
+      <ul>
+        <li><b>Multi-équipement</b> : interfaçable avec d'autres marques de régulateurs selon le besoin</li>
+        <li>Prévision de tension et de performance fondée sur la météo locale</li>
+        <li>Alertes courriel ciblées par projet, cadence configurable</li>
+        <li>Redémarrage à distance, individuel ou par projet</li>
+        <li>Carte du parc, historique et <b>rapports PDF</b> · interface <b>bilingue FR / EN</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sections">
+
+    <div class="block">
+      <div class="secbar hl">Compatibilité des équipements</div>
+      <div class="callout">
+        <p style="margin:0 0 4px"><b>Ouverte par conception.</b> La plateforme est aujourd'hui
+        déployée avec des régulateurs de charge <b>Morningstar</b>, sans y être liée.</p>
+        <p style="margin:0">L'acquisition des mesures repose sur les protocoles standards de
+        l'industrie : <b>tout autre régulateur, onduleur, compteur ou capteur</b> exposant ses
+        données peut être intégré <b>selon le besoin du client</b>, sans refonte de l'application.</p>
+      </div>
+      <ul class="feat" style="margin-top:5px">
+        <li>Grandeurs mesurées et seuils adaptables à l'équipement raccordé.</li>
+        <li>Cohabitation de plusieurs types de matériel sur un même parc.</li>
+        <li>Chimies de batterie multiples, avec seuils propres à chacune.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar hl">Contrôleurs d'intersection</div>
+      <p>Même socle appliqué aux équipements routiers : dialogue avec les contrôleurs
+      par <b>protocoles standards</b> pour un suivi en temps réel de leur état.</p>
+      <ul class="feat">
+        <li>Détection et centralisation des événements : passage en <b>mode Flash</b>,
+        perte de communication ou état hors ligne, <b>bascule sur batteries de secours</b>
+        en cas de défaillance de l'alimentation principale.</li>
+        <li>Transmission automatique des alarmes aux équipes concernées, par notification
+        et par courriel, pour une intervention rapide.</li>
+        <li><b>Journal d'interventions</b> : actions réalisées, observations et dates,
+        rattachées à chaque équipement ou intersection.</li>
+        <li>Événements, alarmes et rapports d'intervention centralisés, consultables et
+        <b>exportables en PDF</b> pour le suivi et la traçabilité.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Supervision en temps réel</div>
+      <ul class="feat">
+        <li><b>État de chaque station</b> : en ligne / hors ligne, avec date et heure du dernier contact.</li>
+        <li><b>Mesures électriques</b> : tension batterie, courant de charge, tension panneau, tension et courant de sortie, puissance maximale.</li>
+        <li><b>Températures</b> batterie et ambiante.</li>
+        <li>Une mesure indisponible est signalée comme telle et n'est jamais remplacée par une valeur périmée.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Tableau de bord</div>
+      <ul class="feat">
+        <li>Indicateurs de parc : stations totales, en ligne, hors ligne, <b>sous le seuil de tension</b>.</li>
+        <li>Comparaison graphique de la tension de toutes les stations, avec <b>seuils propres à chaque chimie de batterie</b>.</li>
+        <li>Recherche et pagination sur l'ensemble du parc.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Analyse prévisionnelle</div>
+      <p>Pour chaque station, à partir des conditions météorologiques de sa position :</p>
+      <ul class="feat">
+        <li>Couverture nuageuse et <b>ensoleillement restant</b> sur la journée.</li>
+        <li><b>Perte de capacité batterie liée au froid</b> — déterminante en climat rigoureux.</li>
+        <li>Perte de recharge due aux nuages, efficacité de charge.</li>
+        <li><b>Tension prévue en fin de journée</b> et indice de performance (élevée / moyenne / faible).</li>
+      </ul>
+      <p class="note">Aucune prévision n'est affichée pour une station injoignable : elle reposerait sur un relevé qui ne décrit plus son état.</p>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Historique &amp; tendances</div>
+      <ul class="feat">
+        <li>Courbes de tension batterie et panneau sur <b>24 h, 7 jours et 30 jours</b>.</li>
+        <li><b>Coupures visibles</b> : une interruption apparaît comme une rupture de la courbe, jamais comme une progression continue.</li>
+        <li>Horodatage à la minute ; une station silencieuse est signalée explicitement.</li>
+        <li>Durée de conservation de l'historique paramétrable.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Cartographie du parc</div>
+      <ul class="feat">
+        <li>Localisation géographique des stations, <b>vue 2D et 3D</b>.</li>
+        <li>Repères colorés selon l'état, fiche de synthèse au clic, accès à la vue immersive du lieu.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Alertes &amp; notifications</div>
+      <ul class="feat">
+        <li>Déclenchement sur <b>station injoignable</b>, absence de relevé récent, tension prévue insuffisante.</li>
+        <li>Envoi par courriel <b>ciblé par projet</b> : chaque destinataire ne reçoit que ce qui le concerne.</li>
+        <li>Cadence de vérification et délai de rappel d'une alerte non résolue configurables.</li>
+        <li>Rapport de synthèse après redémarrage programmé.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Exploitation à distance</div>
+      <ul class="feat">
+        <li><b>Redémarrage d'une station</b> depuis l'interface, avec suivi du retour en ligne.</li>
+        <li><b>Redémarrage groupé par projet</b>, sous confirmation explicite ; les autres projets ne sont jamais affectés.</li>
+        <li>Redémarrage nocturne programmable.</li>
+        <li>Réapplication de la configuration réseau d'une station.</li>
+        <li>Accès direct aux consoles des équipements présents sur le site.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Organisation multi-projets</div>
+      <ul class="feat">
+        <li>Parc structuré en <b>projets</b> ; un utilisateur n'accède qu'à ceux qui lui sont attribués.</li>
+        <li>Rôles administrateur et utilisateur.</li>
+        <li>Gestion des stations, des panneaux et des équipements réseau associés.</li>
+        <li><b>Import et export tableur</b> pour la mise en service en masse.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Rapports</div>
+      <ul class="feat">
+        <li><b>Rapport PDF d'analyse</b> par projet, prêt à remettre au client.</li>
+        <li>Synthèse du parc, tableau détaillé par station, état et performance.</li>
+        <li>Stations hors service clairement distinguées, sans valeur trompeuse.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Paramétrage depuis l'interface</div>
+      <ul class="feat">
+        <li>Serveur de messagerie et expéditeur, avec <b>test d'envoi intégré</b> avant enregistrement.</li>
+        <li>Fréquence de vérification, planification nocturne, fuseau horaire, délai de rappel.</li>
+        <li>Modifications <b>actives immédiatement</b>, sans interruption de service.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Sécurité</div>
+      <ul class="feat">
+        <li>Authentification par jeton sécurisé et expiration de session.</li>
+        <li><b>Cloisonnement par projet</b> appliqué côté serveur, non contournable depuis le navigateur.</li>
+        <li>Hachage robuste des mots de passe, renouvellement forcé au premier accès.</li>
+        <li>Protection contre les tentatives répétées de connexion.</li>
+        <li>Renforcement des en-têtes de sécurité web, connexion chiffrée de bout en bout.</li>
+        <li>Base de données authentifiée et non exposée publiquement.</li>
+        <li><b>Licence signée cryptographiquement</b> (échéance, plafond de stations), installée depuis l'application.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Architecture &amp; déploiement</div>
+      <table class="kv">
+        <tr><td class="k">Hébergement</td><td class="v">Serveur dédié chez le client — vos données restent chez vous</td></tr>
+        <tr><td class="k">Accès</td><td class="v">Interface web sécurisée, aucun logiciel à installer</td></tr>
+        <tr><td class="k">Raccordement</td><td class="v">Liaison réseau vers les stations (réseau privé ou liaison sécurisée)</td></tr>
+        <tr><td class="k">Poste client</td><td class="v">Navigateur moderne (Chrome, Edge, Firefox)</td></tr>
+        <tr><td class="k">Langues</td><td class="v">Français et anglais, commutables par utilisateur</td></tr>
+      </table>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Dimensionnement</div>
+      <table class="sizing">
+        <tr><th>Profil</th><th>Stations</th><th>vCPU</th><th>RAM</th><th>Disque</th></tr>
+        <tr><td class="profile">Petit</td><td>&le; 50</td><td>2</td><td>4 Go</td><td>40 Go</td></tr>
+        <tr><td class="profile">Moyen</td><td>&le; 250</td><td>4</td><td>8 Go</td><td>80 Go</td></tr>
+        <tr><td class="profile">Grand</td><td>&le; 1 000</td><td>4&ndash;8</td><td>16 Go</td><td>150&ndash;200 Go</td></tr>
+      </table>
+      <p class="note">Valeurs indicatives, à valider selon la fréquence de relevé et la durée de conservation retenues.</p>
+    </div>
+
+    <div class="block">
+      <div class="secbar">Éditeur &amp; support</div>
+      <table class="kv">
+        <tr><td class="k">Éditeur</td><td class="v">Abdelmounim Metrane</td></tr>
+        <tr><td class="k">Support</td><td class="v">abdelmounim.metrane&#64;gmail.com</td></tr>
+        <tr><td class="k">Téléphone</td><td class="v">+212 637 204 447</td></tr>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div><b>InfraPulse</b> — Abdelmounim Metrane · abdelmounim.metrane&#64;gmail.com · +212 637 204 447</div>
+    <div>Les caractéristiques peuvent évoluer sans préavis. · V1</div>
+  </div>
+
+</body>
+</html>

@@ -17,7 +17,6 @@ export interface AppSettings {
   'smtp.user': string;
   'smtp.pass.isSet': boolean;
   'mail.from': string;
-  'mail.memberDomain': string;
   'schedule.alert': string;
   'schedule.nightly': string;
   'schedule.timezone': string;

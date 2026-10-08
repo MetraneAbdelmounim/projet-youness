@@ -9,6 +9,15 @@ const memberSchema = mongoose.Schema(
     isAdmin: { type: Boolean, required: true, default: false },
     actif: { type: Boolean, default: false },
     notification: { type: Boolean, default: false },
+    /**
+     * Where alerts are actually sent.
+     *
+     * Stored rather than derived from the username: the address and the login
+     * name are two independent facts. Deriving it meant a change of e-mail
+     * domain, or of username, silently redirected every alert to a mailbox
+     * that no longer existed.
+     */
+    email: { type: String, trim: true, lowercase: true, default: '' },
     mustChangePassword: { type: Boolean, default: true },
     projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project', index: true }],
   },
@@ -22,25 +31,6 @@ memberSchema.set('toJSON', {
     delete ret.__v;
     return ret;
   },
-});
-
-/**
- * The address to mail a member at.
- *
- * Usernames are a mix of bare handles ("demo.admin") and full addresses
- * ("someone@axians.com"). Appending the domain unconditionally turned the
- * latter into "someone@axians.com@innovationmi8.com", which no MTA accepts —
- * so every alert to those members silently bounced.
- */
-memberSchema.statics.emailFor = function (username, domain) {
-  const handle = String(username || '').trim();
-  if (!handle) return null;
-  if (handle.includes('@')) return handle;
-  return `${handle}@${domain || require('../config/config').memberEmailDomain}`;
-};
-
-memberSchema.virtual('email').get(function () {
-  return memberSchema.statics.emailFor(this.username);
 });
 
 module.exports = mongoose.model('Member', memberSchema);

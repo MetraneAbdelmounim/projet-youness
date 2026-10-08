@@ -89,14 +89,6 @@
           <span class="mt-1 block text-xs text-ink-muted">{{ 'settings.envValue' | t: { value: defaultOf('mail.from') } }}</span>
         </label>
 
-        <label class="block">
-          <span class="label">{{ 'settings.memberDomain' | t }}</span>
-          <input type="text" name="memberDomain" [(ngModel)]="form.memberDomain"
-                 class="field mt-1 w-full" />
-          <span class="mt-1 block text-xs text-ink-muted">
-            {{ 'settings.memberDomainHint' | t }}
-          </span>
-        </label>
       </div>
 
       <!-- Test. Uses the values on screen so a wrong server is caught before it

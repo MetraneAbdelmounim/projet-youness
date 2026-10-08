@@ -77,7 +77,11 @@ module.exports = {
       : null,
   },
 
-  // Email domain used to derive member addresses from usernames.
+  /**
+   * Only used by tools/backfill-member-emails.js to seed addresses for
+   * accounts created before Member.email existed. Alerts are sent to the
+   * address stored on each member, never to one derived from a username.
+   */
   memberEmailDomain: process.env.MEMBER_EMAIL_DOMAIN || 'innovationmi8.com',
 
   /**

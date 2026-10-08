@@ -45,17 +45,18 @@ async function clearAlert(kind, ip) {
  * admin carrying no explicit project list is the normal case — treating them as
  * assigned to nothing meant every alert matched no recipient and was dropped.
  */
-async function recipientsByProject(memberDomain) {
-  const members = await Member.find({ notification: true })
-    .select('username isAdmin projects')
+async function recipientsByProject() {
+  // An address stored on the member, not derived from their username: the two
+  // are independent, and deriving one from the other meant a change of login
+  // name or of mail domain silently pointed every alert at a dead mailbox.
+  const members = await Member.find({ notification: true, email: { $ne: '' } })
+    .select('email isAdmin projects')
     .lean();
 
-  return members
-    .map((m) => ({
-      email: Member.emailFor(m.username, memberDomain),
-      projects: m.isAdmin ? null : new Set((m.projects || []).map((p) => p.toString())),
-    }))
-    .filter((r) => r.email);
+  return members.map((m) => ({
+    email: m.email,
+    projects: m.isAdmin ? null : new Set((m.projects || []).map((p) => p.toString())),
+  }));
 }
 
 /**
@@ -149,7 +150,7 @@ async function runAlertSweep() {
   );
   if (!due.length) return;
 
-  const recipients = await recipientsByProject(current['mail.memberDomain']);
+  const recipients = await recipientsByProject();
   if (!recipients.length) {
     console.warn(
       `🔕 ${due.length} alert(s) raised but no member has notifications enabled. ` +

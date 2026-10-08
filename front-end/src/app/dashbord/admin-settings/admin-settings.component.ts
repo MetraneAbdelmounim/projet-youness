@@ -39,7 +39,6 @@ interface FormState {
   smtpUser: string;
   smtpPass: string;
   mailFrom: string;
-  memberDomain: string;
   alertCron: string;
   nightlyCron: string;
   timezone: string;
@@ -88,7 +87,6 @@ export class AdminSettingsComponent implements OnInit {
       smtpUser: '',
       smtpPass: '',
       mailFrom: '',
-      memberDomain: '',
       alertCron: '',
       nightlyCron: '',
       timezone: '',
@@ -106,7 +104,6 @@ export class AdminSettingsComponent implements OnInit {
       // Always blank: an empty field means "keep the stored password".
       smtpPass: '',
       mailFrom: v['mail.from'],
-      memberDomain: v['mail.memberDomain'],
       alertCron: v['schedule.alert'],
       nightlyCron: v['schedule.nightly'],
       timezone: v['schedule.timezone'],
@@ -156,7 +153,6 @@ export class AdminSettingsComponent implements OnInit {
       'smtp.secure': this.form.smtpSecure,
       'smtp.user': this.form.smtpUser,
       'mail.from': this.form.mailFrom,
-      'mail.memberDomain': this.form.memberDomain,
       'schedule.alert': this.form.alertCron,
       'schedule.nightly': this.form.nightlyCron,
       'schedule.timezone': this.form.timezone,

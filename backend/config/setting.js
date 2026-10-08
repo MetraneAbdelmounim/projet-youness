@@ -89,11 +89,6 @@ const REGISTRY = {
     default: () => config.mailOptions.from,
     coerce: requireNonEmpty("L'adresse d'expéditeur"),
   },
-  'mail.memberDomain': {
-    group: 'smtp',
-    default: () => config.memberEmailDomain,
-    coerce: requireNonEmpty('Le domaine des membres'),
-  },
 
   'schedule.alert': {
     group: 'schedule',
@@ -244,7 +239,6 @@ async function mailConfig() {
     secure: s['smtp.secure'],
     auth: s['smtp.user'] ? { user: s['smtp.user'], pass: s['smtp.pass'] } : null,
     from: s['mail.from'],
-    memberDomain: s['mail.memberDomain'],
   };
 }
 
