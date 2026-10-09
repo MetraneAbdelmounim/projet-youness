@@ -7,6 +7,42 @@ const AlertState = require('../analysis/alertState');
 const mailer = require('./mailer');
 
 /**
+ * Reason codes.
+ *
+ * These exact strings are persisted in AlertState and compared on every sweep
+ * to decide whether an alert is new. Changing a value would make every open
+ * alert look new and re-notify the whole fleet once, so they stay as they are
+ * and the French wording lives in a separate display map.
+ */
+const REASON_DOWN = 'Station is DOWN (no ping response)';
+const REASON_STALE = 'No recent MPPT reading';
+const REASON_LOW = 'Low predicted voltage';
+const REASON_PANNEAU_DOWN = 'Panneau is DOWN (no ping response)';
+
+const REASON_LABELS = {
+  [REASON_DOWN]: 'Injoignable',
+  [REASON_STALE]: 'Aucun relevé récent',
+  [REASON_LOW]: 'Tension prévue faible',
+  [REASON_PANNEAU_DOWN]: 'Injoignable',
+};
+
+/**
+ * Rows shown in the digest before it is truncated.
+ *
+ * A fleet-wide outage otherwise produces a message hundreds of rows long that
+ * nobody scrolls; the counts at the top already carry the scale, and the
+ * platform holds the full list.
+ */
+const MAX_ROWS = 15;
+
+const REASON_TONES = {
+  [REASON_DOWN]: 'crit',
+  [REASON_STALE]: 'warn',
+  [REASON_LOW]: 'warn',
+  [REASON_PANNEAU_DOWN]: 'crit',
+};
+
+/**
  * Whether an alert is due to be emailed now.
  *
  * Due when it is new, when the reason has changed, or when the reminder
@@ -67,16 +103,16 @@ async function recipientsByProject() {
  * inline, so a large project could not finish within its own schedule interval.
  */
 function siteReason(site, staleBefore) {
-  if (!site.status) return 'Station is DOWN (no ping response)';
+  if (!site.status) return REASON_DOWN;
 
   if (
     !site.lastReading?.measuredAt ||
     new Date(site.lastReading.measuredAt).getTime() < staleBefore
   ) {
-    return 'No recent MPPT reading';
+    return REASON_STALE;
   }
 
-  if (site.lastAnalysis?.performance === 'DOWN') return 'Low predicted voltage';
+  if (site.lastAnalysis?.performance === 'DOWN') return REASON_LOW;
 
   return null;
 }
@@ -126,7 +162,7 @@ async function runAlertSweep() {
       kind: 'Panneau',
       nom: panneau.nom,
       ip: panneau.ip,
-      reason: 'Panneau is DOWN (no ping response)',
+      reason: REASON_PANNEAU_DOWN,
       projectId: panneau.project?._id?.toString() || null,
       project: panneau.project?.nom || 'N/A',
     });
@@ -184,22 +220,49 @@ async function runAlertSweep() {
   await Promise.all(
     [...alertsByEmail].map(async ([email, alerts]) => {
       const projects = [...new Set(alerts.map((a) => a.project))].join(', ');
+      const down = alerts.filter((a) => a.reason === REASON_DOWN).length;
+      const stale = alerts.filter((a) => a.reason === REASON_STALE).length;
+      const weak = alerts.filter((a) => a.reason === REASON_LOW).length;
+
+      // Counts first: an operator opening this on a phone needs the scale of
+      // the problem before the detail of it.
+      const summary = mailer.statRow(
+        [
+          mailer.stat(alerts.length, 'Alertes', 'crit'),
+          down ? mailer.stat(down, 'Injoignables', 'crit') : null,
+          stale ? mailer.stat(stale, 'Sans relevé', 'warn') : null,
+          weak ? mailer.stat(weak, 'Tension faible', 'warn') : null,
+        ].filter(Boolean)
+      );
+
       const sent = await mailer.send({
         to: email,
-        subject: `[MI8 Monitoring Platform][${projects}] MPPT Alert Summary`,
-        html:
-          '<h3>🚨 MPPT &amp; Panneaux Status Report</h3>' +
-          mailer.table(
-            ['Type', 'Name', 'IP', 'Project', 'Status', 'Date'],
-            alerts.map((a) => [
-              a.kind === 'Panneau' ? 'Panneau de parcours' : 'Station MPPT',
-              a.nom,
-              a.ip,
-              a.project,
-              a.reason,
-              now,
-            ])
-          ),
+        subject: `InfraPulse — ${alerts.length} alerte(s) · ${projects}`,
+        html: mailer.layout({
+          accent: 'crit',
+          title: `${alerts.length} équipement(s) à vérifier`,
+          subtitle: projects,
+          preheader: `${down} injoignable(s), ${stale} sans relevé récent, ${weak} sous tension faible.`,
+          body:
+            summary +
+            '<div style="height:16px;font-size:0;line-height:0;">&nbsp;</div>' +
+            mailer.table(
+              ['Équipement', 'Adresse IP', 'Projet', 'État'],
+              alerts.slice(0, MAX_ROWS).map((a) => [
+                `${a.nom} · ${a.kind === 'Panneau' ? 'Panneau' : 'Station'}`,
+                a.ip,
+                a.project,
+                { text: REASON_LABELS[a.reason] || a.reason, tone: REASON_TONES[a.reason] || 'crit' },
+              ])
+            ) +
+            (alerts.length > MAX_ROWS
+              ? `<div style="padding:12px 2px 0;font:400 12px -apple-system,BlinkMacSystemFont,` +
+                `'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#647287;">` +
+                `… et ${alerts.length - MAX_ROWS} autre(s) équipement(s). ` +
+                `La liste complète est dans la plateforme.</div>`
+              : ''),
+          footer: `Relevé du ${now}. Une alerte non résolue est rappelée automatiquement.`,
+        }),
       });
 
       if (sent) alerts.forEach((a) => delivered.add(a));

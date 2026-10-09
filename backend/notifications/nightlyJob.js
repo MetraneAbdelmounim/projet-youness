@@ -66,16 +66,40 @@ async function runNightlyRestart() {
   const current = await settings.all();
   const now = new Date().toLocaleString('fr-CA', { timeZone: current['schedule.timezone'] });
 
+  // "OK" is whatever the restart helper reports as success; anything else is
+  // worth an operator's eye, so it is toned rather than left as plain text.
+  const succeeded = results.filter((r) => /ok|succ/i.test(String(r.restart))).length;
+  const failed = results.length - succeeded;
+
   await mailer.send({
     to: admins.map((a) => a.email),
-    subject: '[MI8 Monitoring Platform] 🌙 Station Restart Report',
-    html:
-      '<h3>🌙 Nightly Restart Report</h3>' +
-      '<p>Below is the status of all stations after the scheduled restart:</p>' +
-      mailer.table(
-        ['Station', 'IP', 'Project', 'Restart', 'Date'],
-        results.map((r) => [r.name, r.ip, r.project, r.restart, now])
-      ),
+    subject: `InfraPulse — Redémarrage nocturne · ${succeeded}/${results.length} réussi(s)`,
+    html: mailer.layout({
+      accent: failed ? 'warn' : 'good',
+      title: 'Rapport de redémarrage nocturne',
+      subtitle: `${results.length} station(s) traitée(s).`,
+      preheader: `${succeeded} réussite(s), ${failed} échec(s).`,
+      body:
+        mailer.statRow([
+          mailer.stat(results.length, 'Stations', 'neutral'),
+          mailer.stat(succeeded, 'Réussis', 'good'),
+          mailer.stat(failed, 'Échecs', failed ? 'crit' : 'neutral'),
+        ]) +
+        '<div style="height:16px;font-size:0;line-height:0;">&nbsp;</div>' +
+        mailer.table(
+          ['Station', 'Adresse IP', 'Projet', 'Redémarrage'],
+          results.map((r) => [
+            r.name,
+            r.ip,
+            r.project,
+            {
+              text: r.restart,
+              tone: /ok|succ/i.test(String(r.restart)) ? 'good' : 'crit',
+            },
+          ])
+        ),
+      footer: `Exécuté le ${now}.`,
+    }),
   });
 
   console.log('✅ Restart report sent to admins.');

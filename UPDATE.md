@@ -150,46 +150,73 @@ docker compose restart app poller
 
 ## One-time steps for *this* release
 
-Only for the update that adds the map, the Paramètres page and the alerting
-fix. Skip on later updates.
+Only for the update that moves notification addresses onto the member record.
+Skip on later updates. **No `.env` change is required.**
 
-**No `.env` change is required** and no schema migration runs.
+### a. Backfill the notification addresses — do this immediately
 
-### a. Clear the stale alert suppression
+Alert recipients used to be derived at send time as `username@<domain>`. They
+now come from an `email` field stored on each member, so a change of mail
+domain — or of username — no longer silently redirects every alert to a
+mailbox that does not exist.
 
-The previous alerting code recorded "already notified" for alerts it never
-sent, so a station that is currently down would stay silent for up to 12 hours
-after the update. Clear it once:
-
-```powershell
-docker compose exec -T mongo mongosh mppt --quiet --eval "db.alertstates.deleteMany({})"
-```
-
-### b. Make sure someone actually receives alerts
-
-Alerts go to members with `notification` enabled — **not** to `MAIL_TO`, which
-the code never reads.
+Existing accounts have no address yet, so until this runs the alert sweep
+correctly finds nobody to write to and **no notification is sent**. Run it as
+soon as the containers are up:
 
 ```powershell
-docker compose exec -T mongo mongosh mppt --quiet --eval "db.members.find({},{username:1,isAdmin:1,notification:1}).toArray()"
+docker compose exec app node tools/backfill-member-emails.js --domain orangetraffic.com
+docker compose exec app node tools/backfill-member-emails.js --domain orangetraffic.com --apply
 ```
 
-If none has `notification: true`, enable it in **Administration →
-Utilisateurs**. Admins now receive alerts for every project; other members only
-for the projects assigned to them.
+The first command changes nothing and prints what it would write. It only
+fills addresses that are empty, so it is safe to re-run.
 
-### c. Confirm mail actually leaves the VPS
+### b. Correct the addresses that moved
 
-**Administration → Paramètres → Tester la configuration**, then *Envoyer un
-test*. It reports the SMTP server's own reply, so a relay that refuses the
-sender or the recipient says so plainly. Settings changed here take effect
-immediately — no restart — and default to the `.env` values.
+The backfill reproduces what the old code computed — which is wrong wherever
+the client renamed a mailbox. Review them in **Administration →
+Utilisateurs**: each member now shows their address under their username, and
+fixing one is a field edit. Enabling notifications without an address is
+refused, so an account can no longer look covered while being silently skipped.
 
-### d. Check the map can reach its tile server
+### c. Point the mail settings at the new domain
 
-The map needs outbound HTTPS from the **browser**, not the VPS, to
-`tiles.openfreemap.org`. If operators are on a restricted network, allow it
-there; a blocked host shows pins on an empty background.
+In **Administration → Paramètres** — effective immediately, no restart:
+
+| Field | Value |
+|---|---|
+| Serveur | `orangetraffic-com.mail.protection.outlook.com` |
+| Adresse d'expéditeur | `notifications@orangetraffic.com` |
+
+The server matters most: the old host is the mail entry point for the previous
+tenant and rejects anything addressed to `@orangetraffic.com`, however correct
+the member addresses are.
+
+The **Domaine des membres** field is gone — nothing derives an address from it
+any more.
+
+### d. Prove mail actually leaves the VPS
+
+**Paramètres → Tester la configuration → Envoyer un test**, to a real
+`@orangetraffic.com` address. It reports the SMTP server's own reply, so a
+relay refusing the sender or the recipient says so plainly.
+
+### e. Check the licence has not lapsed
+
+A deployment onto an expired licence boots locked: sign-in works, everything
+else is refused until a licence is uploaded.
+
+```powershell
+docker compose exec -T mongo mongosh mppt --quiet --eval "db.licences.find({},{customer:1,expiresAt:1}).sort({_id:-1}).limit(1).toArray()"
+```
+
+If it has expired, issue a fresh one from the machine holding the signing key
+and upload it in **Administration → Licence**:
+
+```powershell
+node tools/licence-issue.js --customer "Innovation MI8" --months 12 --stations 100
+```
 
 ---
 

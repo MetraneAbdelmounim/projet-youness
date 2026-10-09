@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const settings = require('../config/setting');
+const template = require('./emailTemplate');
 
 /**
  * The transporter is rebuilt whenever SMTP settings change.
@@ -35,33 +36,6 @@ async function transporter() {
     cached = { client: build(mail), from: mail.from };
   }
   return cached;
-}
-
-/** Escapes interpolated values so a device name cannot inject markup into an email. */
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  })[c]);
-}
-
-function table(headers, rows) {
-  return `
-    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%">
-      <thead>
-        <tr style="background-color:#f2f2f2">
-          ${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}
-        </tr>
-      </thead>
-      <tbody>
-        ${rows
-          .map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`)
-          .join('')}
-      </tbody>
-    </table>`;
 }
 
 /**
@@ -112,11 +86,19 @@ async function verifyAndSend({ host, port, secure, user, pass, from, to }) {
     const info = await client.sendMail({
       from,
       to,
-      subject: '[MI8 Monitoring Platform] Test de configuration SMTP',
-      html:
-        '<h3>✅ Test SMTP réussi</h3>' +
-        '<p>Ce message confirme que la plateforme de supervision MPPT peut ' +
-        'envoyer des courriels avec la configuration enregistrée.</p>',
+      subject: 'InfraPulse — Test de configuration SMTP',
+      html: template.layout({
+        accent: 'good',
+        title: 'Test SMTP réussi',
+        subtitle: 'La plateforme peut envoyer des courriels avec la configuration enregistrée.',
+        preheader: 'Votre configuration SMTP fonctionne.',
+        body:
+          `<div style="padding:14px 16px;background:#e3f7ee;border-radius:8px;` +
+          `font:400 13px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;` +
+          `color:#0f7a55;line-height:1.6;">Si vous lisez ce message, les alertes de stations ` +
+          `hors ligne et le rapport de redémarrage nocturne partiront de la même façon.</div>`,
+        footer: `Envoyé depuis Administration → Paramètres.`,
+      }),
     });
     return { ok: true, stage: 'envoi', message: info.response || 'Message accepté par le serveur.' };
   } catch (err) {
@@ -126,4 +108,13 @@ async function verifyAndSend({ host, port, secure, user, pass, from, to }) {
   }
 }
 
-module.exports = { send, table, escapeHtml, verifyAndSend };
+module.exports = {
+  send,
+  verifyAndSend,
+  // Re-exported so callers compose a message from one import.
+  layout: template.layout,
+  table: template.table,
+  stat: template.stat,
+  statRow: template.statRow,
+  escapeHtml: template.escapeHtml,
+};
